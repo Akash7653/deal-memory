@@ -251,10 +251,10 @@ export default function Layout() {
           <button
             onClick={handleLogout}
             title="Sign Out"
-            className="flex items-center space-x-1 sm:space-x-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-xs font-semibold transition-all cursor-pointer shadow-sm active:scale-95 whitespace-nowrap"
+            className="flex items-center justify-center p-2 sm:px-3 sm:py-2 rounded-xl border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-xs font-semibold transition-all cursor-pointer shadow-sm active:scale-95 flex-shrink-0"
           >
-            <LogOut size={14} className="sm:w-[15px] sm:h-[15px]" />
-            <span>Sign Out</span>
+            <LogOut size={16} />
+            <span className="hidden sm:inline sm:ml-1.5">Sign Out</span>
           </button>
         </div>
         </header>
