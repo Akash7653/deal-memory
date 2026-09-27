@@ -1,16 +1,64 @@
 import logging
+import uuid
 from typing import Optional, List, Dict, Any
 from datetime import datetime
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Depends, status
 from pydantic import BaseModel, Field
 
 from app.config import settings
 from app.memory.hindsight import hindsight_service
 from app.agent.agent import deal_memory_agent
+from app.db.database import get_db_connection
+from app.auth.security import get_current_user, get_optional_current_user
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/deals", tags=["deals"])
+
+
+def get_tenant_bank_id(deal_id_clean: str, user: Optional[dict] = None) -> str:
+    """Determine the isolated Hindsight bank ID based on tenant/user ID and deal ID."""
+    if not user or user.get("id") == "demo-user-001" or (deal_id_clean == "acme" and not user):
+        # Demo account or unauthenticated fallback for ACME demo
+        return settings.HINDSIGHT_BANK_ID or "dealmemory-acme"
+    
+    # Isolated user bank ID
+    user_prefix = user["id"].replace("user_", "")[:8]
+    return f"dealmemory-{user_prefix}-{deal_id_clean}"
+
+
+def log_activity(user_id: str, deal_id: Optional[str], company: Optional[str], activity_type: str, title: str, description: str):
+    """Helper to log an activity in the database for the user."""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            INSERT INTO activities (id, user_id, deal_id, company, activity_type, title, description, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                f"act_{uuid.uuid4().hex[:8]}",
+                user_id,
+                deal_id,
+                company or "ACME Corp",
+                activity_type,
+                title,
+                description,
+                datetime.utcnow().isoformat(),
+            ),
+        )
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        logger.error(f"Failed to log activity: {e}")
+
+
+class DealCreate(BaseModel):
+    company_name: str = Field(..., description="Company name (e.g. Stripe, Snowflake)")
+    deal_value: int = Field(default=50000, description="Annual deal value in USD")
+    stage: str = Field(default="Discovery", description="Pipeline stage (Discovery, Evaluation, Proposal, Negotiation)")
+    relationship_health: int = Field(default=75, ge=0, le=100, description="Health score percentage")
 
 
 class InteractionCreate(BaseModel):
@@ -70,11 +118,129 @@ class OutcomeCreate(BaseModel):
     )
 
 
+@router.get("")
+async def get_user_deals(
+    include_demo: bool = Query(True, description="Whether to include ACME demo deal if user has no deals"),
+    user: Optional[dict] = Depends(get_optional_current_user),
+):
+    """Retrieve all deals owned by the authenticated user."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    user_id = user["id"] if user else "demo-user-001"
+
+    cursor.execute(
+        "SELECT id, owner_user_id, company_name, deal_value, stage, relationship_health, created_at FROM deals WHERE owner_user_id = ? ORDER BY created_at DESC",
+        (user_id,),
+    )
+    rows = cursor.fetchall()
+
+    deals = [
+        {
+            "id": r["id"],
+            "owner_user_id": r["owner_user_id"],
+            "company_name": r["company_name"],
+            "deal_value": r["deal_value"],
+            "stage": r["stage"],
+            "relationship_health": r["relationship_health"],
+            "created_at": r["created_at"],
+            "is_demo": r["id"] == "acme",
+        }
+        for r in rows
+    ]
+
+    # If new user has 0 deals and requested demo or is exploring
+    if not deals and include_demo:
+        cursor.execute("SELECT id, owner_user_id, company_name, deal_value, stage, relationship_health, created_at FROM deals WHERE id = 'acme'")
+        demo_row = cursor.fetchone()
+        if demo_row:
+            deals.append({
+                "id": demo_row["id"],
+                "owner_user_id": demo_row["owner_user_id"],
+                "company_name": demo_row["company_name"],
+                "deal_value": demo_row["deal_value"],
+                "stage": demo_row["stage"],
+                "relationship_health": demo_row["relationship_health"],
+                "created_at": demo_row["created_at"],
+                "is_demo": True,
+            })
+
+    conn.close()
+    return {"status": "success", "count": len(deals), "deals": deals}
+
+
+@router.post("")
+async def create_deal(req: DealCreate, user: dict = Depends(get_current_user)):
+    """Create a new user-owned deal."""
+    deal_id = f"deal_{uuid.uuid4().hex[:8]}"
+    now = datetime.utcnow().isoformat()
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        INSERT INTO deals (id, owner_user_id, company_name, deal_value, stage, relationship_health, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+        """,
+        (deal_id, user["id"], req.company_name.strip(), req.deal_value, req.stage, req.relationship_health, now),
+    )
+    conn.commit()
+    conn.close()
+
+    log_activity(
+        user_id=user["id"],
+        deal_id=deal_id,
+        company=req.company_name,
+        activity_type="deal_created",
+        title=f"Created Deal: {req.company_name}",
+        description=f"Initialized {req.company_name} (${req.deal_value:,} ARR) at stage {req.stage}.",
+    )
+
+    return {
+        "status": "success",
+        "message": f"Deal for {req.company_name} created successfully.",
+        "deal": {
+            "id": deal_id,
+            "company_name": req.company_name,
+            "deal_value": req.deal_value,
+            "stage": req.stage,
+            "relationship_health": req.relationship_health,
+            "created_at": now,
+        },
+    }
+
+
+@router.delete("/{deal_id}")
+async def delete_deal(deal_id: str, user: dict = Depends(get_current_user)):
+    """Delete a user-owned deal."""
+    if deal_id == "acme":
+        raise HTTPException(status_code=400, detail="Cannot delete default demo deal.")
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id FROM deals WHERE id = ? AND owner_user_id = ?", (deal_id, user["id"]))
+    row = cursor.fetchone()
+    if not row:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Deal not found or you do not have permission to delete it.")
+
+    cursor.execute("DELETE FROM deals WHERE id = ? AND owner_user_id = ?", (deal_id, user["id"]))
+    cursor.execute("DELETE FROM activities WHERE deal_id = ? AND user_id = ?", (deal_id, user["id"]))
+    conn.commit()
+    conn.close()
+
+    return {"status": "success", "message": f"Deal {deal_id} deleted successfully."}
+
+
 @router.post("/{deal_id}/interactions")
-async def create_deal_interaction(deal_id: str, interaction: InteractionCreate):
-    """Store a sales interaction in Hindsight persistent memory."""
+async def create_deal_interaction(
+    deal_id: str,
+    interaction: InteractionCreate,
+    user: Optional[dict] = Depends(get_optional_current_user),
+):
+    """Store a sales interaction in Hindsight persistent memory with user isolation."""
     deal_id_clean = deal_id.strip().lower()
-    bank_id = settings.HINDSIGHT_BANK_ID or f"dealmemory-{deal_id_clean}"
+    bank_id = get_tenant_bank_id(deal_id_clean, user)
 
     interaction_date = interaction.date or datetime.utcnow().strftime("%Y-%m-%d")
 
@@ -93,6 +259,9 @@ async def create_deal_interaction(deal_id: str, interaction: InteractionCreate):
         f"company:{interaction.company.lower().replace(' ', '_')}",
         f"type:{interaction.interaction_type.lower()}",
     ]
+    if user:
+        combined_tags.append(f"user:{user['id']}")
+
     if interaction.tags:
         for t in interaction.tags:
             clean_tag = t.strip().lower()
@@ -116,6 +285,16 @@ async def create_deal_interaction(deal_id: str, interaction: InteractionCreate):
             tags=combined_tags,
             metadata=metadata,
         )
+
+        if user:
+            log_activity(
+                user_id=user["id"],
+                deal_id=deal_id_clean,
+                company=interaction.company,
+                activity_type="interaction",
+                title=f"{interaction.interaction_type.capitalize()} with {interaction.contact_name} ({interaction.contact_role})",
+                description=interaction.content[:160] + ("..." if len(interaction.content) > 160 else ""),
+            )
 
         return {
             "status": "success",
@@ -143,14 +322,17 @@ async def create_deal_interaction(deal_id: str, interaction: InteractionCreate):
 
 
 @router.post("/{deal_id}/outcomes")
-async def create_deal_outcome(deal_id: str, outcome: OutcomeCreate):
+async def create_deal_outcome(
+    deal_id: str,
+    outcome: OutcomeCreate,
+    user: Optional[dict] = Depends(get_optional_current_user),
+):
     """Retain a strategy outcome in Hindsight so the agent can learn what worked and what failed."""
     deal_id_clean = deal_id.strip().lower()
-    bank_id = settings.HINDSIGHT_BANK_ID or f"dealmemory-{deal_id_clean}"
+    bank_id = get_tenant_bank_id(deal_id_clean, user)
 
     outcome_date = outcome.date or datetime.utcnow().strftime("%Y-%m-%d")
 
-    # Construct a high-signal memory specifically linking strategy -> outcome -> lesson
     memory_narrative = (
         f"{outcome.company} SALES STRATEGY & OUTCOME RECORD ({outcome_date}): "
         f"Sales Strategy Attempted: \"{outcome.strategy}\". "
@@ -168,6 +350,9 @@ async def create_deal_outcome(deal_id: str, outcome: OutcomeCreate):
         f"result:{outcome.result.lower()}",
         f"company:{outcome.company.lower().replace(' ', '_')}",
     ]
+    if user:
+        combined_tags.append(f"user:{user['id']}")
+
     if outcome.tags:
         for t in outcome.tags:
             clean_tag = t.strip().lower()
@@ -191,6 +376,16 @@ async def create_deal_outcome(deal_id: str, outcome: OutcomeCreate):
             tags=combined_tags,
             metadata=metadata,
         )
+
+        if user:
+            log_activity(
+                user_id=user["id"],
+                deal_id=deal_id_clean,
+                company=outcome.company,
+                activity_type="outcome",
+                title=f"Strategy Outcome: {outcome.result.capitalize()}",
+                description=f"Strategy: \"{outcome.strategy}\". Details: {outcome.details[:120]}...",
+            )
 
         return {
             "status": "success",
@@ -220,10 +415,13 @@ async def create_deal_outcome(deal_id: str, outcome: OutcomeCreate):
 
 
 @router.post("/{deal_id}/learn")
-async def learn_from_deal_memory(deal_id: str):
+async def learn_from_deal_memory(
+    deal_id: str,
+    user: Optional[dict] = Depends(get_optional_current_user),
+):
     """Use Hindsight's reflect() reasoning engine to extract learned insights from past strategies and outcomes."""
     deal_id_clean = deal_id.strip().lower()
-    bank_id = settings.HINDSIGHT_BANK_ID or f"dealmemory-{deal_id_clean}"
+    bank_id = get_tenant_bank_id(deal_id_clean, user)
 
     learn_query = (
         f"Analyze all customer interactions, stakeholder objections, proposed sales strategies, and outcomes "
@@ -256,7 +454,6 @@ async def learn_from_deal_memory(deal_id: str):
         structured = reflect_res.structured_output or {}
         learned_insights = structured.get("learned_insights", [])
 
-        # Fallback to text parsing if structured output was empty
         if not learned_insights and reflect_res.text:
             lines = [
                 line.strip(" -*•")
@@ -264,6 +461,16 @@ async def learn_from_deal_memory(deal_id: str):
                 if line.strip().startswith(("-", "*", "•", "1.", "2.", "3.", "4."))
             ]
             learned_insights = lines if lines else [reflect_res.text.strip()]
+
+        if user:
+            log_activity(
+                user_id=user["id"],
+                deal_id=deal_id_clean,
+                company="ACME Corp" if deal_id_clean == "acme" else deal_id_clean.upper(),
+                activity_type="learning",
+                title="Hindsight Reflection Generated",
+                description=f"Identified {len(learned_insights)} strategic insights from historical outcomes.",
+            )
 
         return {
             "status": "success",
@@ -281,10 +488,13 @@ async def learn_from_deal_memory(deal_id: str):
 
 
 @router.get("/{deal_id}/prepare")
-async def prepare_for_meeting(deal_id: str):
+async def prepare_for_meeting(
+    deal_id: str,
+    user: Optional[dict] = Depends(get_optional_current_user),
+):
     """Generate comprehensive AI meeting intelligence using Hindsight memory recall and reflection."""
     deal_id_clean = deal_id.strip().lower()
-    bank_id = settings.HINDSIGHT_BANK_ID or f"dealmemory-{deal_id_clean}"
+    bank_id = get_tenant_bank_id(deal_id_clean, user)
 
     prep_query = (
         f"Generate a complete, executive B2B sales meeting preparation brief for {deal_id_clean}. "
@@ -343,7 +553,16 @@ async def prepare_for_meeting(deal_id: str):
 
         structured = reflect_res.structured_output or {}
 
-        # Construct final structured meeting preparation payload
+        if user:
+            log_activity(
+                user_id=user["id"],
+                deal_id=deal_id_clean,
+                company=structured.get("company", deal_id_clean.upper()),
+                activity_type="meeting_prep",
+                title=f"Prepared Meeting for {structured.get('company', deal_id_clean.upper())}",
+                description="Synthesized customer trajectory, past outcomes, and key pitfalls to avoid.",
+            )
+
         return {
             "deal_id": deal_id_clean,
             "company": structured.get("company", deal_id_clean.upper()),
@@ -378,10 +597,11 @@ async def get_deal_memory(
         description="Optional tag to narrow recall",
     ),
     max_tokens: int = Query(default=4096, ge=256, le=8192),
+    user: Optional[dict] = Depends(get_optional_current_user),
 ):
     """Recall relationship history, objections, stakeholder positions, and outcomes for a deal."""
     deal_id_clean = deal_id.strip().lower()
-    bank_id = settings.HINDSIGHT_BANK_ID or f"dealmemory-{deal_id_clean}"
+    bank_id = get_tenant_bank_id(deal_id_clean, user)
 
     search_query = query or (
         f"What is the relationship history, key interactions, objections, competitors, "
@@ -441,17 +661,63 @@ class AskRequest(BaseModel):
 
 
 @router.post("/{deal_id}/ask")
-async def ask_deal_agent(deal_id: str, request: AskRequest):
+async def ask_deal_agent(
+    deal_id: str,
+    request: AskRequest,
+    user: Optional[dict] = Depends(get_optional_current_user),
+):
     """Ask DealMemory Agent a relationship-intelligence question grounded in Hindsight memories and Groq LLM."""
     if not request.question.strip():
         raise HTTPException(status_code=400, detail="Question cannot be empty.")
 
+    deal_id_clean = deal_id.strip().lower()
+    bank_id = get_tenant_bank_id(deal_id_clean, user)
+
     try:
-        return await deal_memory_agent.ask(deal_id=deal_id, question=request.question.strip())
+        # Note: we pass bank_id to agent ask
+        res = await deal_memory_agent.ask(
+            deal_id=deal_id_clean,
+            question=request.question.strip(),
+            bank_id=bank_id,
+        )
+
+        if user:
+            # Store in AI conversations
+            try:
+                conn = get_db_connection()
+                cursor = conn.cursor()
+                cursor.execute(
+                    """
+                    INSERT INTO ai_conversations (id, user_id, deal_id, question, answer, created_at)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        f"conv_{uuid.uuid4().hex[:8]}",
+                        user["id"],
+                        deal_id_clean,
+                        request.question.strip(),
+                        res.get("answer", ""),
+                        datetime.utcnow().isoformat(),
+                    ),
+                )
+                conn.commit()
+                conn.close()
+            except Exception as e:
+                logger.error(f"Failed to save AI conversation: {e}")
+
+            log_activity(
+                user_id=user["id"],
+                deal_id=deal_id_clean,
+                company="ACME Corp" if deal_id_clean == "acme" else deal_id_clean.upper(),
+                activity_type="ai_question",
+                title=f"Asked AI: \"{request.question[:45]}...\"",
+                description=f"Generated grounded answer utilizing {res.get('memory_context', {}).get('count', 0)} Hindsight memories.",
+            )
+
+        return res
     except Exception as e:
         logger.error(f"Error answering question for {deal_id}: {e}")
         raise HTTPException(
             status_code=502,
             detail=f"DealMemory agent error: {str(e)}",
         )
-

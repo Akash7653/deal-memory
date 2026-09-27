@@ -139,6 +139,15 @@ Hindsight is not merely used as a vector lookup database. It provides:
    - **Hallucination Resistant**: Inquiries about unrecorded departments (e.g., Legal) explicitly state no record exists rather than hallucinating answers.
 6. **Interaction Retention Form (`/add-interaction`)**:
    - Seamlessly retain new meetings, notes, and strategy outcomes to the Hindsight bank.
+7. **Multi-User Data Isolation & Authentication (`/login`, `/register`)**:
+   - Real bcrypt password hashing and JWT bearer authentication.
+   - Tenant-aware memory partitioning: `dealmemory-{user_prefix}-{deal_id}`.
+   - Dedicated 1-click Demo Account (`demo@dealmemory.ai` / `demopassword123`) for hackathon judges.
+8. **User Activity & Intelligence History (`/history`)**:
+   - Filterable chronological audit log tracking interactions, strategy attempts, AI questions, and Hindsight reflections.
+9. **Dark + Light Mode & Dedicated Mobile UX**:
+   - High-contrast, accessibility-checked Dark and Light themes with persistent preference.
+   - Fixed mobile bottom navigation bar (`Home`, `Deal`, `Memory`, `AI`, `More`) with slide-over quick drawer.
 
 ---
 

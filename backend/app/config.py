@@ -16,6 +16,9 @@ class Settings:
     GROQ_MODEL: str = os.getenv("GROQ_MODEL", "qwen/qwen3.8-27b")
     CORS_ORIGINS: str = os.getenv("CORS_ORIGINS", "*")
     ENV: str = os.getenv("ENV", "development")
+    JWT_SECRET: str = os.getenv("JWT_SECRET", "dealmemory-jwt-secret-key-super-secure-production-2026")
+    JWT_ALGORITHM: str = "HS256"
+    JWT_EXPIRES_MINUTES: int = 60 * 24 * 7  # 7 days
 
 
 settings = Settings()

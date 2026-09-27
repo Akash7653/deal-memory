@@ -1,8 +1,11 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
+from app.db.database import init_db
 from app.memory.hindsight import hindsight_service
+from app.auth.routes import router as auth_router
 from app.deals.routes import router as deals_router
+from app.history.routes import router as history_router
 
 app = FastAPI(
     title="DealMemory API",
@@ -10,7 +13,12 @@ app = FastAPI(
     version="1.0.0",
 )
 
+# Initialize database schema
+init_db()
+
+app.include_router(auth_router)
 app.include_router(deals_router)
+app.include_router(history_router)
 
 # Production-safe CORS configuration
 cors_origins_raw = getattr(settings, "CORS_ORIGINS", "*")

@@ -46,10 +46,10 @@ class DealMemoryAgent:
         self.groq_model = settings.GROQ_MODEL
         self.groq_url = "https://api.groq.com/openai/v1/chat/completions"
 
-    async def ask(self, deal_id: str, question: str) -> Dict[str, Any]:
+    async def ask(self, deal_id: str, question: str, bank_id: Optional[str] = None) -> Dict[str, Any]:
         """Answer a sales question grounded strictly in Hindsight memories and learned outcomes."""
         deal_id_clean = deal_id.strip().lower()
-        bank_id = settings.HINDSIGHT_BANK_ID or f"dealmemory-{deal_id_clean}"
+        active_bank_id = bank_id or settings.HINDSIGHT_BANK_ID or f"dealmemory-{deal_id_clean}"
 
         # ---------------------------------------------------------
         # STEP 1: HINDSIGHT RECALL
@@ -59,7 +59,7 @@ class DealMemoryAgent:
         prompt_representation = ""
         try:
             recall_res = await hindsight_service.recall(
-                bank_id=bank_id,
+                bank_id=active_bank_id,
                 query=question,
                 tags=[f"deal:{deal_id_clean}"],
                 max_tokens=3000,
@@ -89,7 +89,7 @@ class DealMemoryAgent:
                 f"'{question}'. Specifically address what previous approaches failed or succeeded, and what lessons apply."
             )
             reflect_res = await hindsight_service.reflect(
-                bank_id=bank_id,
+                bank_id=active_bank_id,
                 query=reflect_query,
                 budget="mid",
                 tags=[f"deal:{deal_id_clean}"],

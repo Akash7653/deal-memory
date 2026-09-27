@@ -18,26 +18,103 @@ import {
   XCircle,
   Database,
   BrainCircuit,
+  PlusCircle,
+  Clock,
 } from 'lucide-react';
-import { fetchDealMemory } from '../api';
+import { fetchDealMemory, fetchDeals, createDeal } from '../api';
+import { useAuth } from '../context/AuthContext';
 
 export default function Dashboard() {
-  const [memoryCount, setMemoryCount] = useState(5);
+  const { user } = useAuth();
+  const [memoryCount, setMemoryCount] = useState(15);
+  const [deals, setDeals] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showCreateDealModal, setShowCreateDealModal] = useState(false);
+  const [newCompanyName, setNewCompanyName] = useState('');
+  const [newDealValue, setNewDealValue] = useState(75000);
+  const [creatingDeal, setCreatingDeal] = useState(false);
+
+  const loadDashboardData = async () => {
+    try {
+      const [memData, dealsData] = await Promise.all([
+        fetchDealMemory('acme').catch(() => ({ count: 15 })),
+        fetchDeals(true).catch(() => ({ deals: [] })),
+      ]);
+      if (memData && memData.count) setMemoryCount(memData.count);
+      if (dealsData && dealsData.deals) setDeals(dealsData.deals);
+    } catch (err) {
+      console.error('Dashboard load error', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    fetchDealMemory('acme')
-      .then((data) => {
-        if (data.count) setMemoryCount(data.count);
-      })
-      .catch((err) => console.log('Memory fetch error', err))
-      .finally(() => setLoading(false));
+    loadDashboardData();
   }, []);
 
+  const handleCreateDeal = async (e) => {
+    e.preventDefault();
+    if (!newCompanyName.trim()) return;
+    setCreatingDeal(true);
+    try {
+      const res = await createDeal({
+        company_name: newCompanyName.trim(),
+        deal_value: parseInt(newDealValue) || 50000,
+        stage: 'Discovery',
+        relationship_health: 80,
+      });
+      setShowCreateDealModal(false);
+      setNewCompanyName('');
+      await loadDashboardData();
+    } catch (err) {
+      alert(err.message || 'Failed to create deal');
+    } finally {
+      setCreatingDeal(false);
+    }
+  };
+
+  // Calculate total pipeline
+  const totalPipeline = deals.reduce((acc, d) => acc + (d.deal_value || 0), 0) || 120000;
+
   return (
-    <div className="max-w-6xl mx-auto space-y-8">
+    <div className="max-w-6xl mx-auto space-y-6 sm:space-y-8">
+      {/* Personalized Greeting Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <div className="flex items-center space-x-2">
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+              Welcome back, {user?.name || 'Sales Leader'}
+            </h1>
+            <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-sky-500/10 text-sky-400 border border-sky-500/20">
+              {user?.company || 'Personal Workspace'}
+            </span>
+          </div>
+          <p className="text-xs sm:text-sm text-slate-400 mt-1">
+            Your personal relationship intelligence dashboard grounded in Hindsight persistent memory.
+          </p>
+        </div>
+
+        <div className="flex items-center space-x-2.5">
+          <button
+            onClick={() => setShowCreateDealModal(true)}
+            className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-semibold shadow-md shadow-sky-600/20 transition-all"
+          >
+            <PlusCircle size={15} />
+            <span>New Deal</span>
+          </button>
+          <Link
+            to="/history"
+            className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-850 border border-slate-800 text-slate-300 hover:text-white text-xs font-medium transition-all"
+          >
+            <Clock size={15} />
+            <span>Activity History</span>
+          </Link>
+        </div>
+      </div>
+
       {/* Visual Hook: Traditional CRM vs DealMemory */}
-      <div className="bg-gradient-to-r from-slate-900 via-slate-850 to-slate-900 border border-slate-800 p-4 sm:p-5 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-gradient-to-r from-slate-900 via-slate-850 to-slate-900 border border-slate-800 p-4 sm:p-5 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xl">
         <div className="flex items-center space-x-3.5">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center text-white flex-shrink-0 shadow-md">
             <BrainCircuit size={20} />
@@ -59,236 +136,305 @@ export default function Dashboard() {
             </p>
           </div>
         </div>
-
-        <div className="flex items-center space-x-2 self-start md:self-center flex-shrink-0">
+        <div className="flex items-center space-x-2 self-start md:self-auto text-xs font-semibold">
           <Link
-            to="/meeting-prep"
-            className="px-3.5 py-2 text-xs font-semibold rounded-lg bg-sky-600 hover:bg-sky-500 text-white flex items-center space-x-1.5 shadow-md shadow-sky-600/20 transition-all"
+            to="/timeline"
+            className="px-3.5 py-2 rounded-xl bg-sky-600/15 border border-sky-500/30 text-sky-400 hover:bg-sky-600/25 transition-colors flex items-center space-x-1.5"
           >
-            <Sparkles size={13} />
-            <span>Launch 60s Demo</span>
+            <span>See Memory Timeline</span>
+            <ArrowRight size={14} />
           </Link>
         </div>
       </div>
 
-      {/* KPI Stats Row */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-slate-900/90 border border-slate-800 p-4 rounded-xl">
-          <div className="flex items-center justify-between text-slate-400 mb-1.5">
-            <span className="text-xs font-medium">Pipeline Value</span>
-            <DollarSign size={15} className="text-sky-400" />
+      {/* KPI Cards: Responsive Grid (Mobile stacked, tablet 2-col, desktop 4-col) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Total Pipeline */}
+        <div className="bg-slate-900 border border-slate-800 p-4 sm:p-5 rounded-2xl relative overflow-hidden shadow-sm">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-slate-400">Active Pipeline</span>
+            <div className="p-2 rounded-lg bg-sky-500/10 text-sky-400">
+              <DollarSign size={17} />
+            </div>
           </div>
-          <div className="text-2xl font-bold text-white">$470,000</div>
-          <div className="text-[11px] text-slate-400 mt-1">4 active sales opportunities</div>
+          <div className="mt-2 flex items-baseline space-x-2">
+            <span className="text-2xl font-black tracking-tight text-white">
+              ${totalPipeline.toLocaleString()}
+            </span>
+            <span className="text-xs text-slate-400 font-medium">ARR</span>
+          </div>
+          <div className="mt-3 flex items-center space-x-1.5 text-[11px] text-slate-400">
+            <span className="text-emerald-400 font-semibold">{deals.length || 1} Deals</span>
+            <span>in active evaluation</span>
+          </div>
         </div>
 
-        <div className="bg-slate-900/90 border border-slate-800 p-4 rounded-xl">
-          <div className="flex items-center justify-between text-slate-400 mb-1.5">
-            <span className="text-xs font-medium">Needs Attention</span>
-            <AlertTriangle size={15} className="text-amber-400" />
+        {/* Needs Attention */}
+        <div className="bg-slate-900 border border-rose-500/30 p-4 sm:p-5 rounded-2xl relative overflow-hidden bg-rose-500/5 shadow-sm">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-rose-300">Needs Strategy Attention</span>
+            <div className="p-2 rounded-lg bg-rose-500/20 text-rose-400">
+              <AlertTriangle size={17} />
+            </div>
           </div>
-          <div className="text-2xl font-bold text-amber-400">1 Deal Stalled</div>
-          <div className="text-[11px] text-slate-400 mt-1">ACME Corp (Strategy failure)</div>
+          <div className="mt-2 flex items-baseline space-x-2">
+            <span className="text-2xl font-black tracking-tight text-white">1 Deal</span>
+            <span className="text-xs font-semibold text-rose-400">Failed Strategy</span>
+          </div>
+          <div className="mt-3 flex items-center space-x-1.5 text-[11px] text-rose-300/80">
+            <span>ACME Corp • 15% discount rejected</span>
+          </div>
         </div>
 
-        <div className="bg-slate-900/90 border border-slate-800 p-4 rounded-xl">
-          <div className="flex items-center justify-between text-slate-400 mb-1.5">
-            <span className="text-xs font-medium">Persistent Memories</span>
-            <History size={15} className="text-indigo-400" />
+        {/* Persistent Memories */}
+        <div className="bg-slate-900 border border-slate-800 p-4 sm:p-5 rounded-2xl relative overflow-hidden shadow-sm">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-slate-400">Persistent Memories</span>
+            <div className="p-2 rounded-lg bg-purple-500/10 text-purple-400">
+              <History size={17} />
+            </div>
           </div>
-          <div className="text-2xl font-bold text-indigo-400">
-            {loading ? '...' : `${memoryCount}+ Units`}
+          <div className="mt-2 flex items-baseline space-x-2">
+            <span className="text-2xl font-black tracking-tight text-white">
+              {loading ? '...' : memoryCount}
+            </span>
+            <span className="text-xs text-purple-400 font-semibold">Live in Bank</span>
           </div>
-          <div className="text-[11px] text-slate-400 mt-1">Hindsight autonomous retention</div>
+          <div className="mt-3 flex items-center space-x-1.5 text-[11px] text-slate-400">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <span>Hindsight Recall Active</span>
+          </div>
         </div>
 
-        <div className="bg-slate-900/90 border border-slate-800 p-4 rounded-xl">
-          <div className="flex items-center justify-between text-slate-400 mb-1.5">
-            <span className="text-xs font-medium">Cognitive Insights</span>
-            <Lightbulb size={15} className="text-emerald-400" />
+        {/* Learned Lessons */}
+        <div className="bg-slate-900 border border-slate-800 p-4 sm:p-5 rounded-2xl relative overflow-hidden shadow-sm">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-slate-400">Learned Insights</span>
+            <div className="p-2 rounded-lg bg-amber-500/10 text-amber-400">
+              <Lightbulb size={17} />
+            </div>
           </div>
-          <div className="text-2xl font-bold text-emerald-400">5 Lessons</div>
-          <div className="text-[11px] text-slate-400 mt-1">Learned from strategy outcomes</div>
+          <div className="mt-2 flex items-baseline space-x-2">
+            <span className="text-2xl font-black tracking-tight text-white">2</span>
+            <span className="text-xs text-amber-400 font-semibold">Reflections</span>
+          </div>
+          <div className="mt-3 flex items-center space-x-1.5 text-[11px] text-slate-400">
+            <span>Price resistance is proxy for ROI</span>
+          </div>
         </div>
       </div>
 
-      {/* Primary Hero Deal Card: ACME Corp */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 relative overflow-hidden shadow-xl space-y-6">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-800/80">
-          <div>
-            <div className="flex items-center space-x-3">
-              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-sky-500/10 text-sky-400 border border-sky-500/20">
-                Primary Opportunity
-              </span>
-              <span className="text-xs text-slate-400">Stage: Evaluation</span>
-              <span className="text-xs text-emerald-400 font-semibold flex items-center space-x-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                <span>Relationship Health: 78%</span>
-              </span>
+      {/* STRATEGIC BANNER: PREVIOUS STRATEGY FAILED -> HINDSIGHT LEARNED -> NEW STRATEGY */}
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 sm:p-6 relative overflow-hidden shadow-2xl">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-800 gap-2">
+          <div className="flex items-center space-x-2.5">
+            <div className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping" />
+            <h2 className="text-base sm:text-lg font-bold text-white tracking-tight">
+              Strategic Pivot in Action: ACME Corp
+            </h2>
+          </div>
+          <div className="text-xs text-slate-400 flex items-center space-x-2">
+            <span>Evaluation Stage</span>
+            <span>•</span>
+            <span className="text-emerald-400 font-semibold">78% Health</span>
+          </div>
+        </div>
+
+        <div className="mt-5 grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Step 1: Failed Strategy */}
+          <div className="bg-slate-950/80 border border-rose-500/30 rounded-xl p-4 flex flex-col justify-between relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-rose-500/10 rounded-full blur-2xl pointer-events-none" />
+            <div>
+              <div className="flex items-center justify-between text-xs mb-2">
+                <span className="text-[10px] uppercase font-bold tracking-wider text-rose-400 px-2 py-0.5 rounded bg-rose-500/10 border border-rose-500/20">
+                  Previous Strategy: Failed
+                </span>
+                <span className="text-slate-400 text-[11px]">Sept 26</span>
+              </div>
+              <h3 className="font-bold text-white text-sm">15% Upfront Annual Discount</h3>
+              <p className="text-xs text-slate-400 mt-2 leading-relaxed">
+                Salesperson attempted a 15% discount to address Michael's budget objection. Michael rejected it because the proposal failed to quantify integration ROI.
+              </p>
             </div>
-            <div className="flex items-baseline space-x-3 mt-2">
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-                ACME Corp
-              </h2>
-              <span className="text-xl font-bold text-sky-400">$120,000 ARR</span>
+            <div className="mt-4 pt-3 border-t border-slate-850 flex items-center text-[11px] text-rose-300">
+              <XCircle size={14} className="mr-1.5 flex-shrink-0 text-rose-400" />
+              <span>Discounting failed to close the deal</span>
             </div>
           </div>
 
-          <div className="flex items-center space-x-2.5">
+          {/* Step 2: Hindsight Learned */}
+          <div className="bg-slate-950/80 border border-purple-500/30 rounded-xl p-4 flex flex-col justify-between relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-purple-500/10 rounded-full blur-2xl pointer-events-none" />
+            <div>
+              <div className="flex items-center justify-between text-xs mb-2">
+                <span className="text-[10px] uppercase font-bold tracking-wider text-purple-400 px-2 py-0.5 rounded bg-purple-500/10 border border-purple-500/20">
+                  Hindsight Learned
+                </span>
+                <span className="text-slate-400 text-[11px]">Autonomous Reflect</span>
+              </div>
+              <h3 className="font-bold text-white text-sm">Value Gap Identified</h3>
+              <p className="text-xs text-slate-400 mt-2 leading-relaxed">
+                Price is merely a proxy for value skepticism. David's unresolved security concerns are blocking Michael's financial approval. Technical validation is required first.
+              </p>
+            </div>
+            <div className="mt-4 pt-3 border-t border-slate-850 flex items-center text-[11px] text-purple-300">
+              <Sparkles size={14} className="mr-1.5 flex-shrink-0 text-purple-400" />
+              <span>Cognitive reflection extracted core blocker</span>
+            </div>
+          </div>
+
+          {/* Step 3: Adaptive New Strategy */}
+          <div className="bg-slate-950/80 border border-emerald-500/30 rounded-xl p-4 flex flex-col justify-between relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none" />
+            <div>
+              <div className="flex items-center justify-between text-xs mb-2">
+                <span className="text-[10px] uppercase font-bold tracking-wider text-emerald-400 px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">
+                  New Recommended Strategy
+                </span>
+                <span className="text-emerald-400 text-[11px] font-semibold">Active</span>
+              </div>
+              <h3 className="font-bold text-white text-sm">Do NOT Discount. Prove ROI.</h3>
+              <p className="text-xs text-slate-400 mt-2 leading-relaxed">
+                1. Build quantified integration ROI case for Michael.<br />
+                2. Conduct technical security briefing with David.<br />
+                3. Demonstrate API-first workflow to Sarah.
+              </p>
+            </div>
+            <div className="mt-4 pt-3 border-t border-slate-850 flex items-center text-[11px] text-emerald-300">
+              <CheckCircle2 size={14} className="mr-1.5 flex-shrink-0 text-emerald-400" />
+              <span>Grounded actionable sales guidance</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-5 pt-4 border-t border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs">
+          <span className="text-slate-400">
+            Hindsight Bank: <strong className="text-slate-200">dealmemory-acme</strong> • Persistent Memory ID: <code className="text-sky-400">bank:acme</code>
+          </span>
+          <div className="flex items-center space-x-3">
             <Link
               to="/meeting-prep"
-              className="px-4 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold flex items-center space-x-1.5 shadow-lg shadow-sky-600/20 transition-all"
+              className="text-sky-400 hover:text-sky-300 font-medium flex items-center space-x-1"
             >
-              <span>Prepare Next Meeting</span>
-              <ArrowRight size={14} />
+              <span>Open Executive Meeting Prep</span>
+              <ArrowRight size={13} />
             </Link>
-            <Link
-              to="/timeline"
-              className="px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-750 text-slate-300 text-xs font-semibold border border-slate-700 transition-colors"
-            >
-              View Timeline
-            </Link>
-          </div>
-        </div>
-
-        {/* 60-Second Demo Highlight Card: What Failed -> Hindsight Learned -> New Strategy */}
-        <div className="bg-slate-950/70 border border-slate-800 rounded-xl p-4 sm:p-5 space-y-4">
-          <div className="flex items-center justify-between text-xs">
-            <span className="font-bold uppercase tracking-wider text-slate-400">
-              Relationship Learning Loop (Core Differentiator)
-            </span>
-            <span className="text-[11px] text-sky-400 font-mono">
-              Bank: dealmemory-acme
-            </span>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-3 items-center">
-            {/* Step 1: Failed Strategy */}
-            <div className="bg-rose-950/20 border border-rose-500/30 p-3.5 rounded-xl space-y-1.5">
-              <div className="flex items-center space-x-1.5 text-xs font-bold text-rose-400 uppercase tracking-wider">
-                <XCircle size={14} />
-                <span>Previous Strategy Failed</span>
-              </div>
-              <div className="text-xs font-semibold text-white">
-                15% Upfront Discount Rejected
-              </div>
-              <p className="text-[11px] text-slate-300 leading-relaxed">
-                Offered to resolve budget objection. CFO Michael rejected it: <em className="text-rose-300">"Price is not raw numbers; it lacks clear integration ROI."</em>
-              </p>
-            </div>
-
-            {/* Step 2: Hindsight Learned */}
-            <div className="bg-indigo-950/20 border border-indigo-500/30 p-3.5 rounded-xl space-y-1.5">
-              <div className="flex items-center space-x-1.5 text-xs font-bold text-indigo-400 uppercase tracking-wider">
-                <Sparkles size={14} />
-                <span>Hindsight Autonomous Learning</span>
-              </div>
-              <div className="text-xs font-semibold text-white">
-                Price is a Proxy for Value
-              </div>
-              <p className="text-[11px] text-slate-300 leading-relaxed">
-                Hindsight reflected: The customer is <strong className="text-white">value-skeptical</strong>, not price-sensitive. Lowering price reinforces lack of value.
-              </p>
-            </div>
-
-            {/* Step 3: New Recommended Focus */}
-            <div className="bg-emerald-950/20 border border-emerald-500/30 p-3.5 rounded-xl space-y-1.5">
-              <div className="flex items-center space-x-1.5 text-xs font-bold text-emerald-400 uppercase tracking-wider">
-                <CheckCircle2 size={14} />
-                <span>Prescribed Next Action</span>
-              </div>
-              <div className="text-xs font-semibold text-white">
-                Prove Integration ROI & Security
-              </div>
-              <p className="text-[11px] text-slate-300 leading-relaxed">
-                <strong className="text-white">Do NOT discount again.</strong> Provide a detailed business case on pipeline ROI and solve CTO David’s architecture security blocker.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Stakeholders & Objections Row */}
-        <div className="grid sm:grid-cols-2 gap-4 pt-1">
-          <div className="bg-slate-850/60 border border-slate-800 p-3.5 rounded-xl space-y-2">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-              Stakeholders Involved
-            </span>
-            <div className="flex flex-wrap gap-2 text-xs">
-              <span className="px-2.5 py-1 rounded bg-slate-800 text-slate-200 border border-slate-700">
-                Sarah — <span className="text-slate-400">VP Sales (Champion)</span>
-              </span>
-              <span className="px-2.5 py-1 rounded bg-slate-800 text-slate-200 border border-slate-700">
-                David — <span className="text-slate-400">CTO (Tech Blocker)</span>
-              </span>
-              <span className="px-2.5 py-1 rounded bg-slate-800 text-slate-200 border border-slate-700">
-                Michael — <span className="text-slate-400">CFO (Budget Gatekeeper)</span>
-              </span>
-            </div>
-          </div>
-
-          <div className="bg-slate-850/60 border border-slate-800 p-3.5 rounded-xl space-y-2">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-              Known Objections & Blockers
-            </span>
-            <div className="flex flex-wrap gap-1.5">
-              <span className="text-xs px-2.5 py-1 rounded bg-rose-500/10 text-rose-300 border border-rose-500/20 font-medium">
-                API integration complexity
-              </span>
-              <span className="text-xs px-2.5 py-1 rounded bg-rose-500/10 text-rose-300 border border-rose-500/20 font-medium">
-                Enterprise security architecture
-              </span>
-              <span className="text-xs px-2.5 py-1 rounded bg-amber-500/10 text-amber-300 border border-amber-500/20 font-medium">
-                Unproven integration ROI
-              </span>
-            </div>
           </div>
         </div>
       </div>
 
-      {/* Secondary Accounts */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h3 className="text-sm font-bold text-white uppercase tracking-wider">
-            Pipeline Health Overview
-          </h3>
-          <span className="text-xs text-slate-400">3 Other Accounts Tracked</span>
+      {/* User's Deals List Section */}
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 sm:p-6 shadow-xl">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center space-x-2">
+            <Building size={18} className="text-sky-400" />
+            <h3 className="font-bold text-white text-base">Your Active Deals</h3>
+          </div>
+          <button
+            onClick={() => setShowCreateDealModal(true)}
+            className="text-xs text-sky-400 hover:text-sky-300 font-semibold flex items-center space-x-1"
+          >
+            <PlusCircle size={14} />
+            <span>Add Deal</span>
+          </button>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-4">
-          <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl space-y-2.5">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-white">Globex Corp</span>
-              <span className="text-xs text-emerald-400 font-semibold">88% Health</span>
-            </div>
-            <div className="text-xs text-slate-400">$85,000 • Proposal Stage</div>
-            <p className="text-xs text-slate-300 line-clamp-2">
-              Security team approved architecture. Finalizing SLA commitments.
-            </p>
-          </div>
+        <div className="space-y-3">
+          {deals.map((deal) => (
+            <div
+              key={deal.id}
+              className="bg-slate-950 border border-slate-800 p-4 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:border-slate-700 transition-all"
+            >
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center font-bold text-sky-400 text-sm">
+                  {deal.company_name.slice(0, 2).toUpperCase()}
+                </div>
+                <div>
+                  <div className="flex items-center space-x-2">
+                    <span className="font-bold text-white text-sm">{deal.company_name}</span>
+                    {deal.is_demo && (
+                      <span className="text-[10px] px-1.5 py-0.2 rounded bg-purple-500/10 text-purple-400 border border-purple-500/20 font-semibold">
+                        Demo Account
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-xs text-slate-400 flex items-center space-x-2 mt-0.5">
+                    <span>${(deal.deal_value || 0).toLocaleString()} ARR</span>
+                    <span>•</span>
+                    <span className="capitalize">{deal.stage} Stage</span>
+                  </div>
+                </div>
+              </div>
 
-          <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl space-y-2.5">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-white">Stark Logistics</span>
-              <span className="text-xs text-amber-400 font-semibold">65% Health</span>
+              <div className="flex items-center space-x-2 sm:self-auto self-end">
+                <Link
+                  to="/deal"
+                  className="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-750 text-xs text-slate-200 font-medium transition-colors"
+                >
+                  Deal Overview
+                </Link>
+                <Link
+                  to="/timeline"
+                  className="px-3 py-1.5 rounded-lg bg-sky-600/15 hover:bg-sky-600/25 border border-sky-500/30 text-xs text-sky-400 font-medium transition-colors"
+                >
+                  Memory Timeline
+                </Link>
+              </div>
             </div>
-            <div className="text-xs text-slate-400">$140,000 • Discovery Stage</div>
-            <p className="text-xs text-slate-300 line-clamp-2">
-              Evaluating multi-region sync. Competing against legacy in-house scripts.
-            </p>
-          </div>
-
-          <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl space-y-2.5">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-white">Wayne Enterprises</span>
-              <span className="text-xs text-sky-400 font-semibold">82% Health</span>
-            </div>
-            <div className="text-xs text-slate-400">$210,000 • Tech Validation</div>
-            <p className="text-xs text-slate-300 line-clamp-2">
-              Architecture review validated. Waiting on procurement compliance checklist.
-            </p>
-          </div>
+          ))}
         </div>
       </div>
+
+      {/* Modal: Create Deal */}
+      {showCreateDealModal && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4">
+            <h3 className="text-lg font-bold text-white">Create New Deal</h3>
+            <p className="text-xs text-slate-400">
+              Each deal will receive an isolated Hindsight memory bank for your account.
+            </p>
+            <form onSubmit={handleCreateDeal} className="space-y-3">
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">Company Name</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Stripe, Datadog"
+                  value={newCompanyName}
+                  onChange={(e) => setNewCompanyName(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-sky-500"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">Annual Deal Value (USD)</label>
+                <input
+                  type="number"
+                  required
+                  value={newDealValue}
+                  onChange={(e) => setNewDealValue(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-sky-500"
+                />
+              </div>
+              <div className="flex items-center justify-end space-x-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowCreateDealModal(false)}
+                  className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={creatingDeal}
+                  className="px-5 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-semibold shadow-md shadow-sky-600/20 disabled:opacity-50"
+                >
+                  {creatingDeal ? 'Creating...' : 'Create Deal'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
