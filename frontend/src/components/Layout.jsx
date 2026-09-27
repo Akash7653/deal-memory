@@ -73,14 +73,15 @@ export default function Layout() {
   const userInitials = getInitials(user?.name);
 
   return (
-    <div className="min-h-screen bg-slate-950 dark:bg-slate-950 text-slate-100 dark:text-slate-100 flex flex-col transition-colors duration-150">
-      {/* Top Header */}
-      <header className="h-16 border-b border-slate-800 dark:border-slate-800 bg-slate-900/90 dark:bg-slate-900/90 backdrop-blur sticky top-0 z-40 px-4 sm:px-6 flex items-center justify-between">
-        <div className="flex items-center space-x-3">
-          <NavLink to="/dashboard" className="flex items-center space-x-2.5">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-sky-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-sky-600/20 text-white font-black text-lg">
-              <Database size={19} className="text-white" />
-            </div>
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col transition-colors duration-150">
+      {/* Top Header Floating Island with top margin */}
+      <div className="pt-2.5 sm:pt-4 px-3 sm:px-6 pb-2 sticky top-0 z-40 bg-slate-950/80 backdrop-blur-md">
+        <header className="h-16 border border-slate-800 bg-slate-900/95 backdrop-blur-xl rounded-2xl px-4 sm:px-6 flex items-center justify-between shadow-xl shadow-black/10">
+          <div className="flex items-center space-x-3">
+            <NavLink to="/dashboard" className="flex items-center space-x-2.5">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-sky-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-sky-600/20 text-white font-black text-lg">
+                <Database size={19} className="text-white" />
+              </div>
             <div>
               <div className="flex items-center space-x-2">
                 <span className="font-bold text-lg tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-300 bg-clip-text text-transparent">
@@ -198,7 +199,8 @@ export default function Layout() {
             )}
           </div>
         </div>
-      </header>
+        </header>
+      </div>
 
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar for Desktop */}

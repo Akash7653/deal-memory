@@ -37,10 +37,11 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
-      {/* Navigation Bar */}
-      <header className="h-18 border-b border-slate-800/80 bg-slate-950/80 backdrop-blur sticky top-0 z-50 px-6 sm:px-12 flex items-center justify-between">
-        <NavLink to="/" className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-sky-600/30 text-white font-black text-xl">
+      {/* Navigation Bar Floating Island with top margin */}
+      <div className="pt-3 sm:pt-4 px-4 sm:px-8 sticky top-0 z-50 bg-slate-950/80 backdrop-blur-md">
+        <header className="h-16 max-w-7xl mx-auto border border-slate-800 bg-slate-900/95 backdrop-blur-xl rounded-2xl px-5 sm:px-8 flex items-center justify-between shadow-xl shadow-black/10">
+          <NavLink to="/" className="flex items-center space-x-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-sky-600/30 text-white font-black text-xl">
             <Database size={22} className="text-white" />
           </div>
           <div>
@@ -99,7 +100,8 @@ export default function LandingPage() {
             </>
           )}
         </div>
-      </header>
+        </header>
+      </div>
 
       {/* Hero Section */}
       <section className="relative px-6 sm:px-12 pt-16 pb-24 overflow-hidden max-w-7xl mx-auto flex flex-col items-center text-center">
