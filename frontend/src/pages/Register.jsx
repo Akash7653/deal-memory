@@ -1,18 +1,35 @@
 import React, { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Database, ArrowRight, ShieldCheck, AlertCircle, CheckCircle2, Lock, Mail, User, Building } from 'lucide-react';
+import {
+  Database,
+  ArrowRight,
+  Home,
+  ShieldCheck,
+  AlertCircle,
+  CheckCircle2,
+  Lock,
+  Mail,
+  User,
+  Building,
+  Eye,
+  EyeOff,
+  Sun,
+  Moon,
+} from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 
 export default function Register() {
   const { register } = useAuth();
-  const { theme } = useTheme();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
 
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [company, setCompany] = useState('');
 
   const [loading, setLoading] = useState(false);
@@ -62,14 +79,34 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-center items-center px-4 sm:px-6 py-12 relative overflow-hidden">
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between items-center px-4 sm:px-6 py-6 sm:py-10 relative overflow-hidden transition-colors duration-150">
       {/* Background glow */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-sky-500/10 rounded-full blur-3xl pointer-events-none" />
 
-      <div className="w-full max-w-md">
+      {/* Top Utility Nav: Back to Home + Theme Toggle */}
+      <div className="w-full max-w-md flex items-center justify-between z-10 mb-4">
+        <NavLink
+          to="/"
+          className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-slate-900/80 hover:bg-slate-850 border border-slate-800 text-xs font-medium text-slate-300 hover:text-white transition-all shadow-sm"
+        >
+          <Home size={14} className="text-sky-400" />
+          <span>Home</span>
+        </NavLink>
+
+        <button
+          onClick={toggleTheme}
+          type="button"
+          className="p-2 rounded-xl bg-slate-900/80 hover:bg-slate-850 border border-slate-800 text-slate-300 hover:text-white transition-colors cursor-pointer"
+          title="Toggle theme"
+        >
+          {theme === 'dark' ? <Sun size={16} className="text-amber-400" /> : <Moon size={16} className="text-sky-400" />}
+        </button>
+      </div>
+
+      <div className="w-full max-w-md my-auto animate-fade-in z-10">
         {/* Header Logo */}
-        <div className="text-center mb-8">
-          <NavLink to="/" className="inline-flex items-center space-x-2.5 mb-3">
+        <div className="text-center mb-6">
+          <NavLink to="/" className="inline-flex items-center space-x-2.5 mb-2">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-sky-600/30 text-white font-black text-xl">
               <Database size={22} className="text-white" />
             </div>
@@ -86,14 +123,14 @@ export default function Register() {
         {/* Form Card */}
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-2xl backdrop-blur relative">
           {error && (
-            <div className="mb-5 p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center space-x-2.5">
+            <div className="mb-5 p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center space-x-2.5 animate-fade-in">
               <AlertCircle size={16} className="text-rose-400 flex-shrink-0" />
               <span>{error}</span>
             </div>
           )}
 
           {success && (
-            <div className="mb-5 p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs flex items-center space-x-2.5">
+            <div className="mb-5 p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs flex items-center space-x-2.5 animate-fade-in">
               <CheckCircle2 size={16} className="text-emerald-400 flex-shrink-0" />
               <span>Account created! Initializing personal workspace...</span>
             </div>
@@ -112,7 +149,7 @@ export default function Register() {
                   placeholder="Alex Carter"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-3.5 py-2.5 text-sm text-white placeholder-slate-400 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-3.5 py-2.5 text-sm text-white placeholder-slate-400 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition-all"
                 />
               </div>
             </div>
@@ -129,7 +166,7 @@ export default function Register() {
                   placeholder="alex@enterprise.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-3.5 py-2.5 text-sm text-white placeholder-slate-400 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-3.5 py-2.5 text-sm text-white placeholder-slate-400 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition-all"
                 />
               </div>
             </div>
@@ -145,7 +182,7 @@ export default function Register() {
                   placeholder="Acme Technologies"
                   value={company}
                   onChange={(e) => setCompany(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-3.5 py-2.5 text-sm text-white placeholder-slate-400 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-3.5 py-2.5 text-sm text-white placeholder-slate-400 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition-all"
                 />
               </div>
             </div>
@@ -157,13 +194,21 @@ export default function Register() {
               <div className="relative">
                 <Lock size={16} className="absolute left-3.5 top-3 text-slate-400" />
                 <input
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   required
                   placeholder="At least 6 characters"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-3.5 py-2.5 text-sm text-white placeholder-slate-400 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-10 py-2.5 text-sm text-white placeholder-slate-400 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition-all"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-200 cursor-pointer p-0.5"
+                  title={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
               </div>
             </div>
 
@@ -174,20 +219,28 @@ export default function Register() {
               <div className="relative">
                 <Lock size={16} className="absolute left-3.5 top-3 text-slate-400" />
                 <input
-                  type="password"
+                  type={showConfirmPassword ? 'text' : 'password'}
                   required
                   placeholder="Confirm your password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-3.5 py-2.5 text-sm text-white placeholder-slate-400 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-10 py-2.5 text-sm text-white placeholder-slate-400 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition-all"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-200 cursor-pointer p-0.5"
+                  title={showConfirmPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
               </div>
             </div>
 
             <button
               type="submit"
               disabled={loading || success}
-              className="w-full mt-2 py-3 px-4 rounded-xl bg-gradient-to-r from-sky-600 to-indigo-600 hover:from-sky-500 hover:to-indigo-500 text-white font-bold text-sm shadow-lg shadow-sky-600/25 transition-all flex items-center justify-center space-x-2 disabled:opacity-50"
+              className="w-full mt-2 py-3 px-4 rounded-xl bg-gradient-to-r from-sky-600 to-indigo-600 hover:from-sky-500 hover:to-indigo-500 text-white font-bold text-sm shadow-lg shadow-sky-600/25 transition-all flex items-center justify-center space-x-2 disabled:opacity-50 cursor-pointer"
             >
               {loading ? (
                 <>
@@ -211,10 +264,15 @@ export default function Register() {
           </div>
         </div>
 
-        <div className="mt-8 text-center text-[11px] text-slate-400 flex items-center justify-center space-x-1.5">
+        <div className="mt-6 text-center text-[11px] text-slate-400 flex items-center justify-center space-x-1.5">
           <ShieldCheck size={14} className="text-emerald-400" />
           <span>Every account receives isolated Hindsight memory banks</span>
         </div>
+      </div>
+
+      {/* Footer copyright */}
+      <div className="text-[11px] text-slate-400 text-center z-10 pt-4">
+        DealMemory • Powered by Hindsight by Vectorize
       </div>
     </div>
   );

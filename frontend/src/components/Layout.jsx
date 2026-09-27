@@ -27,13 +27,45 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 
 export default function Layout() {
-  const { user, logout } = useAuth();
+  const { user, logout, updateProfile } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [hindsightStatus, setHindsightStatus] = useState('checking');
   const [mobileMoreOpen, setMobileMoreOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  const [profileModalOpen, setProfileModalOpen] = useState(false);
+  const [profileName, setProfileName] = useState(user?.name || '');
+  const [profileCompany, setProfileCompany] = useState(user?.company || '');
+  const [profileRole, setProfileRole] = useState(user?.role || '');
+  const [savingProfile, setSavingProfile] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+
+  const openEditProfile = () => {
+    setProfileName(user?.name || '');
+    setProfileCompany(user?.company || '');
+    setProfileRole(user?.role || 'Enterprise AE');
+    setProfileModalOpen(true);
+    setUserDropdownOpen(false);
+    setMobileMoreOpen(false);
+  };
+
+  const handleSaveProfile = async (e) => {
+    e.preventDefault();
+    if (!profileName.trim()) return;
+    setSavingProfile(true);
+    try {
+      await updateProfile({
+        name: profileName.trim(),
+        company: profileCompany.trim(),
+        role: profileRole.trim(),
+      });
+      setProfileModalOpen(false);
+    } catch (err) {
+      alert(err.message || 'Failed to update profile');
+    } finally {
+      setSavingProfile(false);
+    }
+  };
 
   useEffect(() => {
     fetchHealth()
@@ -161,6 +193,13 @@ export default function Layout() {
                   <div className="text-[10px] text-sky-400 mt-0.5">{user?.company || 'Personal Workspace'}</div>
                 </div>
                 <div className="py-1">
+                  <button
+                    onClick={openEditProfile}
+                    className="w-full flex items-center space-x-2 px-4 py-2 text-slate-300 hover:bg-slate-800 hover:text-white cursor-pointer"
+                  >
+                    <User size={14} className="text-sky-400" />
+                    <span>Edit Profile</span>
+                  </button>
                   <button
                     onClick={() => {
                       toggleTheme();
@@ -415,6 +454,16 @@ export default function Layout() {
                 </div>
                 <ChevronRight size={16} className="text-slate-400" />
               </NavLink>
+              <button
+                onClick={openEditProfile}
+                className="w-full flex items-center justify-between p-3 rounded-xl bg-slate-850 hover:bg-slate-800 text-sm text-slate-200 font-medium transition-colors cursor-pointer"
+              >
+                <div className="flex items-center space-x-3">
+                  <User size={18} className="text-sky-400" />
+                  <span>Edit Profile</span>
+                </div>
+                <ChevronRight size={16} className="text-slate-400" />
+              </button>
             </div>
 
             {/* Quick Actions: Theme & Sign Out */}
@@ -423,7 +472,7 @@ export default function Layout() {
                 onClick={() => {
                   toggleTheme();
                 }}
-                className="w-full flex items-center justify-between p-3 rounded-xl bg-slate-800/80 text-sm text-slate-200"
+                className="w-full flex items-center justify-between p-3 rounded-xl bg-slate-800/80 text-sm text-slate-200 cursor-pointer"
               >
                 <span className="flex items-center space-x-2.5">
                   {theme === 'dark' ? <Sun size={17} className="text-amber-400" /> : <Moon size={17} className="text-sky-400" />}
@@ -439,12 +488,102 @@ export default function Layout() {
                   setMobileMoreOpen(false);
                   handleLogout();
                 }}
-                className="w-full flex items-center justify-center space-x-2 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 font-medium text-sm hover:bg-rose-500/20 transition-colors"
+                className="w-full flex items-center justify-center space-x-2 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 font-medium text-sm hover:bg-rose-500/20 transition-colors cursor-pointer"
               >
                 <LogOut size={16} />
                 <span>Sign Out</span>
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* EDIT USER PROFILE MODAL                                                   */}
+      {/* ========================================================================= */}
+      {profileModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+              <div className="flex items-center space-x-2.5">
+                <div className="w-8 h-8 rounded-lg bg-sky-500/10 text-sky-400 border border-sky-500/20 flex items-center justify-center">
+                  <User size={16} />
+                </div>
+                <h3 className="text-base font-bold text-white">Edit Your Profile</h3>
+              </div>
+              <button
+                onClick={() => setProfileModalOpen(false)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveProfile} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                  Full Name
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={profileName}
+                  onChange={(e) => setProfileName(e.target.value)}
+                  placeholder="e.g. Akash Koravena"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-sky-500 transition-colors"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                  Company / Organization
+                </label>
+                <input
+                  type="text"
+                  value={profileCompany}
+                  onChange={(e) => setProfileCompany(e.target.value)}
+                  placeholder="e.g. Enterprise CRM Corp"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-sky-500 transition-colors"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                  Role / Title
+                </label>
+                <input
+                  type="text"
+                  value={profileRole}
+                  onChange={(e) => setProfileRole(e.target.value)}
+                  placeholder="e.g. Enterprise AE, VP Sales"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-sky-500 transition-colors"
+                />
+              </div>
+
+              <div className="flex items-center justify-end space-x-2.5 pt-3 border-t border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setProfileModalOpen(false)}
+                  className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingProfile}
+                  className="px-5 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-semibold shadow-md shadow-sky-600/20 disabled:opacity-50 cursor-pointer flex items-center space-x-1.5"
+                >
+                  {savingProfile ? (
+                    <>
+                      <div className="w-3.5 h-3.5 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                      <span>Saving...</span>
+                    </>
+                  ) : (
+                    <span>Save Changes</span>
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

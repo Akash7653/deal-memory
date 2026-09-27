@@ -56,6 +56,19 @@ export async function fetchMe() {
   return res.json();
 }
 
+export async function updateUserProfile(profileData) {
+  const res = await fetch(`${API_BASE}/auth/profile`, {
+    method: 'PATCH',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(profileData),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data.detail || 'Failed to update profile');
+  }
+  return data;
+}
+
 export async function logoutUser() {
   const token = localStorage.getItem('dealmemory_token');
   if (token) {

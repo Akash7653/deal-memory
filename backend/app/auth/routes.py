@@ -162,9 +162,52 @@ async def get_me(current_user: dict = Depends(get_current_user)):
     }
 
 
-@router.post("/logout")
-async def logout():
+class ProfileUpdateRequest(BaseModel):
+    name: Optional[str] = Field(None, min_length=2, description="Updated name")
+    company: Optional[str] = Field(None, description="Updated company")
+    role: Optional[str] = Field(None, description="Updated sales role")
+
+
+@router.patch("/profile")
+async def update_profile(req: ProfileUpdateRequest, current_user: dict = Depends(get_current_user)):
+    user_id = current_user["id"]
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    updates = []
+    params = []
+
+    if req.name is not None and req.name.strip():
+        updates.append("name = ?")
+        params.append(req.name.strip())
+
+    if req.company is not None:
+        updates.append("company = ?")
+        params.append(req.company.strip())
+
+    if req.role is not None and req.role.strip():
+        updates.append("role = ?")
+        params.append(req.role.strip())
+
+    if updates:
+        params.append(user_id)
+        query = f"UPDATE users SET {', '.join(updates)} WHERE id = ?"
+        cursor.execute(query, tuple(params))
+        conn.commit()
+
+    cursor.execute("SELECT id, name, email, company, role, created_at FROM users WHERE id = ?", (user_id,))
+    updated_user = cursor.fetchone()
+    conn.close()
+
     return {
         "status": "success",
-        "message": "Session invalidated successfully.",
+        "message": "Profile updated successfully.",
+        "user": {
+            "id": updated_user["id"],
+            "name": updated_user["name"],
+            "email": updated_user["email"],
+            "company": updated_user["company"] or "",
+            "role": updated_user["role"] or "Enterprise AE",
+            "created_at": updated_user["created_at"],
+        },
     }

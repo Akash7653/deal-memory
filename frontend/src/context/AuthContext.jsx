@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { fetchMe, loginUser, registerUser, logoutUser } from '../api';
+import { fetchMe, loginUser, registerUser, logoutUser, updateUserProfile } from '../api';
 
 const AuthContext = createContext();
 
@@ -61,6 +61,15 @@ export function AuthProvider({ children }) {
     return login('demo@dealmemory.ai', 'demopassword123');
   };
 
+  const updateProfile = async (profileData) => {
+    const res = await updateUserProfile(profileData);
+    if (res && res.user) {
+      setUser(res.user);
+      return res.user;
+    }
+    throw new Error('Failed to update profile');
+  };
+
   const logout = async () => {
     try {
       await logoutUser();
@@ -83,6 +92,7 @@ export function AuthProvider({ children }) {
         login,
         register,
         demoLogin,
+        updateProfile,
         logout,
       }}
     >

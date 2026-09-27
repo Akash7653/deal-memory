@@ -62,18 +62,30 @@ html.light .text-slate-100 {
   color: #0f172a !important;
 }
 
-/* Keep white text on solid/gradient colored badges & buttons */
-html:not(.dark) .bg-sky-600,
-html:not(.dark) .bg-sky-500,
-html:not(.dark) .bg-indigo-600,
-html:not(.dark) .bg-emerald-600,
-html:not(.dark) .bg-rose-600,
-html:not(.dark) [class*="from-sky-600"],
-html:not(.dark) [class*="bg-gradient-to"] {
+/* Text gradients in light mode: rich high-contrast slate-to-indigo gradient */
+html:not(.dark) .bg-clip-text,
+html.light .bg-clip-text {
+  background-image: linear-gradient(135deg, #0f172a 0%, #0284c7 50%, #4338ca 100%) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  color: transparent !important;
+}
+
+/* Ensure solid CTA buttons keep white text */
+html:not(.dark) button.bg-sky-600,
+html:not(.dark) a.bg-sky-600,
+html:not(.dark) button.bg-gradient-to-r,
+html:not(.dark) a.bg-gradient-to-r,
+html.light button.bg-sky-600,
+html.light a.bg-sky-600,
+html.light button.bg-gradient-to-r,
+html.light a.bg-gradient-to-r {
   color: #ffffff !important;
 }
-html:not(.dark) [class*="from-sky-600"] *,
-html:not(.dark) [class*="bg-gradient-to"] * {
+html:not(.dark) button.bg-gradient-to-r *,
+html:not(.dark) a.bg-gradient-to-r *,
+html.light button.bg-gradient-to-r *,
+html.light a.bg-gradient-to-r * {
   color: #ffffff !important;
 }
 
@@ -136,4 +148,24 @@ html.light ::-webkit-scrollbar-thumb {
 html:not(.dark) ::-webkit-scrollbar-thumb:hover,
 html.light ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
+}
+
+/* Micro-animations and transition polish */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.transition-all-smooth {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
