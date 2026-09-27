@@ -247,14 +247,14 @@ export default function Layout() {
             )}
           </div>
 
-          {/* Direct Top Nav Sign Out Button */}
+          {/* Direct Top Nav Sign Out Button (Desktop only, mobile has bottom nav logout) */}
           <button
             onClick={handleLogout}
             title="Sign Out"
-            className="flex items-center justify-center p-2 sm:px-3 sm:py-2 rounded-xl border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-xs font-semibold transition-all cursor-pointer shadow-sm active:scale-95 flex-shrink-0"
+            className="hidden sm:flex items-center space-x-1.5 px-3 py-2 rounded-xl border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-xs font-semibold transition-all cursor-pointer shadow-sm active:scale-95 whitespace-nowrap"
           >
-            <LogOut size={16} />
-            <span className="hidden sm:inline sm:ml-1.5">Sign Out</span>
+            <LogOut size={15} />
+            <span>Sign Out</span>
           </button>
         </div>
         </header>
@@ -342,19 +342,19 @@ export default function Layout() {
       </div>
 
       {/* ========================================================================= */}
-      {/* FIXED MOBILE BOTTOM NAVIGATION BAR (Home, Deal, Memory, AI, More)         */}
+      {/* FIXED MOBILE BOTTOM NAVIGATION BAR (Home, Deal, Memory, AI, More, Logout) */}
       {/* ========================================================================= */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-900/95 border-t border-slate-800 backdrop-blur-lg px-2 py-1.5 flex items-center justify-around shadow-2xl safe-area-bottom">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-900/95 border-t border-slate-800 backdrop-blur-lg px-1.5 py-1.5 flex items-center justify-around shadow-2xl safe-area-bottom">
         <NavLink
           to="/dashboard"
           onClick={handleNavScrollToTop}
           className={({ isActive }) =>
-            `flex flex-col items-center justify-center py-1 px-3 rounded-lg text-[10px] font-medium transition-colors ${
+            `flex flex-col items-center justify-center py-1 px-1.5 rounded-lg text-[10px] font-medium transition-colors ${
               isActive ? 'text-sky-400 font-semibold' : 'text-slate-400 hover:text-slate-200'
             }`
           }
         >
-          <LayoutDashboard size={20} className="mb-0.5" />
+          <LayoutDashboard size={19} className="mb-0.5" />
           <span>Home</span>
         </NavLink>
 
@@ -362,12 +362,12 @@ export default function Layout() {
           to="/deal"
           onClick={handleNavScrollToTop}
           className={({ isActive }) =>
-            `flex flex-col items-center justify-center py-1 px-3 rounded-lg text-[10px] font-medium transition-colors ${
+            `flex flex-col items-center justify-center py-1 px-1.5 rounded-lg text-[10px] font-medium transition-colors ${
               isActive ? 'text-sky-400 font-semibold' : 'text-slate-400 hover:text-slate-200'
             }`
           }
         >
-          <Building2 size={20} className="mb-0.5" />
+          <Building2 size={19} className="mb-0.5" />
           <span>Deal</span>
         </NavLink>
 
@@ -375,12 +375,12 @@ export default function Layout() {
           to="/timeline"
           onClick={handleNavScrollToTop}
           className={({ isActive }) =>
-            `flex flex-col items-center justify-center py-1 px-3 rounded-lg text-[10px] font-medium transition-colors ${
+            `flex flex-col items-center justify-center py-1 px-1.5 rounded-lg text-[10px] font-medium transition-colors ${
               isActive ? 'text-sky-400 font-semibold' : 'text-slate-400 hover:text-slate-200'
             }`
           }
         >
-          <GitBranch size={20} className="mb-0.5" />
+          <GitBranch size={19} className="mb-0.5" />
           <span>Memory</span>
         </NavLink>
 
@@ -388,23 +388,32 @@ export default function Layout() {
           to="/agent"
           onClick={handleNavScrollToTop}
           className={({ isActive }) =>
-            `flex flex-col items-center justify-center py-1 px-3 rounded-lg text-[10px] font-medium transition-colors ${
+            `flex flex-col items-center justify-center py-1 px-1.5 rounded-lg text-[10px] font-medium transition-colors ${
               isActive ? 'text-sky-400 font-semibold' : 'text-slate-400 hover:text-slate-200'
             }`
           }
         >
-          <Bot size={20} className="mb-0.5" />
+          <Bot size={19} className="mb-0.5" />
           <span>AI</span>
         </NavLink>
 
         <button
           onClick={() => setMobileMoreOpen(true)}
-          className={`flex flex-col items-center justify-center py-1 px-3 rounded-lg text-[10px] font-medium transition-colors ${
+          className={`flex flex-col items-center justify-center py-1 px-1.5 rounded-lg text-[10px] font-medium transition-colors ${
             mobileMoreOpen ? 'text-sky-400 font-semibold' : 'text-slate-400 hover:text-slate-200'
           }`}
         >
-          <MoreHorizontal size={20} className="mb-0.5" />
+          <MoreHorizontal size={19} className="mb-0.5" />
           <span>More</span>
+        </button>
+
+        <button
+          onClick={handleLogout}
+          title="Sign Out"
+          className="flex flex-col items-center justify-center py-1 px-1.5 rounded-lg text-[10px] font-medium text-rose-400 hover:text-rose-300 transition-colors cursor-pointer"
+        >
+          <LogOut size={19} className="mb-0.5 text-rose-400" />
+          <span>Logout</span>
         </button>
       </nav>
 
