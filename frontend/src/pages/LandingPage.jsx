@@ -27,24 +27,27 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 
 export default function LandingPage() {
-  const { isAuthenticated, demoLogin } = useAuth();
+  const { isAuthenticated } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
 
-  const handleDemoAccess = async () => {
-    try {
-      await demoLogin();
-      navigate('/dashboard');
-    } catch (err) {
-      console.error('Demo login error:', err);
-      navigate('/login');
-    }
-  };
-
   const scrollToSection = (id) => {
+    if (id === 'top') {
+      window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+      document.documentElement.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+      return;
+    }
     const el = document.getElementById(id);
     if (el) {
-      el.scrollIntoView({ behavior: 'smooth' });
+      const navOffset = 76;
+      const rect = el.getBoundingClientRect();
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      const targetY = rect.top + scrollTop - navOffset;
+      window.scrollTo({
+        top: Math.max(0, targetY),
+        left: 0,
+        behavior: 'smooth',
+      });
     }
   };
 
@@ -89,14 +92,6 @@ export default function LandingPage() {
               </NavLink>
             ) : (
               <>
-                <button
-                  onClick={handleDemoAccess}
-                  className="hidden md:inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl border border-sky-500/40 bg-sky-500/10 text-sky-400 hover:bg-sky-500/20 text-xs font-semibold transition-all cursor-pointer"
-                >
-                  <Sparkles size={13} />
-                  <span>Demo (ACME)</span>
-                </button>
-
                 <NavLink
                   to="/login"
                   className="hidden sm:inline-block text-slate-300 hover:text-white px-3 py-1.5 text-xs sm:text-sm font-medium transition-colors"
@@ -152,11 +147,11 @@ export default function LandingPage() {
           </NavLink>
 
           <button
-            onClick={handleDemoAccess}
+            onClick={() => scrollToSection('how-it-works')}
             className="w-full sm:w-auto flex items-center justify-center space-x-2 px-6 py-3.5 rounded-xl bg-slate-900 hover:bg-slate-850 border border-slate-800 text-slate-200 hover:text-white font-semibold text-sm sm:text-base transition-all cursor-pointer"
           >
-            <Sparkles size={17} className="text-sky-400" />
-            <span>Explore ACME Demo</span>
+            <Layers size={17} className="text-sky-400" />
+            <span>See How It Works</span>
           </button>
         </div>
 
@@ -196,7 +191,7 @@ export default function LandingPage() {
       </section>
 
       {/* How It Works Section */}
-      <section id="how-it-works" className="py-20 border-t border-slate-850 bg-slate-900/40 px-6 sm:px-12">
+      <section id="how-it-works" className="scroll-mt-20 sm:scroll-mt-24 py-16 sm:py-20 border-t border-slate-850 bg-slate-900/40 px-6 sm:px-12">
         <div className="max-w-6xl mx-auto">
           <div className="text-center max-w-2xl mx-auto mb-16">
             <span className="text-xs uppercase tracking-wider font-semibold text-sky-400 px-3 py-1 rounded-full bg-sky-500/10 border border-sky-500/20">
@@ -255,7 +250,7 @@ export default function LandingPage() {
       </section>
 
       {/* Comparison Table Section */}
-      <section id="comparison" className="py-20 px-6 sm:px-12 max-w-5xl mx-auto w-full">
+      <section id="comparison" className="scroll-mt-20 sm:scroll-mt-24 py-16 sm:py-20 px-6 sm:px-12 max-w-5xl mx-auto w-full">
         <div className="text-center max-w-2xl mx-auto mb-12">
           <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
             Why DealMemory?
@@ -332,7 +327,7 @@ export default function LandingPage() {
       </section>
 
       {/* Powered by Hindsight Section */}
-      <section id="hindsight" className="py-20 border-t border-slate-850 bg-gradient-to-b from-slate-900/40 to-slate-950 px-6 sm:px-12">
+      <section id="hindsight" className="scroll-mt-20 sm:scroll-mt-24 py-16 sm:py-20 border-t border-slate-850 bg-gradient-to-b from-slate-900/40 to-slate-950 px-6 sm:px-12">
         <div className="max-w-4xl mx-auto text-center">
           <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-xs text-purple-400 mb-6">
             <Sparkles size={14} />
@@ -433,18 +428,10 @@ export default function LandingPage() {
 
         <button
           onClick={() => scrollToSection('comparison')}
-          className="flex flex-col items-center justify-center py-1 px-2.5 text-[10px] font-medium text-slate-300 hover:text-sky-400 transition-colors"
+          className="flex flex-col items-center justify-center py-1 px-3 text-[10px] font-medium text-slate-300 hover:text-sky-400 transition-colors"
         >
           <HelpCircle size={18} className="mb-0.5 text-purple-400" />
           <span>Why DM</span>
-        </button>
-
-        <button
-          onClick={handleDemoAccess}
-          className="flex flex-col items-center justify-center py-1 px-2.5 text-[10px] font-medium text-amber-300 hover:text-amber-200 transition-colors"
-        >
-          <Sparkles size={18} className="mb-0.5 text-amber-400 animate-pulse" />
-          <span>Demo</span>
         </button>
 
         {isAuthenticated ? (

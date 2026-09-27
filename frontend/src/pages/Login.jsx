@@ -5,7 +5,6 @@ import {
   ArrowRight,
   ArrowLeft,
   Home,
-  Sparkles,
   AlertCircle,
   Mail,
   Lock,
@@ -19,7 +18,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 
 export default function Login() {
-  const { login, demoLogin } = useAuth();
+  const { login } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
@@ -47,19 +46,6 @@ export default function Login() {
       navigate(redirectTarget, { replace: true });
     } catch (err) {
       setError(err.message || 'Unable to sign in. Please check your email and password.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDemoSignIn = async () => {
-    setError(null);
-    setLoading(true);
-    try {
-      await demoLogin();
-      navigate(redirectTarget, { replace: true });
-    } catch (err) {
-      setError('Demo login failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -179,22 +165,6 @@ export default function Login() {
               )}
             </button>
           </form>
-
-          {/* Demo Account 1-Click Access for Hackathon Judges */}
-          <div className="mt-5 pt-5 border-t border-slate-800">
-            <button
-              type="button"
-              onClick={handleDemoSignIn}
-              disabled={loading}
-              className="w-full py-2.5 px-4 rounded-xl border border-sky-500/40 bg-sky-500/10 hover:bg-sky-500/20 text-sky-300 hover:text-white text-xs font-semibold transition-all flex items-center justify-center space-x-2 cursor-pointer"
-            >
-              <Sparkles size={14} className="text-sky-400" />
-              <span>One-Click Demo Access (ACME Corp $120K)</span>
-            </button>
-            <p className="text-[11px] text-slate-400 text-center mt-1.5">
-              Instant login with the complete ACME discount learning story.
-            </p>
-          </div>
 
           <div className="mt-6 text-center text-xs text-slate-400">
             Don't have an account?{' '}

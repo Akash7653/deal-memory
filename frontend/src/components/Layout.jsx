@@ -84,6 +84,15 @@ export default function Layout() {
     navigate('/');
   };
 
+  const handleNavScrollToTop = () => {
+    const mainEl = document.querySelector('main');
+    if (mainEl) {
+      mainEl.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      mainEl.scrollTop = 0;
+    }
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  };
+
   const navItems = [
     { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { to: '/deal', label: 'ACME Deal Overview', icon: Building2 },
@@ -237,6 +246,16 @@ export default function Layout() {
               </div>
             )}
           </div>
+
+          {/* Direct Top Nav Sign Out Button */}
+          <button
+            onClick={handleLogout}
+            title="Sign Out"
+            className="flex items-center space-x-1 sm:space-x-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-xs font-semibold transition-all cursor-pointer shadow-sm active:scale-95 whitespace-nowrap"
+          >
+            <LogOut size={14} className="sm:w-[15px] sm:h-[15px]" />
+            <span>Sign Out</span>
+          </button>
         </div>
         </header>
       </div>
@@ -328,6 +347,7 @@ export default function Layout() {
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-900/95 border-t border-slate-800 backdrop-blur-lg px-2 py-1.5 flex items-center justify-around shadow-2xl safe-area-bottom">
         <NavLink
           to="/dashboard"
+          onClick={handleNavScrollToTop}
           className={({ isActive }) =>
             `flex flex-col items-center justify-center py-1 px-3 rounded-lg text-[10px] font-medium transition-colors ${
               isActive ? 'text-sky-400 font-semibold' : 'text-slate-400 hover:text-slate-200'
@@ -340,6 +360,7 @@ export default function Layout() {
 
         <NavLink
           to="/deal"
+          onClick={handleNavScrollToTop}
           className={({ isActive }) =>
             `flex flex-col items-center justify-center py-1 px-3 rounded-lg text-[10px] font-medium transition-colors ${
               isActive ? 'text-sky-400 font-semibold' : 'text-slate-400 hover:text-slate-200'
@@ -352,6 +373,7 @@ export default function Layout() {
 
         <NavLink
           to="/timeline"
+          onClick={handleNavScrollToTop}
           className={({ isActive }) =>
             `flex flex-col items-center justify-center py-1 px-3 rounded-lg text-[10px] font-medium transition-colors ${
               isActive ? 'text-sky-400 font-semibold' : 'text-slate-400 hover:text-slate-200'
@@ -364,6 +386,7 @@ export default function Layout() {
 
         <NavLink
           to="/agent"
+          onClick={handleNavScrollToTop}
           className={({ isActive }) =>
             `flex flex-col items-center justify-center py-1 px-3 rounded-lg text-[10px] font-medium transition-colors ${
               isActive ? 'text-sky-400 font-semibold' : 'text-slate-400 hover:text-slate-200'
@@ -466,7 +489,7 @@ export default function Layout() {
               </button>
             </div>
 
-            {/* Quick Actions: Theme & Sign Out */}
+            {/* Quick Actions: Theme */}
             <div className="pt-2 border-t border-slate-800 space-y-2">
               <button
                 onClick={() => {
@@ -481,17 +504,6 @@ export default function Layout() {
                 <span className="capitalize text-xs font-semibold px-2 py-0.5 rounded bg-slate-700 text-slate-300">
                   {theme}
                 </span>
-              </button>
-
-              <button
-                onClick={() => {
-                  setMobileMoreOpen(false);
-                  handleLogout();
-                }}
-                className="w-full flex items-center justify-center space-x-2 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 font-medium text-sm hover:bg-rose-500/20 transition-colors cursor-pointer"
-              >
-                <LogOut size={16} />
-                <span>Sign Out</span>
               </button>
             </div>
           </div>

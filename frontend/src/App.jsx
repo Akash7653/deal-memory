@@ -19,11 +19,14 @@ import AiAgent from './pages/AiAgent';
 import AddInteraction from './pages/AddInteraction';
 import History from './pages/History';
 
+import ScrollToTop from './components/ScrollToTop';
+
 export default function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
         <BrowserRouter>
+          <ScrollToTop />
           <Routes>
             {/* Public Routes */}
             <Route path="/" element={<LandingPage />} />
