@@ -159,28 +159,38 @@ SALES REPRESENTATIVE'S QUESTION:
                 {"role": "user", "content": user_content},
             ],
             "temperature": 0.2,
-            "max_tokens": 1024,
+            "max_tokens": 750,
         }
 
+        models_to_try = [self.groq_model, "openai/gpt-oss-120b", "openai/gpt-oss-20b"]
+        unique_models = []
+        for m in models_to_try:
+            if m and m not in unique_models:
+                unique_models.append(m)
+
         async with httpx.AsyncClient(timeout=45.0) as client:
-            try:
-                response = await client.post(
-                    self.groq_url,
-                    headers=headers,
-                    json=payload,
-                )
-                if response.status_code == 200:
-                    data = response.json()
-                    choices = data.get("choices", [])
-                    if choices:
-                        return choices[0].get("message", {}).get("content", "").strip()
-                    return "No content received from Groq."
-                else:
-                    logger.error(f"Groq API error ({response.status_code}): {response.text}")
-                    return f"Error from Groq API ({response.status_code}): {response.text}"
-            except Exception as e:
-                logger.error(f"Failed to communicate with Groq: {e}")
-                return f"Communication error with Groq: {str(e)}"
+            for model_name in unique_models:
+                payload["model"] = model_name
+                try:
+                    response = await client.post(
+                        self.groq_url,
+                        headers=headers,
+                        json=payload,
+                    )
+                    if response.status_code == 200:
+                        data = response.json()
+                        choices = data.get("choices", [])
+                        if choices:
+                            return choices[0].get("message", {}).get("content", "").strip()
+                    elif response.status_code == 429:
+                        logger.warning(f"Groq model {model_name} rate-limited (429). Attempting fallback model...")
+                        continue
+                    else:
+                        logger.error(f"Groq API error ({response.status_code}): {response.text}")
+                except Exception as e:
+                    logger.error(f"Failed to communicate with Groq using {model_name}: {e}")
+
+            return "DealMemory Agent is currently experiencing high demand. Please try asking again in a few seconds."
 
 
 deal_memory_agent = DealMemoryAgent()
