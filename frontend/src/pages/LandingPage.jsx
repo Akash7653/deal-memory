@@ -693,18 +693,18 @@ export default function LandingPage() {
           {isAuthenticated ? (
             <NavLink
               to="/dashboard"
-              className="flex flex-col items-center justify-center py-1 px-1 text-purple-700 dark:text-purple-300 font-bold text-center active:scale-95"
+              className="flex flex-col items-center justify-center py-1 px-1 text-slate-600 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors text-center active:scale-95"
             >
               <LayoutDashboard size={18} className="mb-0.5 text-purple-600 dark:text-purple-400" />
-              <span className="text-[10px] leading-tight truncate w-full">Dashboard</span>
+              <span className="text-[10px] font-medium leading-tight truncate w-full">Dashboard</span>
             </NavLink>
           ) : (
             <NavLink
               to="/login"
-              className="flex flex-col items-center justify-center py-1 px-1 text-purple-700 dark:text-purple-300 font-bold text-center rounded-lg bg-purple-50/80 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800/60 active:scale-95"
+              className="flex flex-col items-center justify-center py-1 px-1 text-slate-600 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors text-center active:scale-95"
             >
-              <LogIn size={17} className="mb-0.5 text-purple-600 dark:text-purple-400" />
-              <span className="text-[10px] leading-tight truncate w-full font-bold">Sign In</span>
+              <LogIn size={18} className="mb-0.5 text-purple-600 dark:text-purple-400" />
+              <span className="text-[10px] font-medium leading-tight truncate w-full">Sign In</span>
             </NavLink>
           )}
         </div>

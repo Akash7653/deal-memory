@@ -2,11 +2,15 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const ThemeContext = createContext();
 
+const THEME_KEY = 'dealmemory_theme_v2';
+
 export function ThemeProvider({ children }) {
   const [theme, setTheme] = useState(() => {
-    const saved = localStorage.getItem('dealmemory-theme');
-    if (saved === 'dark' || saved === 'light') return saved;
-    // Default theme is explicitly Light Mode for fresh visitors
+    try {
+      const saved = localStorage.getItem(THEME_KEY);
+      if (saved === 'dark' || saved === 'light') return saved;
+    } catch {}
+    // Strict Light Mode default for all visitors across entire website
     return 'light';
   });
 
@@ -19,7 +23,9 @@ export function ThemeProvider({ children }) {
       root.classList.remove('dark');
       root.classList.add('light');
     }
-    localStorage.setItem('dealmemory-theme', theme);
+    try {
+      localStorage.setItem(THEME_KEY, theme);
+    } catch {}
   }, [theme]);
 
   const toggleTheme = () => {
