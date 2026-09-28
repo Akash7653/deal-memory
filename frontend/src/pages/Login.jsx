@@ -176,6 +176,16 @@ export default function Login() {
               Create an account
             </NavLink>
           </div>
+
+          <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 text-center">
+            <NavLink
+              to="/admin/login"
+              className="inline-flex items-center space-x-1.5 text-xs text-slate-600 hover:text-purple-600 dark:text-slate-400 dark:hover:text-purple-400 font-medium transition-colors"
+            >
+              <ShieldCheck size={14} className="text-purple-500" />
+              <span>Platform Admin? Sign In to Admin Portal →</span>
+            </NavLink>
+          </div>
         </div>
 
         <div className="mt-6 text-center text-[11px] text-slate-500 dark:text-slate-400 flex items-center justify-center space-x-1.5">

@@ -167,6 +167,16 @@ export default function LandingPage() {
               </NavLink>
             ) : (
               <div className="flex items-center space-x-2 flex-shrink-0">
+                {/* Admin Portal Button */}
+                <NavLink
+                  to="/admin/login"
+                  className="inline-flex items-center space-x-1.5 px-3 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-semibold border border-purple-500/20 bg-purple-500/5 hover:bg-purple-500/10 text-slate-700 dark:text-slate-300 hover:text-purple-700 dark:hover:text-purple-300 shadow-xs transition-all hover:scale-[1.02] active:scale-95 whitespace-nowrap flex-shrink-0"
+                  title="Platform Administration Portal"
+                >
+                  <ShieldCheck size={15} className="text-purple-600 dark:text-purple-400" />
+                  <span>Admin Portal</span>
+                </NavLink>
+
                 {/* Clearly recognizable premium button with visible border, violet brand color, and hover effect */}
                 <NavLink
                   to="/login"
@@ -721,14 +731,24 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="py-8 px-6 sm:px-12 border-t border-slate-200 dark:border-slate-800 text-center text-xs text-slate-500 dark:text-slate-400 flex flex-col sm:flex-row items-center justify-between max-w-7xl mx-auto w-full">
+      <footer className="py-8 px-6 sm:px-12 border-t border-slate-200 dark:border-slate-800 text-center text-xs text-slate-500 dark:text-slate-400 flex flex-col sm:flex-row items-center justify-between max-w-7xl mx-auto w-full gap-3">
         <div className="flex items-center space-x-2">
           <Database size={16} className="text-purple-600 dark:text-purple-400" />
           <span className="font-semibold text-slate-800 dark:text-slate-300">DealMemory</span>
           <span>• AI Relationship Intelligence for B2B Sales</span>
         </div>
-        <div className="mt-3 sm:mt-0 text-slate-500 dark:text-slate-400">
-          Powered by <span className="text-purple-600 dark:text-purple-400 font-medium">Hindsight by Vectorize</span> & <span className="text-purple-600 dark:text-purple-400 font-medium">Groq</span>
+        <div className="flex items-center space-x-4">
+          <NavLink
+            to="/admin/login"
+            className="inline-flex items-center space-x-1.5 text-xs text-slate-600 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 font-semibold transition-colors"
+          >
+            <ShieldCheck size={14} className="text-purple-500" />
+            <span>Platform Admin Portal</span>
+          </NavLink>
+          <span>•</span>
+          <div className="text-slate-500 dark:text-slate-400">
+            Powered by <span className="text-purple-600 dark:text-purple-400 font-medium">Hindsight by Vectorize</span> & <span className="text-purple-600 dark:text-purple-400 font-medium">Groq</span>
+          </div>
         </div>
       </footer>
 
