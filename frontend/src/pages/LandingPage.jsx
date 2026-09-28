@@ -274,33 +274,40 @@ export default function LandingPage() {
         {/* MOBILE VIEW ONLY: Animation DOMINATES Left, Side Text Right, Centered Buttons Below */}
         {/* ========================================================================= */}
         <div className="sm:hidden flex flex-col items-center w-full">
-          {/* Single Row: Animation on Left (Dominating), Text on Right */}
-          <div className="grid grid-cols-12 gap-3 items-center text-left w-full py-2">
-            {/* User's LEFT Side: Pure Animation Dominating - Increased to Medium Size */}
-            <div className="col-span-7 flex items-center justify-center bg-transparent scale-115 xs:scale-120 origin-center py-2">
+          {/* Single Row: Animation on Left (Dominating Width & Height), Text on Right (Decreased Width & Increased Height) */}
+          <div className="grid grid-cols-12 gap-2.5 items-center text-left w-full min-h-[220px] xs:min-h-[245px] py-3">
+            {/* User's LEFT Side: Pure Animation - Dominant Width & Increased Height */}
+            <div className="col-span-8 flex items-center justify-center bg-transparent h-[210px] xs:h-[235px] scale-120 xs:scale-125 origin-center">
               <HindsightBrainAnimation onlyAnimation={true} />
             </div>
 
-            {/* User's RIGHT Side: Clean Supporting Text - Increased to Medium Size */}
-            <div className="col-span-5 flex flex-col items-start text-left pr-1 space-y-2">
-              <div className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full bg-white/90 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 text-xs shadow-2xs">
+            {/* User's RIGHT Side: Supporting Text - Decreased Width (col-span-4) & Increased Height */}
+            <div className="col-span-4 flex flex-col justify-between text-left pr-0.5 h-[210px] xs:h-[235px] py-1">
+              <div className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full bg-white/90 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 text-[10px] xs:text-xs shadow-2xs self-start">
                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse flex-shrink-0" />
-                <span className="font-bold text-slate-800 dark:text-slate-200 truncate">Hindsight AI</span>
+                <span className="font-bold text-slate-800 dark:text-slate-200 truncate">Hindsight</span>
               </div>
 
-              <h1 className="text-sm xs:text-base font-extrabold tracking-tight text-slate-900 dark:text-white leading-snug">
+              <h1 className="text-xs xs:text-sm font-extrabold tracking-tight text-slate-900 dark:text-white leading-snug my-auto">
                 Your CRM remembers deals.{' '}
-                <span className="bg-gradient-to-r from-purple-700 via-purple-600 to-emerald-600 dark:from-purple-400 dark:via-purple-300 dark:to-emerald-400 bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-purple-700 via-purple-600 to-emerald-600 dark:from-purple-400 dark:via-purple-300 dark:to-emerald-400 bg-clip-text text-transparent block mt-1">
                   DealMemory learns what works.
                 </span>
               </h1>
 
-              <div className="flex items-center space-x-1 text-[11px] xs:text-xs font-bold text-emerald-700 dark:text-emerald-400">
-                <span>Remember</span>
-                <span className="text-slate-400">→</span>
-                <span>Learn</span>
-                <span className="text-slate-400">→</span>
-                <span>Adapt</span>
+              <div className="flex flex-col space-y-0.5 text-[9px] xs:text-[10px] font-bold text-emerald-700 dark:text-emerald-400">
+                <div className="flex items-center space-x-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-purple-500 flex-shrink-0" />
+                  <span>Remember</span>
+                </div>
+                <div className="flex items-center space-x-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 flex-shrink-0" />
+                  <span>Learn</span>
+                </div>
+                <div className="flex items-center space-x-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-teal-500 flex-shrink-0" />
+                  <span>Adapt</span>
+                </div>
               </div>
             </div>
           </div>

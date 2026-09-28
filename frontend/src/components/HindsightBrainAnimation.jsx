@@ -219,8 +219,8 @@ export default function HindsightBrainAnimation({ onlyAnimation = false }) {
   // Pure animation only (transparent background that mixes with page)
   if (onlyAnimation) {
     return (
-      <div className="relative w-full flex items-center justify-center bg-transparent select-none py-1">
-        <div className="w-full max-w-[380px] aspect-[350/240] flex items-center justify-center filter drop-shadow-sm">
+      <div className="relative w-full h-full flex items-center justify-center bg-transparent select-none py-1">
+        <div className="w-full h-full max-w-[400px] aspect-[350/240] flex items-center justify-center filter drop-shadow-sm">
           {svgContent}
         </div>
       </div>
