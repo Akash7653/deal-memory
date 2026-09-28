@@ -196,16 +196,16 @@ export default function HindsightBrainAnimation({ onlyAnimation = false }) {
               x={n.x}
               y={n.y > 150 ? n.y + 22 : n.y - 18}
               textAnchor="middle"
-              className="text-[11px] font-extrabold fill-slate-900 dark:fill-slate-100"
+              className="text-[12px] font-extrabold fill-slate-900 dark:fill-slate-100"
               style={{ pointerEvents: 'none' }}
             >
               {n.label}
             </text>
             <text
               x={n.x}
-              y={n.y > 150 ? n.y + 34 : n.y - 7}
+              y={n.y > 150 ? n.y + 35 : n.y - 6}
               textAnchor="middle"
-              className="text-[9px] font-semibold fill-slate-500 dark:fill-slate-400"
+              className="text-[10px] font-semibold fill-slate-500 dark:fill-slate-400"
               style={{ pointerEvents: 'none' }}
             >
               {n.sub}
@@ -220,7 +220,7 @@ export default function HindsightBrainAnimation({ onlyAnimation = false }) {
   if (onlyAnimation) {
     return (
       <div className="relative w-full flex items-center justify-center bg-transparent select-none py-1">
-        <div className="w-full max-w-[340px] aspect-[350/240] flex items-center justify-center filter drop-shadow-sm">
+        <div className="w-full max-w-[380px] aspect-[350/240] flex items-center justify-center filter drop-shadow-sm">
           {svgContent}
         </div>
       </div>

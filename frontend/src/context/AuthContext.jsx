@@ -73,27 +73,31 @@ export function AuthProvider({ children }) {
   // Company User Login
   const login = async (email, password) => {
     const res = await loginUser({ email, password });
-    if (res.token && res.user) {
-      localStorage.setItem('dealmemory_token', res.token);
-      setToken(res.token);
+    if (res.user) {
+      if (res.token) {
+        localStorage.setItem('dealmemory_token', res.token);
+        setToken(res.token);
+      }
       setUser(res.user);
       setCompany(res.company || null);
-      return { user: res.user, company: res.company, status: res.status };
+      return { user: res.user, company: res.company, status: res.status || (res.company ? res.company.status : 'approved') };
     }
-    throw new Error('Authentication failed: Missing token or user.');
+    throw new Error('Authentication failed: Missing user details in response.');
   };
 
   // Company Registration
   const register = async (registrationData) => {
     const res = await registerUser(registrationData);
-    if (res.token && res.user) {
-      localStorage.setItem('dealmemory_token', res.token);
-      setToken(res.token);
-      setUser(res.user);
-      setCompany(res.company || null);
+    if (res.user || res.company || res.status === 'pending') {
+      if (res.token) {
+        localStorage.setItem('dealmemory_token', res.token);
+        setToken(res.token);
+      }
+      if (res.user) setUser(res.user);
+      if (res.company) setCompany(res.company);
       return { user: res.user, company: res.company, status: res.status || 'pending' };
     }
-    throw new Error('Registration failed: Missing token or user.');
+    throw new Error('Registration failed: Missing registration response.');
   };
 
   // Refresh current user and company state

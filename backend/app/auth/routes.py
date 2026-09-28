@@ -117,9 +117,19 @@ async def register(req: CompanyRegisterRequest):
     conn.commit()
     conn.close()
 
+    token = create_access_token({
+        "sub": user_id,
+        "email": contact_email,
+        "name": contact_name,
+        "role": "company_admin",
+        "company_id": company_id,
+        "status": "pending",
+    })
+
     return {
         "status": "pending",
         "message": "Your company access request has been submitted. An administrator will review your application shortly.",
+        "token": token,
         "company": {
             "id": company_id,
             "name": comp_name,
@@ -175,9 +185,18 @@ async def login(req: LoginRequest):
 
     # If company status is pending and not platform admin
     if user["role"] != "admin" and company_status == "pending":
+        token = create_access_token({
+            "sub": user["id"],
+            "email": user["email"],
+            "name": user["name"],
+            "role": user["role"],
+            "company_id": company_id,
+            "status": "pending",
+        })
         return {
             "status": "pending",
             "message": "Your company access request is currently pending administrator approval.",
+            "token": token,
             "company": {
                 "id": company_id,
                 "name": company_name,
