@@ -34,26 +34,26 @@ export default function LandingPage() {
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
 
-  // Initial landing page loader only (never on internal page navigation)
-  const [showLandingLoader, setShowLandingLoader] = useState(() => {
-    try {
-      return !sessionStorage.getItem('dm_landing_loader_shown');
-    } catch {
-      return false;
-    }
-  });
+  // Branded loading animation whenever the landing page is loaded
+  const [loadingProgress, setLoadingProgress] = useState(15);
+  const [isLoaderExiting, setIsLoaderExiting] = useState(false);
+  const [showLandingLoader, setShowLandingLoader] = useState(true);
 
   useEffect(() => {
-    if (showLandingLoader) {
-      const timer = setTimeout(() => {
-        setShowLandingLoader(false);
-        try {
-          sessionStorage.setItem('dm_landing_loader_shown', 'true');
-        } catch {}
-      }, 850);
-      return () => clearTimeout(timer);
-    }
-  }, [showLandingLoader]);
+    const t1 = setTimeout(() => setLoadingProgress(45), 250);
+    const t2 = setTimeout(() => setLoadingProgress(80), 650);
+    const t3 = setTimeout(() => setLoadingProgress(100), 1050);
+    const tExit = setTimeout(() => setIsLoaderExiting(true), 1300);
+    const tDone = setTimeout(() => setShowLandingLoader(false), 1650);
+
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+      clearTimeout(tExit);
+      clearTimeout(tDone);
+    };
+  }, []);
 
   const scrollToSection = (id) => {
     if (id === 'top') {
@@ -77,23 +77,53 @@ export default function LandingPage() {
 
   return (
     <div id="top" className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col pb-24 md:pb-0 transition-colors duration-200">
-      {/* Branded Initial Landing Page Loader (Requirement 15: Landing Page Only) */}
+      {/* Branded Initial Landing Page Loader */}
       {showLandingLoader && (
-        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-white dark:bg-slate-950 transition-opacity duration-300">
-          <div className="relative flex flex-col items-center p-8 text-center animate-fade-in">
-            <div className="relative w-16 h-16 rounded-2xl bg-gradient-to-tr from-purple-700 via-purple-600 to-emerald-500 flex items-center justify-center shadow-xl shadow-purple-600/30 text-white mb-4">
-              <Brain size={32} className="text-white animate-pulse" />
-              <div className="absolute -inset-1 rounded-2xl bg-purple-500/20 blur-md -z-10 animate-ping" />
+        <div
+          className={`fixed inset-0 z-50 flex flex-col items-center justify-center bg-white dark:bg-slate-950 transition-opacity duration-350 ease-out ${
+            isLoaderExiting ? 'opacity-0 pointer-events-none' : 'opacity-100'
+          }`}
+          style={{ transitionDuration: '350ms' }}
+        >
+          <div className="relative flex flex-col items-center p-8 text-center max-w-sm animate-fade-in">
+            {/* Glowing Icon Container */}
+            <div className="relative mb-5">
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-purple-700 via-purple-600 to-emerald-500 flex items-center justify-center shadow-xl shadow-purple-600/30 text-white relative z-10">
+                <Brain size={32} className="text-white animate-pulse" />
+              </div>
+              <div className="absolute -inset-2 rounded-3xl bg-purple-500/20 blur-lg animate-pulse" />
+              <div
+                className="absolute -inset-4 rounded-full border border-purple-500/25 animate-spin"
+                style={{ animationDuration: '6s' }}
+              />
             </div>
+
             <h2 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
               DealMemory
             </h2>
-            <p className="text-xs text-purple-700 dark:text-purple-400 font-bold tracking-wide uppercase mt-1">
+            <p className="text-xs text-purple-700 dark:text-purple-400 font-bold tracking-wider uppercase mt-1">
               Persistent Relationship Memory
             </p>
-            <div className="w-40 h-1 bg-slate-200 dark:bg-slate-800 rounded-full mt-5 overflow-hidden">
-              <div className="h-full bg-gradient-to-r from-purple-600 via-purple-500 to-emerald-500 rounded-full animate-pulse" style={{ width: '80%' }} />
+
+            {/* Dynamic Status Text */}
+            <p className="text-[12px] text-slate-500 dark:text-slate-400 mt-4 h-4 font-mono">
+              {loadingProgress < 50
+                ? 'Initializing persistent neural state...'
+                : loadingProgress < 95
+                ? 'Connecting Hindsight memory bank...'
+                : 'Intelligence matrix ready.'}
+            </p>
+
+            {/* Animated Progress Bar */}
+            <div className="w-48 h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full mt-3 overflow-hidden p-0.5 border border-slate-200/60 dark:border-slate-800">
+              <div
+                className="h-full bg-gradient-to-r from-purple-600 via-purple-500 to-emerald-500 rounded-full transition-all duration-300 ease-out"
+                style={{ width: `${loadingProgress}%` }}
+              />
             </div>
+            <span className="text-[10px] font-mono text-slate-400 dark:text-slate-500 mt-1.5">
+              {loadingProgress}%
+            </span>
           </div>
         </div>
       )}

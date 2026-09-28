@@ -33,14 +33,29 @@ app.add_middleware(
 )
 
 
+import os
+from pathlib import Path
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+
+DIST_DIR = Path(__file__).resolve().parent.parent.parent / "frontend" / "dist"
+ASSETS_DIR = DIST_DIR / "assets"
+if ASSETS_DIR.exists():
+    app.mount("/assets", StaticFiles(directory=str(ASSETS_DIR)), name="assets")
+
+
 @app.get("/")
 async def root():
+    index_file = DIST_DIR / "index.html"
+    if index_file.exists():
+        return FileResponse(index_file)
     return {
         "message": "DealMemory API is running",
         "status": "healthy",
     }
 
 
+@app.get("/api/health")
 @app.get("/health")
 async def health():
     return {
@@ -113,3 +128,25 @@ async def test_memory():
             status_code=502,
             detail=f"Hindsight communication error: {str(e)}",
         )
+
+
+@app.get("/{full_path:path}")
+async def serve_spa_route(full_path: str):
+    """
+    Catch-all SPA fallback:
+    If a static asset or file exists in dist, serve it directly.
+    Otherwise serve index.html to allow client-side React Router to resolve routes
+    like /dashboard, /deal, /timeline, /meeting-prep, etc. without 404 Not Found.
+    """
+    if full_path.startswith("api/") or full_path.startswith("auth/") or full_path.startswith("deals/") or full_path.startswith("history/"):
+        raise HTTPException(status_code=404, detail="API endpoint not found")
+
+    target_file = DIST_DIR / full_path
+    if target_file.is_file():
+        return FileResponse(target_file)
+
+    index_file = DIST_DIR / "index.html"
+    if index_file.exists():
+        return FileResponse(index_file)
+
+    raise HTTPException(status_code=404, detail="DealMemory web assets not found. Run npm run build in frontend.")
