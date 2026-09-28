@@ -42,8 +42,12 @@ export default function Login() {
 
     setLoading(true);
     try {
-      await login(email.trim().toLowerCase(), password);
-      navigate(redirectTarget, { replace: true });
+      const res = await login(email.trim().toLowerCase(), password);
+      if (res?.status === 'pending') {
+        navigate('/access-pending', { replace: true });
+      } else {
+        navigate(redirectTarget, { replace: true });
+      }
     } catch (err) {
       setError(err.message || 'Unable to sign in. Please check your email and password.');
     } finally {

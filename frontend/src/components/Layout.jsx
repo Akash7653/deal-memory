@@ -21,20 +21,22 @@ import {
   User,
   Sliders,
   MoreHorizontal,
+  Briefcase,
+  MessageSquare,
 } from 'lucide-react';
 import { fetchHealth } from '../api';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 
 export default function Layout() {
-  const { user, logout, updateProfile } = useAuth();
+  const { user, company, logout, updateProfile } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [hindsightStatus, setHindsightStatus] = useState('checking');
   const [mobileMoreOpen, setMobileMoreOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [profileName, setProfileName] = useState(user?.name || '');
-  const [profileCompany, setProfileCompany] = useState(user?.company || '');
+  const [profileCompany, setProfileCompany] = useState(company?.name || user?.company || '');
   const [profileRole, setProfileRole] = useState(user?.role || '');
   const [savingProfile, setSavingProfile] = useState(false);
   const location = useLocation();
@@ -42,7 +44,7 @@ export default function Layout() {
 
   const openEditProfile = () => {
     setProfileName(user?.name || '');
-    setProfileCompany(user?.company || '');
+    setProfileCompany(company?.name || user?.company || '');
     setProfileRole(user?.role || 'Enterprise AE');
     setProfileModalOpen(true);
     setUserDropdownOpen(false);
@@ -95,10 +97,12 @@ export default function Layout() {
 
   const navItems = [
     { to: '/dashboard', label: 'Home', icon: LayoutDashboard },
-    { to: '/deal', label: 'Deals', icon: Building2 },
+    { to: '/customers', label: 'Customers', icon: Building2 },
+    { to: '/deal', label: 'Deals', icon: Briefcase },
     { to: '/timeline', label: 'Memory', icon: GitBranch, badge: 'Hindsight' },
     { to: '/meeting-prep', label: 'Meeting Prep', icon: CalendarCheck2, badge: 'AI Brief' },
     { to: '/agent', label: 'AI Agent', icon: Bot, badge: 'Grounded' },
+    { to: '/support', label: 'Support', icon: MessageSquare },
     { to: '/history', label: 'History', icon: Clock },
     { to: '/add-interaction', label: 'Add Interaction', icon: PlusCircle },
   ];
@@ -112,6 +116,7 @@ export default function Layout() {
   };
 
   const userInitials = getInitials(user?.name);
+  const companyDisplayName = company?.name || user?.company || 'TechNova Solutions';
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col transition-colors duration-150">
@@ -127,8 +132,10 @@ export default function Layout() {
                 <span className="font-bold text-base sm:text-lg tracking-tight text-slate-900 dark:text-white whitespace-nowrap">
                   DealMemory
                 </span>
-                <span className="hidden sm:inline-block text-[10px] uppercase tracking-wider font-semibold px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
-                  Hindsight
+                <span className="hidden sm:inline-block text-slate-300 dark:text-slate-700">|</span>
+                <span className="hidden sm:inline-flex items-center gap-1.5 text-xs font-bold text-purple-600 dark:text-purple-400 bg-purple-500/10 border border-purple-500/20 px-2 py-0.5 rounded-lg max-w-[170px] truncate" title={companyDisplayName}>
+                  <span className="w-1.5 h-1.5 rounded-full bg-purple-500 shrink-0" />
+                  <span className="truncate">{companyDisplayName}</span>
                 </span>
               </div>
             </NavLink>

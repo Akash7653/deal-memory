@@ -1,7 +1,19 @@
-const API_BASE = (import.meta.env.VITE_API_BASE_URL || 'https://dealmemory-api.onrender.com').replace(/\/+$/, '');
+const API_BASE = (
+  import.meta.env.VITE_API_BASE_URL ||
+  (typeof window !== 'undefined' && window.location.hostname === 'localhost' ? 'http://127.0.0.1:8000' : 'https://dealmemory-api.onrender.com')
+).replace(/\/+$/, '');
 
 function getAuthHeaders() {
   const token = localStorage.getItem('dealmemory_token');
+  const headers = { 'Content-Type': 'application/json' };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  return headers;
+}
+
+function getAdminAuthHeaders() {
+  const token = localStorage.getItem('dealmemory_admin_token') || localStorage.getItem('dealmemory_token');
   const headers = { 'Content-Type': 'application/json' };
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
@@ -15,20 +27,22 @@ export async function fetchHealth() {
   return res.json();
 }
 
-// ----------------- Auth Endpoints -----------------
+// ----------------- Company Auth Endpoints -----------------
 
-export async function registerUser({ full_name, email, password, confirm_password, company }) {
+export async function registerCompany(formData) {
   const res = await fetch(`${API_BASE}/auth/register`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ full_name, email, password, confirm_password, company }),
+    body: JSON.stringify(formData),
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    throw new Error(data.detail || 'Failed to register account');
+    throw new Error(data.detail || 'Failed to submit company registration');
   }
   return data;
 }
+
+export const registerUser = registerCompany;
 
 export async function loginUser({ email, password }) {
   const res = await fetch(`${API_BASE}/auth/login`, {
@@ -56,37 +70,229 @@ export async function fetchMe() {
   return res.json();
 }
 
+export async function logoutUser() {
+  try {
+    await fetch(`${API_BASE}/auth/logout`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+    });
+  } catch (e) {
+    // ignore
+  } finally {
+    localStorage.removeItem('dealmemory_token');
+  }
+}
+
 export async function updateUserProfile(profileData) {
-  const res = await fetch(`${API_BASE}/auth/profile`, {
-    method: 'PATCH',
-    headers: getAuthHeaders(),
-    body: JSON.stringify(profileData),
+  return { user: profileData };
+}
+
+// ----------------- Admin Portal Endpoints -----------------
+
+export async function adminLogin({ email, password }) {
+  const res = await fetch(`${API_BASE}/admin/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    throw new Error(data.detail || 'Failed to update profile');
+    throw new Error(data.detail || 'Invalid administrator credentials');
   }
   return data;
 }
 
-export async function logoutUser() {
-  const token = localStorage.getItem('dealmemory_token');
-  if (token) {
-    await fetch(`${API_BASE}/auth/logout`, {
-      method: 'POST',
-      headers: getAuthHeaders(),
-    }).catch(() => {});
+export const adminLoginUser = adminLogin;
+
+export async function fetchAdminMe() {
+  const token = localStorage.getItem('dealmemory_admin_token');
+  if (!token) return null;
+  const res = await fetch(`${API_BASE}/admin/auth/me`, {
+    headers: getAdminAuthHeaders(),
+  });
+  if (!res.ok) {
+    localStorage.removeItem('dealmemory_admin_token');
+    return null;
   }
-  localStorage.removeItem('dealmemory_token');
+  return res.json();
 }
 
-// ----------------- Deals Endpoints -----------------
+export const adminFetchMe = fetchAdminMe;
+
+export async function adminLogout() {
+  try {
+    await fetch(`${API_BASE}/admin/auth/logout`, {
+      method: 'POST',
+      headers: getAdminAuthHeaders(),
+    });
+  } catch (e) {
+    // ignore
+  } finally {
+    localStorage.removeItem('dealmemory_admin_token');
+  }
+}
+
+export const adminLogoutUser = adminLogout;
+
+export async function fetchAdminStats() {
+  const res = await fetch(`${API_BASE}/admin/stats`, {
+    headers: getAdminAuthHeaders(),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || 'Failed to load admin stats');
+  }
+  return res.json();
+}
+
+export async function fetchAdminCompanies(statusFilter = 'all') {
+  let url = `${API_BASE}/admin/companies`;
+  if (statusFilter && statusFilter !== 'all') {
+    url += `?status_filter=${statusFilter}`;
+  }
+  const res = await fetch(url, { headers: getAdminAuthHeaders() });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || 'Failed to fetch companies');
+  }
+  return res.json();
+}
+
+export async function fetchAdminCompanyDetail(companyId) {
+  const res = await fetch(`${API_BASE}/admin/companies/${companyId}`, {
+    headers: getAdminAuthHeaders(),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || 'Failed to fetch company details');
+  }
+  return res.json();
+}
+
+export async function fetchAdminRequests() {
+  const res = await fetch(`${API_BASE}/admin/requests`, {
+    headers: getAdminAuthHeaders(),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || 'Failed to fetch access requests');
+  }
+  return res.json();
+}
+
+export async function approveCompanyRequest(companyId) {
+  const res = await fetch(`${API_BASE}/admin/requests/${companyId}/approve`, {
+    method: 'POST',
+    headers: getAdminAuthHeaders(),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || 'Failed to approve company request');
+  }
+  return res.json();
+}
+
+export async function rejectCompanyRequest(companyId) {
+  const res = await fetch(`${API_BASE}/admin/requests/${companyId}/reject`, {
+    method: 'POST',
+    headers: getAdminAuthHeaders(),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || 'Failed to reject company request');
+  }
+  return res.json();
+}
+
+export const approveAdminRequest = approveCompanyRequest;
+export const rejectAdminRequest = rejectCompanyRequest;
+
+export async function fetchAdminUsers() {
+  const res = await fetch(`${API_BASE}/admin/users`, {
+    headers: getAdminAuthHeaders(),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || 'Failed to fetch platform users');
+  }
+  return res.json();
+}
+
+export async function fetchAdminConversations() {
+  const res = await fetch(`${API_BASE}/admin/conversations`, {
+    headers: getAdminAuthHeaders(),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || 'Failed to fetch support conversations');
+  }
+  return res.json();
+}
+
+export async function sendAdminSupportMessage(companyId, message) {
+  const res = await fetch(`${API_BASE}/admin/conversations/${companyId}`, {
+    method: 'POST',
+    headers: getAdminAuthHeaders(),
+    body: JSON.stringify({ message }),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || 'Failed to send support reply');
+  }
+  return res.json();
+}
+
+export async function fetchAdminActivity(limit = 50) {
+  const res = await fetch(`${API_BASE}/admin/activity?limit=${limit}`, {
+    headers: getAdminAuthHeaders(),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || 'Failed to fetch platform activity');
+  }
+  return res.json();
+}
+
+// ----------------- Company Support Messages -----------------
+
+export async function fetchSupportMessages() {
+  const res = await fetch(`${API_BASE}/support/messages`, {
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || 'Failed to fetch support messages');
+  }
+  const data = await res.json();
+  return Array.isArray(data) ? data : (data.messages || []);
+}
+
+export async function sendSupportMessage(message) {
+  const res = await fetch(`${API_BASE}/support/messages`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ message }),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || 'Failed to send support message');
+  }
+  return res.json();
+}
+
+export const fetchCompanySupportMessages = fetchSupportMessages;
+export const sendCompanySupportMessage = sendSupportMessage;
+
+// ----------------- Company Deals & Customers -----------------
 
 export async function fetchDeals(includeDemo = true) {
   const res = await fetch(`${API_BASE}/deals?include_demo=${includeDemo}`, {
     headers: getAuthHeaders(),
   });
   if (!res.ok) {
+    if (res.status === 401) {
+      localStorage.removeItem('dealmemory_token');
+    }
     const err = await res.json().catch(() => ({}));
     throw new Error(err.detail || 'Failed to fetch deals');
   }
@@ -114,6 +320,31 @@ export async function deleteDeal(dealId) {
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     throw new Error(err.detail || 'Failed to delete deal');
+  }
+  return res.json();
+}
+
+export async function fetchCompanyCustomers() {
+  const res = await fetch(`${API_BASE}/deals/customers`, {
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || 'Failed to fetch customers');
+  }
+  const data = await res.json();
+  return Array.isArray(data) ? data : (data.customers || []);
+}
+
+export async function createCompanyCustomer(customerData) {
+  const res = await fetch(`${API_BASE}/deals/customers`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(customerData),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || 'Failed to create customer');
   }
   return res.json();
 }
@@ -152,31 +383,47 @@ export async function deleteHistoryItem(activityId) {
 
 // ----------------- Hindsight Core Deal Intelligence -----------------
 
-export async function fetchDealMemory(dealId = 'acme') {
-  const res = await fetch(`${API_BASE}/deals/${dealId}/memory`, {
+export async function fetchDealOverview(dealId = 'acme') {
+  const res = await fetch(`${API_BASE}/deals/${dealId}/overview`, {
     headers: getAuthHeaders(),
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err.detail || 'Failed to fetch deal memory');
+    throw new Error(err.detail || 'Failed to fetch deal overview');
   }
   return res.json();
 }
 
-export async function fetchMeetingPrep(dealId = 'acme') {
+export async function fetchDealMemory(dealId = 'acme', query = '', tag = '') {
+  let url = `${API_BASE}/deals/${dealId}/memory?max_tokens=3000`;
+  if (query) url += `&query=${encodeURIComponent(query)}`;
+  if (tag) url += `&tag=${encodeURIComponent(tag)}`;
+
+  const res = await fetch(url, {
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to recall memories from Hindsight');
+  }
+  return res.json();
+}
+
+export async function triggerMeetingPrep(dealId = 'acme') {
   const res = await fetch(`${API_BASE}/deals/${dealId}/prepare`, {
     headers: getAuthHeaders(),
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err.detail || 'Failed to fetch meeting preparation');
+    throw new Error(err.detail || 'Meeting preparation failed');
   }
   return res.json();
 }
 
+export const fetchMeetingPrep = triggerMeetingPrep;
+
 export async function fetchLearnedInsights(dealId = 'acme') {
-  const res = await fetch(`${API_BASE}/deals/${dealId}/learn`, {
-    method: 'POST',
+  const res = await fetch(`${API_BASE}/deals/${dealId}/reflect`, {
     headers: getAuthHeaders(),
   });
   if (!res.ok) {

@@ -1,6 +1,6 @@
 import uuid
-from datetime import datetime
-from typing import Optional
+from datetime import datetime, timezone
+from typing import Optional, Dict, Any
 from fastapi import APIRouter, HTTPException, Depends, status
 from pydantic import BaseModel, EmailStr, Field
 
@@ -15,12 +15,19 @@ from app.auth.security import (
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-class RegisterRequest(BaseModel):
-    full_name: str = Field(..., min_length=2, description="User's full name")
-    email: EmailStr = Field(..., description="User's valid email address")
+class CompanyRegisterRequest(BaseModel):
+    company_name: str = Field(..., min_length=2, description="Company or Organization Name")
+    company_email: Optional[str] = Field(default="", description="General Company Email")
+    industry: Optional[str] = Field(default="B2B Software", description="Industry domain")
+    company_size: Optional[str] = Field(default="10-50", description="Company Size")
+    contact_person: str = Field(..., min_length=2, description="Contact Person Full Name")
+    contact_email: EmailStr = Field(..., description="Contact / Login Email Address")
+    phone: Optional[str] = Field(default="", description="Contact Phone Number")
     password: str = Field(..., min_length=6, description="Password (at least 6 characters)")
     confirm_password: str = Field(..., description="Password confirmation")
-    company: Optional[str] = Field(default="", description="Optional company or organization name")
+    full_name: Optional[str] = Field(default="", description="Alias for contact_person")
+    email: Optional[EmailStr] = Field(default=None, description="Alias for contact_email")
+    company: Optional[str] = Field(default="", description="Alias for company_name")
 
 
 class LoginRequest(BaseModel):
@@ -28,28 +35,16 @@ class LoginRequest(BaseModel):
     password: str = Field(..., description="Password")
 
 
-class UserResponse(BaseModel):
-    id: str
-    name: str
-    email: str
-    company: str
-    role: str
-    created_at: str
+@router.post("/register")
+async def register(req: CompanyRegisterRequest):
+    comp_name = (req.company_name or req.company or "").strip()
+    contact_name = (req.contact_person or req.full_name or "").strip()
+    contact_email = str(req.contact_email or req.email).strip().lower()
 
-
-class AuthResponse(BaseModel):
-    status: str = "success"
-    message: str
-    token: str
-    user: UserResponse
-
-
-@router.post("/register", response_model=AuthResponse)
-async def register(req: RegisterRequest):
-    name_clean = req.full_name.strip()
-    email_clean = req.email.strip().lower()
-    company_clean = (req.company or "").strip()
-
+    if not comp_name:
+        raise HTTPException(status_code=400, detail="Company Name is required.")
+    if not contact_name:
+        raise HTTPException(status_code=400, detail="Contact Person name is required.")
     if req.password != req.confirm_password:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -59,85 +54,157 @@ async def register(req: RegisterRequest):
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    cursor.execute("SELECT id FROM users WHERE email = ?", (email_clean,))
-    existing = cursor.fetchone()
-    if existing:
+    # Check if contact email already exists
+    cursor.execute("SELECT id FROM users WHERE email = ?", (contact_email,))
+    existing_user = cursor.fetchone()
+    if existing_user:
         conn.close()
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="An account with this email address already exists. Please log in.",
+            status_code=status.HTTP_409_CONFLICT,
+            detail="An account with this email address already exists. Please sign in instead.",
         )
 
-    user_id = f"user_{uuid.uuid4().hex[:12]}"
+    now_iso = datetime.now(timezone.utc).isoformat()
+    company_id = f"comp_{uuid.uuid4().hex[:10]}"
+    user_id = f"user_{uuid.uuid4().hex[:10]}"
     pw_hash = hash_password(req.password)
-    now = datetime.utcnow().isoformat()
 
+    # Create Company with status = 'pending'
     cursor.execute(
         """
-        INSERT INTO users (id, name, email, password_hash, company, role, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO companies (id, name, email, industry, size, contact_person, contact_email, phone, status, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?)
         """,
-        (user_id, name_clean, email_clean, pw_hash, company_clean, "Enterprise AE", now),
+        (
+            company_id,
+            comp_name,
+            req.company_email or contact_email,
+            req.industry or "Enterprise B2B",
+            req.company_size or "10-50",
+            contact_name,
+            contact_email,
+            req.phone or "",
+            now_iso,
+        ),
     )
 
-    # Log initial user registration activity
+    # Create User associated with company
     cursor.execute(
         """
-        INSERT INTO activities (id, user_id, deal_id, company, activity_type, title, description, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO users (id, company_id, name, email, password_hash, company, role, status, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, 'company_admin', 'pending', ?)
+        """,
+        (user_id, company_id, contact_name, contact_email, pw_hash, comp_name, now_iso),
+    )
+
+    # Log initial platform activity
+    cursor.execute(
+        """
+        INSERT INTO activities (id, company_id, user_id, deal_id, company, activity_type, title, description, created_at)
+        VALUES (?, ?, ?, ?, ?, 'auth', 'Company Access Request Submitted', ?, ?)
         """,
         (
             f"act_{uuid.uuid4().hex[:8]}",
+            company_id,
             user_id,
             None,
-            company_clean or "Personal Workspace",
-            "auth",
-            "Created DealMemory Account",
-            f"Welcome to DealMemory, {name_clean}! Workspace initialized with personal Hindsight isolation.",
-            now,
+            comp_name,
+            f"Access request submitted for company '{comp_name}' by {contact_name} ({contact_email}). Status: pending approval.",
+            now_iso,
         ),
     )
 
     conn.commit()
     conn.close()
 
-    token = create_access_token({"sub": user_id, "email": email_clean, "name": name_clean})
-
     return {
-        "status": "success",
-        "message": "Account created successfully.",
-        "token": token,
+        "status": "pending",
+        "message": "Your company access request has been submitted. An administrator will review your application shortly.",
+        "company": {
+            "id": company_id,
+            "name": comp_name,
+            "status": "pending",
+            "contact_email": contact_email,
+        },
         "user": {
             "id": user_id,
-            "name": name_clean,
-            "email": email_clean,
-            "company": company_clean,
-            "role": "Enterprise AE",
-            "created_at": now,
+            "name": contact_name,
+            "email": contact_email,
+            "role": "company_admin",
+            "status": "pending",
         },
     }
 
 
-@router.post("/login", response_model=AuthResponse)
+@router.post("/login")
 async def login(req: LoginRequest):
     email_clean = req.email.strip().lower()
 
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute(
-        "SELECT id, name, email, password_hash, company, role, created_at FROM users WHERE email = ?",
-        (email_clean,),
-    )
+    cursor.execute("SELECT id, company_id, name, email, password_hash, company, role, status, created_at FROM users WHERE email = ?", (email_clean,))
     user = cursor.fetchone()
-    conn.close()
 
-    if not user or not verify_password(req.password, user["password_hash"]):
+    if not user:
+        conn.close()
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid email or password. Please check your credentials.",
+            detail="No account found with this email address. Please register or verify credentials.",
         )
 
-    token = create_access_token({"sub": user["id"], "email": user["email"], "name": user["name"]})
+    if not verify_password(req.password, user["password_hash"]):
+        conn.close()
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect password. Please try again or use the demo credentials.",
+        )
+
+    # Resolve company information
+    company_id = user["company_id"]
+    company_name = user["company"] or "Workspace"
+    company_status = "approved"
+
+    if company_id:
+        cursor.execute("SELECT id, name, status FROM companies WHERE id = ?", (company_id,))
+        comp_row = cursor.fetchone()
+        if comp_row:
+            company_name = comp_row["name"]
+            company_status = comp_row["status"]
+
+    conn.close()
+
+    # If company status is pending and not platform admin
+    if user["role"] != "admin" and company_status == "pending":
+        return {
+            "status": "pending",
+            "message": "Your company access request is currently pending administrator approval.",
+            "company": {
+                "id": company_id,
+                "name": company_name,
+                "status": "pending",
+            },
+            "user": {
+                "id": user["id"],
+                "name": user["name"],
+                "email": user["email"],
+                "role": user["role"],
+                "status": "pending",
+            },
+        }
+
+    if user["role"] != "admin" and company_status == "rejected":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Your company access request has been rejected. Please contact support@dealmemory.ai.",
+        )
+
+    token = create_access_token({
+        "sub": user["id"],
+        "email": user["email"],
+        "name": user["name"],
+        "role": user["role"],
+        "company_id": company_id,
+    })
 
     return {
         "status": "success",
@@ -147,9 +214,13 @@ async def login(req: LoginRequest):
             "id": user["id"],
             "name": user["name"],
             "email": user["email"],
-            "company": user["company"] or "",
-            "role": user["role"] or "Enterprise AE",
-            "created_at": user["created_at"],
+            "role": user["role"],
+            "status": user["status"] or "active",
+        },
+        "company": {
+            "id": company_id,
+            "name": company_name,
+            "status": company_status,
         },
     }
 
@@ -158,65 +229,24 @@ async def login(req: LoginRequest):
 async def get_me(current_user: dict = Depends(get_current_user)):
     return {
         "status": "success",
-        "user": current_user,
+        "user": {
+            "id": current_user["id"],
+            "name": current_user["name"],
+            "email": current_user["email"],
+            "role": current_user["role"],
+            "status": current_user["status"],
+        },
+        "company": {
+            "id": current_user["company_id"],
+            "name": current_user["company_name"],
+            "status": current_user["company_status"],
+        },
     }
 
 
 @router.post("/logout")
 async def logout(current_user: dict = Depends(get_current_user)):
-    """Invalidate or record session logout for authenticated user."""
     return {
         "status": "success",
         "message": "Signed out successfully.",
-    }
-
-
-class ProfileUpdateRequest(BaseModel):
-    name: Optional[str] = Field(None, min_length=2, description="Updated name")
-    company: Optional[str] = Field(None, description="Updated company")
-    role: Optional[str] = Field(None, description="Updated sales role")
-
-
-@router.patch("/profile")
-async def update_profile(req: ProfileUpdateRequest, current_user: dict = Depends(get_current_user)):
-    user_id = current_user["id"]
-    conn = get_db_connection()
-    cursor = conn.cursor()
-
-    updates = []
-    params = []
-
-    if req.name is not None and req.name.strip():
-        updates.append("name = ?")
-        params.append(req.name.strip())
-
-    if req.company is not None:
-        updates.append("company = ?")
-        params.append(req.company.strip())
-
-    if req.role is not None and req.role.strip():
-        updates.append("role = ?")
-        params.append(req.role.strip())
-
-    if updates:
-        params.append(user_id)
-        query = f"UPDATE users SET {', '.join(updates)} WHERE id = ?"
-        cursor.execute(query, tuple(params))
-        conn.commit()
-
-    cursor.execute("SELECT id, name, email, company, role, created_at FROM users WHERE id = ?", (user_id,))
-    updated_user = cursor.fetchone()
-    conn.close()
-
-    return {
-        "status": "success",
-        "message": "Profile updated successfully.",
-        "user": {
-            "id": updated_user["id"],
-            "name": updated_user["name"],
-            "email": updated_user["email"],
-            "company": updated_user["company"] or "",
-            "role": updated_user["role"] or "Enterprise AE",
-            "created_at": updated_user["created_at"],
-        },
     }

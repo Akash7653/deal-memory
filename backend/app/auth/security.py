@@ -1,12 +1,10 @@
 import logging
-import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, Any
-
-import bcrypt
 import jwt
-from fastapi import Depends, HTTPException, Security, status
+from fastapi import HTTPException, Security, status, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+import bcrypt
 
 from app.config import settings
 from app.db.database import get_db_connection
@@ -69,87 +67,109 @@ async def get_current_user(credentials: Optional[HTTPAuthorizationCredentials] =
     user_id = str(payload["sub"])
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT id, name, email, company, role, created_at FROM users WHERE id = ?", (user_id,))
+    cursor.execute("SELECT id, company_id, name, email, company, role, status, created_at FROM users WHERE id = ?", (user_id,))
     row = cursor.fetchone()
 
-    # Resilient fallback: If user was purged by ephemeral DB restart or ID mismatch, check by email
+    # Resilient fallback: Check by email if user ID was reset
     if not row and payload.get("email"):
         email_clean = payload["email"].strip().lower()
-        cursor.execute("SELECT id, name, email, company, role, created_at FROM users WHERE email = ?", (email_clean,))
+        cursor.execute("SELECT id, company_id, name, email, company, role, status, created_at FROM users WHERE email = ?", (email_clean,))
         row = cursor.fetchone()
 
     # Demo user fallback
     if not row and ("demo" in user_id.lower() or payload.get("email") == "demo@dealmemory.ai"):
-        cursor.execute("SELECT id, name, email, company, role, created_at FROM users WHERE id = 'demo-user-001'")
+        cursor.execute("SELECT id, company_id, name, email, company, role, status, created_at FROM users WHERE id = 'demo-user-001'")
         row = cursor.fetchone()
 
-    # Cryptographically valid token auto-provisioning (handles Render / container restarts seamlessly)
+    # Admin user fallback
+    if not row and ("admin" in user_id.lower() or payload.get("email") == "admin@dealmemory.ai"):
+        cursor.execute("SELECT id, company_id, name, email, company, role, status, created_at FROM users WHERE role = 'admin'")
+        row = cursor.fetchone()
+
+    # Cryptographically valid token auto-provisioning
     if not row:
         email_val = payload.get("email", f"{user_id}@dealmemory.ai")
         name_val = payload.get("name") or email_val.split("@")[0].replace(".", " ").capitalize()
-        now_str = datetime.utcnow().isoformat() + "Z"
+        now_str = datetime.now(timezone.utc).isoformat()
         try:
             cursor.execute(
                 """
-                INSERT OR IGNORE INTO users (id, name, email, password_hash, company, role, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
+                INSERT OR IGNORE INTO users (id, company_id, name, email, password_hash, company, role, status, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
-                (user_id, name_val, email_val, "", "DealMemory Workspace", "Enterprise AE", now_str),
+                (user_id, "comp_technova", name_val, email_val, "", "TechNova Solutions", "company_user", "active", now_str),
             )
             conn.commit()
-            cursor.execute("SELECT id, name, email, company, role, created_at FROM users WHERE id = ?", (user_id,))
+            cursor.execute("SELECT id, company_id, name, email, company, role, status, created_at FROM users WHERE id = ?", (user_id,))
             row = cursor.fetchone()
         except Exception as e:
             logger.error(f"Error auto-restoring user session: {e}")
 
-    conn.close()
-
     if not row:
+        conn.close()
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User account not found. Please log in again.",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
+    # Resolve company information
+    company_id = row["company_id"]
+    company_name = row["company"] or "Personal Workspace"
+    company_status = "approved"
+
+    if company_id:
+        cursor.execute("SELECT id, name, status FROM companies WHERE id = ?", (company_id,))
+        comp_row = cursor.fetchone()
+        if comp_row:
+            company_name = comp_row["name"]
+            company_status = comp_row["status"]
+
+    conn.close()
+
     return {
         "id": row["id"],
+        "company_id": company_id or "comp_technova",
         "name": row["name"],
         "email": row["email"],
-        "company": row["company"] or "",
-        "role": row["role"] or "Enterprise AE",
+        "company": company_name,
+        "company_name": company_name,
+        "company_status": company_status,
+        "role": row["role"] or "company_user",
+        "status": row["status"] or "active",
         "created_at": row["created_at"],
     }
+
+
+async def get_current_admin(current_user: Dict[str, Any] = Depends(get_current_user)) -> Dict[str, Any]:
+    if current_user.get("role") != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin privileges required to access the DealMemory Admin Portal.",
+        )
+    return current_user
+
+
+async def get_approved_company_user(current_user: Dict[str, Any] = Depends(get_current_user)) -> Dict[str, Any]:
+    if current_user.get("role") == "admin":
+        return current_user
+    if current_user.get("company_status") == "pending":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Your company access request is currently pending administrator approval.",
+        )
+    if current_user.get("company_status") == "rejected":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Your company access request has been rejected. Please contact administrator support.",
+        )
+    return current_user
 
 
 async def get_optional_current_user(credentials: Optional[HTTPAuthorizationCredentials] = Security(security)) -> Optional[Dict[str, Any]]:
     if not credentials or not credentials.credentials:
         return None
-    token = credentials.credentials
-    payload = decode_access_token(token)
-    if not payload or "sub" not in payload:
+    try:
+        return await get_current_user(credentials)
+    except Exception:
         return None
-    user_id = str(payload["sub"])
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT id, name, email, company, role, created_at FROM users WHERE id = ?", (user_id,))
-    row = cursor.fetchone()
-
-    if not row and payload.get("email"):
-        cursor.execute("SELECT id, name, email, company, role, created_at FROM users WHERE email = ?", (payload["email"].strip().lower(),))
-        row = cursor.fetchone()
-
-    if not row and ("demo" in user_id.lower() or payload.get("email") == "demo@dealmemory.ai"):
-        cursor.execute("SELECT id, name, email, company, role, created_at FROM users WHERE id = 'demo-user-001'")
-        row = cursor.fetchone()
-
-    conn.close()
-    if not row:
-        return None
-    return {
-        "id": row["id"],
-        "name": row["name"],
-        "email": row["email"],
-        "company": row["company"] or "",
-        "role": row["role"] or "Enterprise AE",
-        "created_at": row["created_at"],
-    }

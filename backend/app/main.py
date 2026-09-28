@@ -6,6 +6,8 @@ from app.memory.hindsight import hindsight_service
 from app.auth.routes import router as auth_router
 from app.deals.routes import router as deals_router
 from app.history.routes import router as history_router
+from app.admin.routes import router as admin_router
+from app.support.routes import router as support_router
 
 app = FastAPI(
     title="DealMemory API",
@@ -19,6 +21,8 @@ init_db()
 app.include_router(auth_router)
 app.include_router(deals_router)
 app.include_router(history_router)
+app.include_router(admin_router)
+app.include_router(support_router)
 
 # Production-safe CORS configuration
 cors_origins_raw = getattr(settings, "CORS_ORIGINS", "*")

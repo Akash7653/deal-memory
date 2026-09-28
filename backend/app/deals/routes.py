@@ -18,28 +18,35 @@ router = APIRouter(prefix="/deals", tags=["deals"])
 
 
 def get_tenant_bank_id(deal_id_clean: str, user: Optional[dict] = None) -> str:
-    """Determine the isolated Hindsight bank ID based on tenant/user ID and deal ID."""
-    if deal_id_clean == "acme" or not user or user.get("id") == "demo-user-001":
-        # Shared benchmark demo deal for all users to explore real ACME data
-        return settings.HINDSIGHT_BANK_ID or "dealmemory-acme"
-    
-    # Isolated user bank ID for custom deals created by user
-    user_prefix = user["id"].replace("user_", "")[:8]
-    return f"dealmemory-{user_prefix}-{deal_id_clean}"
+    """
+    Determine company-isolated Hindsight memory bank.
+    Per Section 11:
+    Hindsight must be isolated by company: dealmemory-{company_id}
+    (e.g. dealmemory-comp_technova, dealmemory-comp_apex, etc.)
+    """
+    comp_id = "comp_technova"
+    if user and user.get("company_id"):
+        comp_id = str(user["company_id"]).lower()
+
+    if comp_id in ("comp_technova", "technova", "dealmemory-acme"):
+        return settings.HINDSIGHT_BANK_ID or "dealmemory-comp_technova"
+
+    return f"dealmemory-{comp_id}"
 
 
-def log_activity(user_id: str, deal_id: Optional[str], company: Optional[str], activity_type: str, title: str, description: str):
-    """Helper to log an activity in the database for the user."""
+def log_activity(user_id: str, deal_id: Optional[str], company: Optional[str], activity_type: str, title: str, description: str, company_id: Optional[str] = None):
+    """Helper to log an activity in the database for the user's company."""
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute(
             """
-            INSERT INTO activities (id, user_id, deal_id, company, activity_type, title, description, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO activities (id, company_id, user_id, deal_id, company, activity_type, title, description, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 f"act_{uuid.uuid4().hex[:8]}",
+                company_id or "comp_technova",
                 user_id,
                 deal_id,
                 company or "ACME Corp",
@@ -119,26 +126,61 @@ class OutcomeCreate(BaseModel):
     )
 
 
+class CustomerCreate(BaseModel):
+    name: str = Field(..., min_length=2, description="Customer Account name")
+    industry: Optional[str] = Field(default="Enterprise Software")
+    contact_information: Optional[str] = Field(default="")
+
+
+@router.get("/customers")
+async def get_company_customers(user: Optional[dict] = Depends(get_optional_current_user)):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    company_id = user.get("company_id") if user else "comp_technova"
+    cursor.execute("SELECT id, company_id, name, industry, contact_information, created_at FROM customers WHERE company_id = ? ORDER BY created_at DESC", (company_id,))
+    customers = [dict(r) for r in cursor.fetchall()]
+    conn.close()
+    return {"status": "success", "count": len(customers), "customers": customers}
+
+
+@router.post("/customers")
+async def create_company_customer(req: CustomerCreate, user: dict = Depends(get_current_user)):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    company_id = user.get("company_id") or "comp_technova"
+    cust_id = f"cust_{uuid.uuid4().hex[:8]}"
+    now_iso = datetime.utcnow().isoformat() + "Z"
+    cursor.execute(
+        "INSERT INTO customers (id, company_id, name, industry, contact_information, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+        (cust_id, company_id, req.name.strip(), req.industry, req.contact_information, now_iso),
+    )
+    conn.commit()
+    conn.close()
+    return {"status": "success", "customer": {"id": cust_id, "name": req.name, "company_id": company_id}}
+
+
 @router.get("")
 async def get_user_deals(
     include_demo: bool = Query(True, description="Whether to include ACME demo deal if user has no deals"),
     user: Optional[dict] = Depends(get_optional_current_user),
 ):
-    """Retrieve all deals owned by the authenticated user."""
+    """Retrieve all deals owned by the authenticated company."""
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    user_id = user["id"] if user else "demo-user-001"
+    company_id = user.get("company_id") if user else "comp_technova"
 
     cursor.execute(
-        "SELECT id, owner_user_id, company_name, deal_value, stage, relationship_health, created_at FROM deals WHERE owner_user_id = ? ORDER BY created_at DESC",
-        (user_id,),
+        "SELECT id, company_id, customer_id, owner_user_id, company_name, deal_value, stage, relationship_health, created_at FROM deals WHERE company_id = ? ORDER BY created_at DESC",
+        (company_id,),
     )
     rows = cursor.fetchall()
 
     deals = [
         {
             "id": r["id"],
+            "company_id": r["company_id"],
+            "customer_id": r["customer_id"],
             "owner_user_id": r["owner_user_id"],
             "company_name": r["company_name"],
             "deal_value": r["deal_value"],
@@ -150,13 +192,15 @@ async def get_user_deals(
         for r in rows
     ]
 
-    # If new user has 0 deals and requested demo or is exploring
+    # If no deals, include ACME demo deal
     if not deals and include_demo:
-        cursor.execute("SELECT id, owner_user_id, company_name, deal_value, stage, relationship_health, created_at FROM deals WHERE id = 'acme'")
+        cursor.execute("SELECT id, company_id, customer_id, owner_user_id, company_name, deal_value, stage, relationship_health, created_at FROM deals WHERE id = 'acme'")
         demo_row = cursor.fetchone()
         if demo_row:
             deals.append({
                 "id": demo_row["id"],
+                "company_id": demo_row["company_id"] or "comp_technova",
+                "customer_id": demo_row["customer_id"],
                 "owner_user_id": demo_row["owner_user_id"],
                 "company_name": demo_row["company_name"],
                 "deal_value": demo_row["deal_value"],
@@ -172,18 +216,19 @@ async def get_user_deals(
 
 @router.post("")
 async def create_deal(req: DealCreate, user: dict = Depends(get_current_user)):
-    """Create a new user-owned deal."""
+    """Create a new company-owned deal."""
     deal_id = f"deal_{uuid.uuid4().hex[:8]}"
+    company_id = user.get("company_id") or "comp_technova"
     now = datetime.utcnow().isoformat() + "Z"
 
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute(
         """
-        INSERT INTO deals (id, owner_user_id, company_name, deal_value, stage, relationship_health, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO deals (id, company_id, owner_user_id, company_name, deal_value, stage, relationship_health, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         """,
-        (deal_id, user["id"], req.company_name.strip(), req.deal_value, req.stage, req.relationship_health, now),
+        (deal_id, company_id, user["id"], req.company_name.strip(), req.deal_value, req.stage, req.relationship_health, now),
     )
     conn.commit()
     conn.close()
@@ -195,6 +240,7 @@ async def create_deal(req: DealCreate, user: dict = Depends(get_current_user)):
         activity_type="deal_created",
         title=f"Created Deal: {req.company_name}",
         description=f"Initialized {req.company_name} (${req.deal_value:,} ARR) at stage {req.stage}.",
+        company_id=company_id,
     )
 
     return {
@@ -202,6 +248,7 @@ async def create_deal(req: DealCreate, user: dict = Depends(get_current_user)):
         "message": f"Deal for {req.company_name} created successfully.",
         "deal": {
             "id": deal_id,
+            "company_id": company_id,
             "company_name": req.company_name,
             "deal_value": req.deal_value,
             "stage": req.stage,
