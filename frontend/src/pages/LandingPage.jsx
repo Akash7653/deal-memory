@@ -439,57 +439,137 @@ export default function LandingPage() {
           </p>
         </div>
 
-        <div className="overflow-x-auto rounded-3xl border border-slate-200 dark:border-slate-800 shadow-md">
-          <table className="w-full text-left text-sm">
+        {/* Mobile View: High-clarity Paired Contrast Cards (Both sides clearly visible) */}
+        <div className="space-y-3.5 sm:hidden">
+          {[
+            {
+              crm: 'Stores static text call notes',
+              dm: 'Builds persistent relationship memory',
+            },
+            {
+              crm: 'Records activities blindly',
+              dm: 'Understands whether strategies worked or failed',
+            },
+            {
+              crm: 'Manual pre-call preparation',
+              dm: 'AI-generated executive briefings & warnings',
+            },
+            {
+              crm: 'Repeats failed pricing concessions',
+              dm: 'Explicitly warns: "Do NOT repeat the failed discount"',
+            },
+          ].map((item, idx) => (
+            <div
+              key={idx}
+              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-3.5 space-y-2.5 shadow-sm"
+            >
+              {/* Traditional CRM side */}
+              <div className="p-3 rounded-xl bg-rose-50/90 dark:bg-rose-950/30 border border-rose-200/80 dark:border-rose-900/50 flex items-start space-x-2.5">
+                <XCircle size={16} className="text-rose-600 dark:text-rose-400 flex-shrink-0 mt-0.5" />
+                <div className="space-y-0.5 flex-1">
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-rose-800 dark:text-rose-300">
+                    Traditional CRM
+                  </div>
+                  <div className="text-xs text-slate-800 dark:text-slate-200 font-medium">
+                    {item.crm}
+                  </div>
+                </div>
+              </div>
+
+              {/* DealMemory side */}
+              <div className="p-3 rounded-xl bg-emerald-50/90 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-800/50 flex items-start space-x-2.5">
+                <CheckCircle2 size={16} className="text-emerald-600 dark:text-emerald-400 flex-shrink-0 mt-0.5" />
+                <div className="space-y-0.5 flex-1">
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300">
+                    DealMemory (with Hindsight)
+                  </div>
+                  <div className="text-xs text-slate-950 dark:text-white font-bold">
+                    {item.dm}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Desktop / Tablet View: Side-by-Side 50/50 Table with proper table-cell display */}
+        <div className="hidden sm:block rounded-3xl border border-slate-200 dark:border-slate-800 shadow-md overflow-hidden bg-white dark:bg-slate-950/60">
+          <table className="w-full table-fixed text-left text-sm border-collapse">
+            <colgroup>
+              <col className="w-1/2" />
+              <col className="w-1/2" />
+            </colgroup>
             <thead className="text-xs uppercase tracking-wider font-bold border-b border-slate-200 dark:border-slate-800">
               <tr>
-                <th className="py-4 px-6 w-1/2 bg-rose-50/70 dark:bg-rose-950/20 text-rose-800 dark:text-rose-300">
-                  Traditional CRM
+                <th className="py-4 px-6 bg-rose-50/80 dark:bg-rose-950/20 text-rose-800 dark:text-rose-300">
+                  <div className="flex items-center space-x-2">
+                    <XCircle size={16} className="text-rose-600 dark:text-rose-400" />
+                    <span>Traditional CRM</span>
+                  </div>
                 </th>
-                <th className="py-4 px-6 w-1/2 bg-emerald-50/70 dark:bg-emerald-950/20 text-emerald-800 dark:text-emerald-300 border-l border-slate-200 dark:border-slate-800">
-                  DealMemory (with Hindsight)
+                <th className="py-4 px-6 bg-emerald-50/80 dark:bg-emerald-950/20 text-emerald-800 dark:text-emerald-300 border-l border-slate-200 dark:border-slate-800">
+                  <div className="flex items-center space-x-2">
+                    <CheckCircle2 size={16} className="text-emerald-600 dark:text-emerald-400" />
+                    <span>DealMemory (with Hindsight)</span>
+                  </div>
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-200 dark:divide-slate-800 bg-white dark:bg-slate-950/60 text-xs sm:text-sm">
+            <tbody className="divide-y divide-slate-200 dark:divide-slate-800 text-xs sm:text-sm">
               <tr className="hover:bg-slate-50 dark:hover:bg-slate-900/40">
-                <td className="py-3.5 px-6 text-slate-700 dark:text-slate-400 flex items-center space-x-2">
-                  <XCircle size={16} className="text-rose-600 dark:text-rose-400 flex-shrink-0" />
-                  <span>Stores static text call notes</span>
+                <td className="py-4 px-6 text-slate-700 dark:text-slate-300 align-middle">
+                  <div className="flex items-center space-x-3">
+                    <XCircle size={16} className="text-rose-600 dark:text-rose-400 flex-shrink-0" />
+                    <span>Stores static text call notes</span>
+                  </div>
                 </td>
-                <td className="py-3.5 px-6 text-slate-900 dark:text-white font-medium bg-emerald-50/20 dark:bg-emerald-950/10 border-l border-slate-200 dark:border-slate-800 flex items-center space-x-2">
-                  <CheckCircle2 size={16} className="text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
-                  <span>Builds persistent relationship memory</span>
+                <td className="py-4 px-6 text-slate-950 dark:text-white font-medium bg-emerald-50/20 dark:bg-emerald-950/10 border-l border-slate-200 dark:border-slate-800 align-middle">
+                  <div className="flex items-center space-x-3">
+                    <CheckCircle2 size={16} className="text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
+                    <span>Builds persistent relationship memory</span>
+                  </div>
                 </td>
               </tr>
               <tr className="hover:bg-slate-50 dark:hover:bg-slate-900/40">
-                <td className="py-3.5 px-6 text-slate-700 dark:text-slate-400 flex items-center space-x-2">
-                  <XCircle size={16} className="text-rose-600 dark:text-rose-400 flex-shrink-0" />
-                  <span>Records activities blindly</span>
+                <td className="py-4 px-6 text-slate-700 dark:text-slate-300 align-middle">
+                  <div className="flex items-center space-x-3">
+                    <XCircle size={16} className="text-rose-600 dark:text-rose-400 flex-shrink-0" />
+                    <span>Records activities blindly</span>
+                  </div>
                 </td>
-                <td className="py-3.5 px-6 text-slate-900 dark:text-white font-medium bg-emerald-50/20 dark:bg-emerald-950/10 border-l border-slate-200 dark:border-slate-800 flex items-center space-x-2">
-                  <CheckCircle2 size={16} className="text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
-                  <span>Understands whether strategies worked or failed</span>
-                </td>
-              </tr>
-              <tr className="hover:bg-slate-50 dark:hover:bg-slate-900/40">
-                <td className="py-3.5 px-6 text-slate-700 dark:text-slate-400 flex items-center space-x-2">
-                  <XCircle size={16} className="text-rose-600 dark:text-rose-400 flex-shrink-0" />
-                  <span>Manual pre-call preparation</span>
-                </td>
-                <td className="py-3.5 px-6 text-slate-900 dark:text-white font-medium bg-emerald-50/20 dark:bg-emerald-950/10 border-l border-slate-200 dark:border-slate-800 flex items-center space-x-2">
-                  <CheckCircle2 size={16} className="text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
-                  <span>AI-generated executive briefings & warnings</span>
+                <td className="py-4 px-6 text-slate-950 dark:text-white font-medium bg-emerald-50/20 dark:bg-emerald-950/10 border-l border-slate-200 dark:border-slate-800 align-middle">
+                  <div className="flex items-center space-x-3">
+                    <CheckCircle2 size={16} className="text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
+                    <span>Understands whether strategies worked or failed</span>
+                  </div>
                 </td>
               </tr>
               <tr className="hover:bg-slate-50 dark:hover:bg-slate-900/40">
-                <td className="py-3.5 px-6 text-slate-700 dark:text-slate-400 flex items-center space-x-2">
-                  <XCircle size={16} className="text-rose-600 dark:text-rose-400 flex-shrink-0" />
-                  <span>Repeats failed pricing concessions</span>
+                <td className="py-4 px-6 text-slate-700 dark:text-slate-300 align-middle">
+                  <div className="flex items-center space-x-3">
+                    <XCircle size={16} className="text-rose-600 dark:text-rose-400 flex-shrink-0" />
+                    <span>Manual pre-call preparation</span>
+                  </div>
                 </td>
-                <td className="py-3.5 px-6 text-slate-900 dark:text-white font-medium bg-emerald-50/20 dark:bg-emerald-950/10 border-l border-slate-200 dark:border-slate-800 flex items-center space-x-2">
-                  <CheckCircle2 size={16} className="text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
-                  <span>Explicitly warns: "Do NOT repeat the failed discount"</span>
+                <td className="py-4 px-6 text-slate-950 dark:text-white font-medium bg-emerald-50/20 dark:bg-emerald-950/10 border-l border-slate-200 dark:border-slate-800 align-middle">
+                  <div className="flex items-center space-x-3">
+                    <CheckCircle2 size={16} className="text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
+                    <span>AI-generated executive briefings & warnings</span>
+                  </div>
+                </td>
+              </tr>
+              <tr className="hover:bg-slate-50 dark:hover:bg-slate-900/40">
+                <td className="py-4 px-6 text-slate-700 dark:text-slate-300 align-middle">
+                  <div className="flex items-center space-x-3">
+                    <XCircle size={16} className="text-rose-600 dark:text-rose-400 flex-shrink-0" />
+                    <span>Repeats failed pricing concessions</span>
+                  </div>
+                </td>
+                <td className="py-4 px-6 text-slate-950 dark:text-white font-medium bg-emerald-50/20 dark:bg-emerald-950/10 border-l border-slate-200 dark:border-slate-800 align-middle">
+                  <div className="flex items-center space-x-3">
+                    <CheckCircle2 size={16} className="text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
+                    <span>Explicitly warns: "Do NOT repeat the failed discount"</span>
+                  </div>
                 </td>
               </tr>
             </tbody>
