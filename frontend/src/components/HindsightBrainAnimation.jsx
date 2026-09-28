@@ -48,21 +48,21 @@ export default function HindsightBrainAnimation() {
   ];
 
   return (
-    <div className="relative w-full max-w-md mx-auto p-4 sm:p-5 rounded-3xl bg-white/90 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 shadow-xl backdrop-blur-xl transition-all">
+    <div className="relative w-full max-w-full sm:max-w-md mx-auto p-2.5 sm:p-5 rounded-2xl sm:rounded-3xl bg-white/90 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 shadow-xl backdrop-blur-xl transition-all">
       {/* Subtle top indicator */}
-      <div className="flex items-center justify-between pb-3 mb-2 border-b border-slate-100 dark:border-slate-800 text-[11px]">
-        <div className="flex items-center space-x-1.5 font-bold text-purple-700 dark:text-purple-300 uppercase tracking-wider">
-          <Brain size={14} className="text-purple-600 dark:text-purple-400 animate-pulse" />
-          <span>Hindsight Cognitive Flow</span>
+      <div className="flex items-center justify-between pb-2 sm:pb-3 mb-1.5 sm:mb-2 border-b border-slate-100 dark:border-slate-800 text-[9px] sm:text-[11px]">
+        <div className="flex items-center space-x-1 sm:space-x-1.5 font-bold text-purple-700 dark:text-purple-300 uppercase tracking-wider">
+          <Brain size={13} className="text-purple-600 dark:text-purple-400 animate-pulse flex-shrink-0" />
+          <span className="truncate">Hindsight Cognitive Flow</span>
         </div>
-        <div className="flex items-center space-x-1 text-emerald-700 dark:text-emerald-400 font-semibold">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping inline-block" />
-          <span>Live Memory Bank</span>
+        <div className="flex items-center space-x-1 text-emerald-700 dark:text-emerald-400 font-semibold flex-shrink-0">
+          <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-emerald-500 animate-ping inline-block" />
+          <span className="hidden xs:inline">Live Memory</span>
         </div>
       </div>
 
       {/* SVG Brain & Synaptic Network */}
-      <div className="relative h-56 sm:h-64 w-full flex items-center justify-center">
+      <div className="relative h-36 xs:h-44 sm:h-56 md:h-64 w-full flex items-center justify-center">
         <svg
           viewBox="0 0 350 240"
           className="w-full h-full select-none"
@@ -232,14 +232,14 @@ export default function HindsightBrainAnimation() {
       </div>
 
       {/* Dynamic Detail Card under animation */}
-      <div className="mt-1 p-3 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-left transition-all">
-        <div className="flex items-center justify-between text-xs font-bold text-slate-800 dark:text-slate-200">
-          <span>{activeNode ? nodes.find((n) => n.id === activeNode)?.label : 'Continuous Feedback Loop'}</span>
-          <span className="text-[10px] text-purple-600 dark:text-purple-400 font-semibold">
-            {activeNode ? 'Inspecting Stage' : 'Hover a node'}
+      <div className="mt-1 p-2 sm:p-3 rounded-xl sm:rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-left transition-all">
+        <div className="flex items-center justify-between text-[10px] sm:text-xs font-bold text-slate-800 dark:text-slate-200">
+          <span className="truncate">{activeNode ? nodes.find((n) => n.id === activeNode)?.label : 'Continuous Feedback Loop'}</span>
+          <span className="text-[9px] sm:text-[10px] text-purple-600 dark:text-purple-400 font-semibold flex-shrink-0 ml-1">
+            {activeNode ? 'Active Stage' : 'Hover a node'}
           </span>
         </div>
-        <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5 leading-snug">
+        <p className="text-[9px] sm:text-[11px] text-slate-600 dark:text-slate-400 mt-0.5 leading-snug line-clamp-2 sm:line-clamp-none">
           {activeNode
             ? nodes.find((n) => n.id === activeNode)?.detail
             : 'Sarah’s technical blockers and Michael’s price objection are remembered to synthesize an adapted ROI case.'}
@@ -247,14 +247,14 @@ export default function HindsightBrainAnimation() {
       </div>
 
       {/* Bottom 4-stage pill chain */}
-      <div className="mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[10px] font-bold text-slate-500 dark:text-slate-400">
-        <span className="text-purple-700 dark:text-purple-300">Interaction</span>
-        <ArrowRight size={11} className="text-slate-400" />
+      <div className="mt-2 sm:mt-3 pt-1.5 sm:pt-2.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[8px] sm:text-[10px] font-bold text-slate-500 dark:text-slate-400">
+        <span className="text-purple-700 dark:text-purple-300">Interact</span>
+        <ArrowRight size={10} className="text-slate-400 flex-shrink-0" />
         <span className="text-purple-700 dark:text-purple-300">Memory</span>
-        <ArrowRight size={11} className="text-slate-400" />
-        <span className="text-emerald-700 dark:text-emerald-300">Learning</span>
-        <ArrowRight size={11} className="text-slate-400" />
-        <span className="text-emerald-800 dark:text-emerald-200">Recommendation</span>
+        <ArrowRight size={10} className="text-slate-400 flex-shrink-0" />
+        <span className="text-emerald-700 dark:text-emerald-300">Learn</span>
+        <ArrowRight size={10} className="text-slate-400 flex-shrink-0" />
+        <span className="text-emerald-800 dark:text-emerald-200">Adapt</span>
       </div>
     </div>
   );
