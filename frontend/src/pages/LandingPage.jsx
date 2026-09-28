@@ -148,7 +148,8 @@ export default function LandingPage() {
             </div>
           </NavLink>
 
-          <div className="flex items-center space-x-1.5 sm:space-x-3 flex-shrink-0">
+          <div className="flex items-center space-x-1.5 sm:space-x-2.5 flex-shrink-0">
+            {/* Mode / Theme Toggle Button */}
             <button
               onClick={toggleTheme}
               className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer shadow-xs flex-shrink-0"
@@ -156,6 +157,16 @@ export default function LandingPage() {
             >
               {theme === 'dark' ? <Sun size={15} className="text-amber-400" /> : <Moon size={15} className="text-purple-600" />}
             </button>
+
+            {/* Admin Portal Button placed directly beside the mode button */}
+            <NavLink
+              to="/admin/login"
+              className="inline-flex items-center space-x-1 sm:space-x-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-semibold border border-purple-500/25 bg-purple-500/10 hover:bg-purple-500/20 text-purple-700 dark:text-purple-300 shadow-xs transition-all hover:scale-[1.02] active:scale-95 whitespace-nowrap flex-shrink-0"
+              title="Platform Administration Portal"
+            >
+              <ShieldCheck size={14} className="text-purple-600 dark:text-purple-400 shrink-0" />
+              <span>Admin Portal</span>
+            </NavLink>
 
             {isAuthenticated ? (
               <NavLink
@@ -166,27 +177,16 @@ export default function LandingPage() {
                 <ArrowRight size={14} />
               </NavLink>
             ) : (
-              <div className="flex items-center space-x-1.5 sm:space-x-2 flex-shrink-0">
-                {/* Admin Portal Button - Compact 'Admin' on mobile, 'Admin Portal' on sm+ */}
-                <NavLink
-                  to="/admin/login"
-                  className="inline-flex items-center space-x-1 sm:space-x-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl text-[11px] sm:text-sm font-semibold border border-purple-500/25 bg-purple-500/10 hover:bg-purple-500/20 text-purple-700 dark:text-purple-300 shadow-xs transition-all hover:scale-[1.02] active:scale-95 whitespace-nowrap flex-shrink-0"
-                  title="Platform Administration Portal"
-                >
-                  <ShieldCheck size={13} className="text-purple-600 dark:text-purple-400 shrink-0" />
-                  <span className="hidden sm:inline">Admin Portal</span>
-                  <span className="sm:hidden">Admin</span>
-                </NavLink>
-
-                {/* Sign In Button */}
+              <div className="hidden sm:flex items-center space-x-2 flex-shrink-0">
+                {/* Sign In Button: hidden on mobile top nav, visible on sm+ */}
                 <NavLink
                   to="/login"
-                  className="px-2.5 sm:px-5 py-1.5 sm:py-2 rounded-xl text-[11px] sm:text-sm font-bold border border-purple-600/30 dark:border-purple-500/50 bg-purple-50/90 hover:bg-purple-100/90 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300 dark:hover:bg-purple-900/60 shadow-xs transition-all hover:scale-[1.02] active:scale-95 whitespace-nowrap flex-shrink-0"
+                  className="px-3.5 sm:px-5 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold border border-purple-600/30 dark:border-purple-500/50 bg-purple-50/90 hover:bg-purple-100/90 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300 dark:hover:bg-purple-900/60 shadow-xs transition-all hover:scale-[1.02] active:scale-95 whitespace-nowrap flex-shrink-0"
                 >
                   Sign In
                 </NavLink>
 
-                {/* Explore Deal hidden on mobile to prevent overflow */}
+                {/* Explore Deal: visible on md+ */}
                 <NavLink
                   to="/register"
                   className="hidden md:inline-flex bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-xl text-sm font-semibold shadow-md shadow-purple-600/20 transition-all hover:scale-[1.02] active:scale-95 whitespace-nowrap flex-shrink-0"
