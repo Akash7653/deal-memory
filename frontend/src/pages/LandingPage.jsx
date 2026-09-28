@@ -148,44 +148,45 @@ export default function LandingPage() {
             </div>
           </NavLink>
 
-          <div className="flex items-center space-x-2 sm:space-x-3 flex-shrink-0">
+          <div className="flex items-center space-x-1.5 sm:space-x-3 flex-shrink-0">
             <button
               onClick={toggleTheme}
-              className="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer shadow-xs flex-shrink-0"
+              className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer shadow-xs flex-shrink-0"
               title="Toggle theme"
             >
-              {theme === 'dark' ? <Sun size={16} className="text-amber-400" /> : <Moon size={16} className="text-purple-600" />}
+              {theme === 'dark' ? <Sun size={15} className="text-amber-400" /> : <Moon size={15} className="text-purple-600" />}
             </button>
 
             {isAuthenticated ? (
               <NavLink
                 to="/dashboard"
-                className="flex items-center space-x-1.5 bg-purple-600 hover:bg-purple-700 text-white px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold shadow-md shadow-purple-600/20 whitespace-nowrap flex-shrink-0 transition-transform active:scale-95"
+                className="flex items-center space-x-1.5 bg-purple-600 hover:bg-purple-700 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-semibold shadow-md shadow-purple-600/20 whitespace-nowrap flex-shrink-0 transition-transform active:scale-95"
               >
                 <span>Dashboard</span>
                 <ArrowRight size={14} />
               </NavLink>
             ) : (
-              <div className="flex items-center space-x-2 flex-shrink-0">
-                {/* Admin Portal Button */}
+              <div className="flex items-center space-x-1.5 sm:space-x-2 flex-shrink-0">
+                {/* Admin Portal Button - Compact 'Admin' on mobile, 'Admin Portal' on sm+ */}
                 <NavLink
                   to="/admin/login"
-                  className="inline-flex items-center space-x-1.5 px-3 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-semibold border border-purple-500/20 bg-purple-500/5 hover:bg-purple-500/10 text-slate-700 dark:text-slate-300 hover:text-purple-700 dark:hover:text-purple-300 shadow-xs transition-all hover:scale-[1.02] active:scale-95 whitespace-nowrap flex-shrink-0"
+                  className="inline-flex items-center space-x-1 sm:space-x-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl text-[11px] sm:text-sm font-semibold border border-purple-500/25 bg-purple-500/10 hover:bg-purple-500/20 text-purple-700 dark:text-purple-300 shadow-xs transition-all hover:scale-[1.02] active:scale-95 whitespace-nowrap flex-shrink-0"
                   title="Platform Administration Portal"
                 >
-                  <ShieldCheck size={15} className="text-purple-600 dark:text-purple-400" />
-                  <span>Admin Portal</span>
+                  <ShieldCheck size={13} className="text-purple-600 dark:text-purple-400 shrink-0" />
+                  <span className="hidden sm:inline">Admin Portal</span>
+                  <span className="sm:hidden">Admin</span>
                 </NavLink>
 
-                {/* Clearly recognizable premium button with visible border, violet brand color, and hover effect */}
+                {/* Sign In Button */}
                 <NavLink
                   to="/login"
-                  className="px-3.5 sm:px-5 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold border border-purple-600/30 dark:border-purple-500/50 bg-purple-50/90 hover:bg-purple-100/90 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300 dark:hover:bg-purple-900/60 shadow-xs transition-all hover:scale-[1.02] active:scale-95 whitespace-nowrap flex-shrink-0"
+                  className="px-2.5 sm:px-5 py-1.5 sm:py-2 rounded-xl text-[11px] sm:text-sm font-bold border border-purple-600/30 dark:border-purple-500/50 bg-purple-50/90 hover:bg-purple-100/90 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300 dark:hover:bg-purple-900/60 shadow-xs transition-all hover:scale-[1.02] active:scale-95 whitespace-nowrap flex-shrink-0"
                 >
                   Sign In
                 </NavLink>
 
-                {/* Explore Deal completely removed on mobile to avoid overflow at 375px/390px/414px */}
+                {/* Explore Deal hidden on mobile to prevent overflow */}
                 <NavLink
                   to="/register"
                   className="hidden md:inline-flex bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-xl text-sm font-semibold shadow-md shadow-purple-600/20 transition-all hover:scale-[1.02] active:scale-95 whitespace-nowrap flex-shrink-0"
