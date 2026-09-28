@@ -20,6 +20,15 @@
             document.documentElement.classList.add('light');
           }
         } catch (e) {}
+
+        // Single Page Application route restoration after reload on static hosting
+        try {
+          var redirect = sessionStorage.redirect;
+          delete sessionStorage.redirect;
+          if (redirect && redirect !== location.href) {
+            history.replaceState(null, null, redirect);
+          }
+        } catch (e) {}
       })();
     </script>
   </head>
