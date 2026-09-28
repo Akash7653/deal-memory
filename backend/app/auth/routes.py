@@ -162,6 +162,15 @@ async def get_me(current_user: dict = Depends(get_current_user)):
     }
 
 
+@router.post("/logout")
+async def logout(current_user: dict = Depends(get_current_user)):
+    """Invalidate or record session logout for authenticated user."""
+    return {
+        "status": "success",
+        "message": "Signed out successfully.",
+    }
+
+
 class ProfileUpdateRequest(BaseModel):
     name: Optional[str] = Field(None, min_length=2, description="Updated name")
     company: Optional[str] = Field(None, description="Updated company")

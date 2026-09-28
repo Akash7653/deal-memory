@@ -209,6 +209,8 @@ export async function createInteraction(dealId = 'acme', data) {
   return res.json();
 }
 
+export const postInteraction = createInteraction;
+
 export async function createOutcome(dealId = 'acme', data) {
   const res = await fetch(`${API_BASE}/deals/${dealId}/outcomes`, {
     method: 'POST',

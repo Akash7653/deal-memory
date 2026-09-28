@@ -18,11 +18,11 @@ router = APIRouter(prefix="/deals", tags=["deals"])
 
 def get_tenant_bank_id(deal_id_clean: str, user: Optional[dict] = None) -> str:
     """Determine the isolated Hindsight bank ID based on tenant/user ID and deal ID."""
-    if not user or user.get("id") == "demo-user-001" or (deal_id_clean == "acme" and not user):
-        # Demo account or unauthenticated fallback for ACME demo
+    if deal_id_clean == "acme" or not user or user.get("id") == "demo-user-001":
+        # Shared benchmark demo deal for all users to explore real ACME data
         return settings.HINDSIGHT_BANK_ID or "dealmemory-acme"
     
-    # Isolated user bank ID
+    # Isolated user bank ID for custom deals created by user
     user_prefix = user["id"].replace("user_", "")[:8]
     return f"dealmemory-{user_prefix}-{deal_id_clean}"
 

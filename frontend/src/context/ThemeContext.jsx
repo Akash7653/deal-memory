@@ -6,7 +6,9 @@ export function ThemeProvider({ children }) {
   const [theme, setTheme] = useState(() => {
     const saved = localStorage.getItem('dealmemory-theme');
     if (saved === 'light' || saved === 'dark') return saved;
-    // Default to dark mode for enterprise SaaS look
+    if (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+      return 'light';
+    }
     return 'dark';
   });
 
