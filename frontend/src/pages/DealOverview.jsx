@@ -45,7 +45,7 @@ export default function DealOverview() {
       <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 relative overflow-hidden shadow-sm">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="flex items-start space-x-4">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-indigo-600 to-sky-600 flex items-center justify-center font-black text-xl text-white shadow-md shadow-indigo-600/25 flex-shrink-0">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-indigo-700 to-indigo-500 flex items-center justify-center font-black text-xl text-white shadow-md shadow-indigo-600/25 flex-shrink-0">
               AC
             </div>
             <div>
@@ -84,7 +84,7 @@ export default function DealOverview() {
               to="/agent"
               className="px-4 py-2.5 text-xs font-semibold rounded-xl bg-slate-850 hover:bg-slate-800 text-slate-200 border border-slate-750 flex items-center space-x-1.5 transition-colors"
             >
-              <Bot size={14} className="text-sky-400" />
+              <Bot size={14} className="text-indigo-400" />
               <span>Ask Agent</span>
               <ArrowRight size={13} />
             </Link>

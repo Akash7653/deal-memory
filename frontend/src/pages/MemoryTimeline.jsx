@@ -66,7 +66,7 @@ export default function MemoryTimeline() {
       stakeholder: 'David — CTO (Technical Evaluator)',
       quote: 'David expressed serious concerns regarding webhook latency, integration complexity, and enterprise security compliance.',
       tags: ['technical', 'security-blocker', 'david'],
-      badgeClass: 'bg-sky-500/10 text-sky-400 border-sky-500/20',
+      badgeClass: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20',
       icon: Shield,
     },
     {

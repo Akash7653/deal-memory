@@ -4,35 +4,45 @@
 
 /* ========================================================================== */
 /* 6-COLOR SEMANTIC DESIGN TOKEN SYSTEM                                       */
-/* 1. Deep Navy / Near Black (#070b14, #0b1120)                               */
-/* 2. White / Soft White (#ffffff, #f8fafc)                                   */
-/* 3. Slate / Neutral Gray (#64748b, #94a3b8, #cbd5e1, #1e293b)              */
-/* 4. Indigo / Violet Identity (#4f46e5, #6366f1, #818cf8)                   */
-/* 5. Emerald Success / Learned (#059669, #10b981, #34d399)                   */
-/* 6. Amber / Red Risk & Failed (#f59e0b, #ef4444, #f87171)                   */
+/* 1. Charcoal / Graphite (#0d0e12, #14151a, #1a1c22) - Dark surfaces         */
+/* 2. Soft White (#ffffff, #f9fafb) - Light surfaces                          */
+/* 3. Slate Gray (#23252c, #6b7280, #9ca3af, #e5e7eb) - Borders & Muted      */
+/* 4. Violet / Purple (#7c3aed, #8b5cf6, #6d28d9) - Brand identity & AI      */
+/* 5. Emerald Green (#059669, #10b981) - Success, Learned & Connected         */
+/* 6. Amber / Warm Red (#f59e0b, #ef4444) - Risks, Warnings & Failed          */
 /* ========================================================================== */
 
 @layer base {
   :root {
-    --color-bg-base: #f8fafc;
-    --color-surface-card: #ffffff;
-    --color-surface-subtle: #f1f5f9;
-    --color-border-subtle: #e2e8f0;
-    --color-border-card: #cbd5e1;
-    --color-text-title: #0f172a;
-    --color-text-body: #334155;
-    --color-text-muted: #64748b;
+    --color-bg: #f9fafb;
+    --color-surface: #ffffff;
+    --color-surface-subtle: #f3f4f6;
+    --color-border: #e5e7eb;
+    --color-border-card: #d1d5db;
+    --color-text: #111827;
+    --color-text-secondary: #374151;
+    --color-muted: #6b7280;
+    --color-primary: #7c3aed;
+    --color-primary-hover: #6d28d9;
+    --color-success: #059669;
+    --color-warning: #f59e0b;
+    --color-danger: #ef4444;
   }
 
   html.dark, :root.dark {
-    --color-bg-base: #070b14;
-    --color-surface-card: #0b1120;
-    --color-surface-subtle: #111a2e;
-    --color-border-subtle: #1e293b;
-    --color-border-card: #334155;
-    --color-text-title: #f8fafc;
-    --color-text-body: #cbd5e1;
-    --color-text-muted: #94a3b8;
+    --color-bg: #0d0e12;
+    --color-surface: #14151a;
+    --color-surface-subtle: #1a1c22;
+    --color-border: #23252c;
+    --color-border-card: #2b2d35;
+    --color-text: #f9fafb;
+    --color-text-secondary: #d1d5db;
+    --color-muted: #9ca3af;
+    --color-primary: #8b5cf6;
+    --color-primary-hover: #7c3aed;
+    --color-success: #10b981;
+    --color-warning: #f59e0b;
+    --color-danger: #ef4444;
   }
 
   body {
@@ -47,33 +57,33 @@
 
 html:not(.dark) body,
 html.light body {
-  background-color: #f8fafc !important;
-  color: #0f172a !important;
+  background-color: #f9fafb !important;
+  color: #111827 !important;
 }
 
 html:not(.dark) .bg-slate-950,
 html.light .bg-slate-950 {
-  background-color: #f8fafc !important;
-  color: #0f172a !important;
+  background-color: #f9fafb !important;
+  color: #111827 !important;
 }
 
 html:not(.dark) .bg-slate-900,
 html.light .bg-slate-900 {
   background-color: #ffffff !important;
-  color: #0f172a !important;
+  color: #111827 !important;
   box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.05), 0 1px 2px -1px rgb(0 0 0 / 0.05);
 }
 
 html:not(.dark) .bg-slate-850,
 html.light .bg-slate-850 {
-  background-color: #f1f5f9 !important;
-  color: #1e293b !important;
+  background-color: #f3f4f6 !important;
+  color: #1f2937 !important;
 }
 
 html:not(.dark) aside.bg-slate-900\/60,
 html.light aside.bg-slate-900\/60 {
   background-color: #ffffff !important;
-  border-color: #e2e8f0 !important;
+  border-color: #e5e7eb !important;
 }
 
 html:not(.dark) .border-slate-800,
@@ -84,7 +94,7 @@ html.light .border-slate-800,
 html.light .border-slate-850,
 html.light .border-slate-750,
 html.light .border-slate-700 {
-  border-color: #e2e8f0 !important;
+  border-color: #e5e7eb !important;
 }
 
 /* Light mode text colors on default surfaces */
@@ -96,40 +106,44 @@ html.light h1:not([class*="bg-clip-text"]),
 html.light h2:not([class*="bg-clip-text"]),
 html.light h3,
 html.light h4 {
-  color: #0f172a;
+  color: #111827 !important;
 }
 
-html:not(.dark) p.text-slate-100,
-html:not(.dark) p.text-white,
-html:not(.dark) span.text-white:not([class*="bg-"]):not(button *):not(a *),
-html.light p.text-slate-100,
-html.light p.text-white,
-html.light span.text-white:not([class*="bg-"]):not(button *):not(a *) {
-  color: #0f172a;
+/* Any text-white element outside buttons/gradients becomes dark in light mode */
+html:not(.dark) .text-white:not(button):not(button *):not(a[class*="bg-"]):not(a[class*="bg-"] *):not([class*="bg-indigo-"]):not([class*="bg-indigo-"] *):not([class*="bg-brand-"]):not([class*="bg-brand-"] *):not([class*="bg-emerald-"]):not([class*="bg-emerald-"] *):not([class*="bg-rose-"]):not([class*="bg-rose-"] *):not([class*="bg-gradient-"]):not([class*="bg-gradient-"] *),
+html.light .text-white:not(button):not(button *):not(a[class*="bg-"]):not(a[class*="bg-"] *):not([class*="bg-indigo-"]):not([class*="bg-indigo-"] *):not([class*="bg-brand-"]):not([class*="bg-brand-"] *):not([class*="bg-emerald-"]):not([class*="bg-emerald-"] *):not([class*="bg-rose-"]):not([class*="bg-rose-"] *):not([class*="bg-gradient-"]):not([class*="bg-gradient-"] *) {
+  color: #111827 !important;
 }
 
-html:not(.dark) .text-slate-200,
-html.light .text-slate-200 {
-  color: #1e293b !important;
+html:not(.dark) .text-slate-100:not(button):not(button *):not(a[class*="bg-"]):not(a[class*="bg-"] *):not([class*="bg-indigo-"]):not([class*="bg-indigo-"] *):not([class*="bg-gradient-"]):not([class*="bg-gradient-"] *),
+html.light .text-slate-100:not(button):not(button *):not(a[class*="bg-"]):not(a[class*="bg-"] *):not([class*="bg-indigo-"]):not([class*="bg-indigo-"] *):not([class*="bg-gradient-"]):not([class*="bg-gradient-"] *) {
+  color: #111827 !important;
 }
 
-html:not(.dark) .text-slate-300,
-html.light .text-slate-300 {
-  color: #334155 !important;
+html:not(.dark) .text-slate-200:not(button):not(button *):not(a[class*="bg-"]):not(a[class*="bg-"] *):not([class*="bg-gradient-"]):not([class*="bg-gradient-"] *),
+html.light .text-slate-200:not(button):not(button *):not(a[class*="bg-"]):not(a[class*="bg-"] *):not([class*="bg-gradient-"]):not([class*="bg-gradient-"] *) {
+  color: #1f2937 !important;
 }
 
-html:not(.dark) .text-slate-400,
-html.light .text-slate-400 {
-  color: #64748b !important;
+html:not(.dark) .text-slate-300:not(button):not(button *):not(a[class*="bg-"]):not(a[class*="bg-"] *):not([class*="bg-gradient-"]):not([class*="bg-gradient-"] *),
+html.light .text-slate-300:not(button):not(button *):not(a[class*="bg-"]):not(a[class*="bg-"] *):not([class*="bg-gradient-"]):not([class*="bg-gradient-"] *) {
+  color: #374151 !important;
+}
+
+html:not(.dark) .text-slate-400:not(button):not(button *):not(a[class*="bg-"]):not(a[class*="bg-"] *):not([class*="bg-gradient-"]):not([class*="bg-gradient-"] *),
+html.light .text-slate-400:not(button):not(button *):not(a[class*="bg-"]):not(a[class*="bg-"] *):not([class*="bg-gradient-"]):not([class*="bg-gradient-"] *) {
+  color: #6b7280 !important;
 }
 
 /* Ensure solid CTA buttons and colored chips ALWAYS keep crisp white text */
-button[class*="bg-sky-"],
 button[class*="bg-indigo-"],
+button[class*="bg-brand-"],
+button[class*="bg-violet-"],
 button[class*="bg-emerald-"],
 button[class*="bg-rose-"],
-a[class*="bg-sky-"],
 a[class*="bg-indigo-"],
+a[class*="bg-brand-"],
+a[class*="bg-violet-"],
 a[class*="bg-emerald-"],
 a[class*="bg-rose-"],
 .bg-gradient-to-r,
@@ -139,12 +153,14 @@ a[class*="bg-rose-"],
   color: #ffffff;
 }
 
-button[class*="bg-sky-"] *,
 button[class*="bg-indigo-"] *,
+button[class*="bg-brand-"] *,
+button[class*="bg-violet-"] *,
 button[class*="bg-emerald-"] *,
 button[class*="bg-rose-"] *,
-a[class*="bg-sky-"] *,
 a[class*="bg-indigo-"] *,
+a[class*="bg-brand-"] *,
+a[class*="bg-violet-"] *,
 a[class*="bg-emerald-"] *,
 a[class*="bg-rose-"] *,
 .bg-gradient-to-r *,

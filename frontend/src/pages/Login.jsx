@@ -52,7 +52,7 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between items-center px-4 sm:px-6 py-6 sm:py-10 relative overflow-hidden transition-colors duration-150">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col justify-between items-center px-4 sm:px-6 py-6 sm:py-10 relative overflow-hidden transition-colors duration-150">
       {/* Background glow */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
 
@@ -60,19 +60,19 @@ export default function Login() {
       <div className="w-full max-w-md flex items-center justify-between z-10 mb-4">
         <NavLink
           to="/"
-          className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-slate-900/80 hover:bg-slate-850 border border-slate-800 text-xs font-medium text-slate-300 hover:text-white transition-all shadow-sm"
+          className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-white dark:bg-slate-900/80 hover:bg-slate-100 dark:hover:bg-slate-850 border border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-all shadow-xs"
         >
-          <Home size={14} className="text-sky-400" />
+          <Home size={14} className="text-indigo-600 dark:text-indigo-400" />
           <span>Home</span>
         </NavLink>
 
         <button
           onClick={toggleTheme}
           type="button"
-          className="p-2 rounded-xl bg-slate-900/80 hover:bg-slate-850 border border-slate-800 text-slate-300 hover:text-white transition-colors cursor-pointer"
+          className="p-2 rounded-xl bg-white dark:bg-slate-900/80 hover:bg-slate-100 dark:hover:bg-slate-850 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer shadow-xs"
           title="Toggle theme"
         >
-          {theme === 'dark' ? <Sun size={16} className="text-amber-400" /> : <Moon size={16} className="text-sky-400" />}
+          {theme === 'dark' ? <Sun size={16} className="text-amber-400" /> : <Moon size={16} className="text-indigo-600" />}
         </button>
       </div>
 
@@ -80,31 +80,31 @@ export default function Login() {
         {/* Header Logo */}
         <div className="text-center mb-6">
           <NavLink to="/" className="inline-flex items-center space-x-2.5 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-sky-600/30 text-white font-black text-xl">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-700 to-indigo-500 flex items-center justify-center shadow-lg shadow-indigo-600/30 text-white font-black text-xl">
               <Database size={22} className="text-white" />
             </div>
-            <span className="font-extrabold text-2xl tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-300 bg-clip-text text-transparent">
+            <span className="font-extrabold text-2xl tracking-tight text-slate-900 dark:text-white">
               DealMemory
             </span>
           </NavLink>
-          <h2 className="text-2xl font-bold text-white tracking-tight">Welcome back</h2>
-          <p className="text-xs text-slate-400 mt-1">
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Welcome back</h2>
+          <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
             Access your isolated deal intelligence and Hindsight memory bank.
           </p>
         </div>
 
         {/* Card */}
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-2xl backdrop-blur relative">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 sm:p-8 shadow-xl backdrop-blur relative">
           {error && (
-            <div className="mb-5 p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center space-x-2.5 animate-fade-in">
-              <AlertCircle size={16} className="text-rose-400 flex-shrink-0" />
+            <div className="mb-5 p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-700 dark:text-rose-300 text-xs flex items-center space-x-2.5 animate-fade-in">
+              <AlertCircle size={16} className="text-rose-500 dark:text-rose-400 flex-shrink-0" />
               <span>{error}</span>
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                 Work Email Address
               </label>
               <div className="relative">
@@ -115,14 +115,14 @@ export default function Login() {
                   placeholder="alex@enterprise.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-3.5 py-2.5 text-sm text-white placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
+                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl pl-10 pr-3.5 py-2.5 text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
                 />
               </div>
             </div>
 
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="block text-xs font-semibold text-slate-300">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
                   Password
                 </label>
               </div>
@@ -134,12 +134,12 @@ export default function Login() {
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-10 py-2.5 text-sm text-white placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
+                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl pl-10 pr-10 py-2.5 text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-200 cursor-pointer p-0.5"
+                  className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 cursor-pointer p-0.5"
                   title={showPassword ? 'Hide password' : 'Show password'}
                 >
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -150,7 +150,7 @@ export default function Login() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full mt-2 py-3 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-sky-600 hover:from-indigo-500 hover:to-sky-500 text-white font-bold text-sm shadow-lg shadow-indigo-600/25 transition-all flex items-center justify-center space-x-2 disabled:opacity-50 cursor-pointer"
+              className="w-full mt-2 py-3 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm shadow-lg shadow-indigo-600/25 transition-all flex items-center justify-center space-x-2 disabled:opacity-50 cursor-pointer"
             >
               {loading ? (
                 <>
@@ -166,22 +166,22 @@ export default function Login() {
             </button>
           </form>
 
-          <div className="mt-6 text-center text-xs text-slate-400">
+          <div className="mt-6 text-center text-xs text-slate-500 dark:text-slate-400">
             Don't have an account?{' '}
-            <NavLink to="/register" className="text-indigo-400 hover:text-indigo-300 font-semibold underline-offset-2 hover:underline">
+            <NavLink to="/register" className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 dark:hover:text-indigo-300 font-semibold underline-offset-2 hover:underline">
               Create an account
             </NavLink>
           </div>
         </div>
 
-        <div className="mt-6 text-center text-[11px] text-slate-400 flex items-center justify-center space-x-1.5">
-          <ShieldCheck size={14} className="text-emerald-400" />
+        <div className="mt-6 text-center text-[11px] text-slate-500 dark:text-slate-400 flex items-center justify-center space-x-1.5">
+          <ShieldCheck size={14} className="text-emerald-500 dark:text-emerald-400" />
           <span>Encrypted sessions with JWT authentication</span>
         </div>
       </div>
 
       {/* Footer copyright */}
-      <div className="text-[11px] text-slate-400 text-center z-10 pt-4">
+      <div className="text-[11px] text-slate-500 dark:text-slate-400 text-center z-10 pt-4">
         DealMemory • Powered by Hindsight by Vectorize
       </div>
     </div>

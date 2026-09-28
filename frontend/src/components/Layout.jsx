@@ -116,28 +116,23 @@ export default function Layout() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col transition-colors duration-150">
       {/* Top Header Floating Island with top margin */}
-      <div className="pt-2.5 sm:pt-4 px-3 sm:px-6 pb-2 sticky top-0 z-40 bg-slate-50/80 dark:bg-slate-950/80 backdrop-blur-md">
-        <header className="h-16 border border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-2xl px-4 sm:px-6 flex items-center justify-between shadow-sm dark:shadow-xl dark:shadow-black/20">
-          <div className="flex items-center space-x-3">
-            <NavLink to="/dashboard" className="flex items-center space-x-2.5">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-700 to-indigo-500 flex items-center justify-center shadow-lg shadow-indigo-600/20 text-white font-black text-lg">
-                <Database size={19} className="text-white" />
+      <div className="pt-2 sm:pt-4 px-2.5 sm:px-6 pb-2 sticky top-0 z-40 bg-slate-50/80 dark:bg-slate-950/80 backdrop-blur-md">
+        <header className="h-14 sm:h-16 border border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-2xl px-3 sm:px-6 flex items-center justify-between shadow-sm dark:shadow-xl dark:shadow-black/20">
+          <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-shrink-0">
+            <NavLink to="/dashboard" className="flex items-center space-x-2 sm:space-x-2.5 flex-shrink-0">
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-indigo-700 to-indigo-500 flex items-center justify-center shadow-md shadow-indigo-600/20 text-white font-black text-base sm:text-lg flex-shrink-0">
+                <Database size={18} className="text-white" />
               </div>
-            <div>
-              <div className="flex items-center space-x-2">
-                <span className="font-bold text-lg tracking-tight text-slate-900 dark:text-white">
+              <div className="flex items-center space-x-1.5 sm:space-x-2">
+                <span className="font-bold text-base sm:text-lg tracking-tight text-slate-900 dark:text-white whitespace-nowrap">
                   DealMemory
                 </span>
-                <span className="text-[10px] uppercase tracking-wider font-semibold px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
+                <span className="hidden sm:inline-block text-[10px] uppercase tracking-wider font-semibold px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
                   Hindsight
                 </span>
               </div>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 hidden sm:block">
-                AI Relationship Intelligence for B2B Sales
-              </p>
-            </div>
-          </NavLink>
-        </div>
+            </NavLink>
+          </div>
 
         {/* Global Search & Active Deal indicator */}
         <div className="hidden lg:flex items-center space-x-3 bg-slate-100 dark:bg-slate-800/80 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700/80 text-xs text-slate-600 dark:text-slate-400">
@@ -148,115 +143,117 @@ export default function Layout() {
           </span>
         </div>
 
-        {/* Right side: Hindsight status, Theme toggle, User Profile */}
-        <div className="flex items-center space-x-2 sm:space-x-3">
-          {/* Hindsight connection badge */}
-          <div className="hidden sm:flex items-center space-x-2 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-3 py-1 rounded-full text-xs">
-            {hindsightStatus === 'connected' ? (
-              <span className="flex items-center space-x-1.5 text-emerald-600 dark:text-emerald-400 font-semibold">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span>Hindsight Connected</span>
-              </span>
-            ) : hindsightStatus === 'offline' ? (
-              <span className="flex items-center space-x-1.5 text-rose-600 dark:text-rose-400 font-semibold">
-                <span className="w-2 h-2 rounded-full border border-rose-500" />
-                <span>Offline</span>
-              </span>
-            ) : (
-              <span className="flex items-center space-x-1.5 text-amber-600 dark:text-amber-400 font-semibold">
-                <span className="w-2 h-2 rounded-full border border-amber-500 animate-spin" />
-                <span>Connecting...</span>
-              </span>
-            )}
-          </div>
 
-          {/* Theme Toggle Button */}
-          <button
-            onClick={toggleTheme}
-            title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
-            className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors border border-slate-200 dark:border-slate-700/60 cursor-pointer shadow-xs"
-          >
-            {theme === 'dark' ? <Sun size={17} className="text-amber-400" /> : <Moon size={17} className="text-indigo-600" />}
-          </button>
+          {/* Right side: Hindsight status, Theme toggle, User Profile */}
+          <div className="flex items-center space-x-2 flex-shrink-0">
+            {/* Hindsight connection badge */}
+            <div className="hidden sm:flex items-center space-x-2 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-3 py-1 rounded-full text-xs">
+              {hindsightStatus === 'connected' ? (
+                <span className="flex items-center space-x-1.5 text-emerald-600 dark:text-emerald-400 font-semibold">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span>Hindsight Connected</span>
+                </span>
+              ) : hindsightStatus === 'offline' ? (
+                <span className="flex items-center space-x-1.5 text-rose-600 dark:text-rose-400 font-semibold">
+                  <span className="w-2 h-2 rounded-full border border-rose-500" />
+                  <span>Offline</span>
+                </span>
+              ) : (
+                <span className="flex items-center space-x-1.5 text-amber-600 dark:text-amber-400 font-semibold">
+                  <span className="w-2 h-2 rounded-full border border-amber-500 animate-spin" />
+                  <span>Connecting...</span>
+                </span>
+              )}
+            </div>
 
-          {/* User Profile dropdown menu */}
-          <div className="relative">
+            {/* Theme Toggle Button */}
             <button
-              onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-              className="flex items-center space-x-2 p-1 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+              onClick={toggleTheme}
+              title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+              className="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors border border-slate-200 dark:border-slate-700/60 cursor-pointer shadow-xs flex-shrink-0"
             >
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-600 to-indigo-800 flex items-center justify-center font-bold text-xs text-white shadow-sm">
-                {userInitials}
-              </div>
-              <div className="hidden md:block text-left text-xs">
-                <div className="font-semibold text-slate-800 dark:text-slate-200 truncate max-w-[120px]">{user?.name || 'User'}</div>
-                <div className="text-[10px] text-slate-500 dark:text-slate-400">{user?.role || 'AE'}</div>
-              </div>
+              {theme === 'dark' ? <Sun size={17} className="text-amber-400" /> : <Moon size={17} className="text-indigo-600" />}
             </button>
 
-            {userDropdownOpen && (
-              <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl py-2 z-50 text-xs animate-fade-in">
-                <div className="px-4 py-2 border-b border-slate-100 dark:border-slate-800">
-                  <div className="font-bold text-slate-900 dark:text-white text-sm">{user?.name || 'Account'}</div>
-                  <div className="text-slate-500 dark:text-slate-400 truncate">{user?.email}</div>
-                  <div className="text-[10px] text-indigo-600 dark:text-indigo-400 font-semibold mt-0.5">{user?.company || 'Personal Workspace'}</div>
+            {/* User Profile dropdown menu with matching dimensions and contained bounds */}
+            <div className="relative flex-shrink-0">
+              <button
+                onClick={() => setUserDropdownOpen(!userDropdownOpen)}
+                className="h-9 px-1.5 sm:px-2 flex items-center space-x-1.5 rounded-xl bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700/60 transition-colors cursor-pointer shadow-xs flex-shrink-0"
+                title="Account menu"
+              >
+                <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-indigo-600 to-indigo-800 flex items-center justify-center font-bold text-[11px] text-white shadow-xs flex-shrink-0">
+                  {userInitials}
                 </div>
-                <div className="py-1">
-                  <button
-                    onClick={openEditProfile}
-                    className="w-full flex items-center space-x-2 px-4 py-2 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white cursor-pointer"
-                  >
-                    <User size={14} className="text-indigo-500 dark:text-indigo-400" />
-                    <span>Edit Profile</span>
-                  </button>
-                  <button
-                    onClick={() => {
-                      toggleTheme();
-                      setUserDropdownOpen(false);
-                    }}
-                    className="w-full flex items-center justify-between px-4 py-2 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white cursor-pointer"
-                  >
-                    <span className="flex items-center space-x-2">
-                      {theme === 'dark' ? <Sun size={14} className="text-amber-400" /> : <Moon size={14} className="text-indigo-600" />}
-                      <span>Theme</span>
-                    </span>
-                    <span className="capitalize text-slate-500 dark:text-slate-400 text-[11px] font-semibold">{theme}</span>
-                  </button>
-                  <NavLink
-                    to="/history"
-                    onClick={() => setUserDropdownOpen(false)}
-                    className="flex items-center space-x-2 px-4 py-2 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white"
-                  >
-                    <Clock size={14} />
-                    <span>My Activity History</span>
-                  </NavLink>
+                <div className="hidden md:block text-left text-xs pr-1">
+                  <div className="font-semibold text-slate-800 dark:text-slate-200 truncate max-w-[100px] leading-tight">{user?.name || 'User'}</div>
+                  <div className="text-[10px] text-slate-500 dark:text-slate-400 leading-tight">{user?.role || 'AE'}</div>
                 </div>
-                <div className="pt-1 border-t border-slate-100 dark:border-slate-800">
-                  <button
-                    onClick={() => {
-                      setUserDropdownOpen(false);
-                      handleLogout();
-                    }}
-                    className="w-full flex items-center space-x-2 px-4 py-2 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 font-semibold cursor-pointer"
-                  >
-                    <LogOut size={14} />
-                    <span>Sign Out</span>
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
+              </button>
 
-          {/* Direct Top Nav Sign Out Button (Desktop only, mobile has bottom nav logout) */}
-          <button
-            onClick={handleLogout}
-            title="Sign Out"
-            className="hidden sm:flex items-center space-x-1.5 px-3 py-2 rounded-xl border border-rose-200 dark:border-rose-500/30 bg-rose-50 dark:bg-rose-500/10 hover:bg-rose-100 dark:hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-semibold transition-all cursor-pointer shadow-xs active:scale-95 whitespace-nowrap"
-          >
-            <LogOut size={15} />
-            <span>Sign Out</span>
-          </button>
-        </div>
+              {userDropdownOpen && (
+                <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl py-2 z-50 text-xs animate-fade-in">
+                  <div className="px-4 py-2 border-b border-slate-100 dark:border-slate-800">
+                    <div className="font-bold text-slate-900 dark:text-white text-sm">{user?.name || 'Account'}</div>
+                    <div className="text-slate-500 dark:text-slate-400 truncate">{user?.email}</div>
+                    <div className="text-[10px] text-indigo-600 dark:text-indigo-400 font-semibold mt-0.5">{user?.company || 'Personal Workspace'}</div>
+                  </div>
+                  <div className="py-1">
+                    <button
+                      onClick={openEditProfile}
+                      className="w-full flex items-center space-x-2 px-4 py-2 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white cursor-pointer"
+                    >
+                      <User size={14} className="text-indigo-500 dark:text-indigo-400" />
+                      <span>Edit Profile</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        toggleTheme();
+                        setUserDropdownOpen(false);
+                      }}
+                      className="w-full flex items-center justify-between px-4 py-2 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white cursor-pointer"
+                    >
+                      <span className="flex items-center space-x-2">
+                        {theme === 'dark' ? <Sun size={14} className="text-amber-400" /> : <Moon size={14} className="text-indigo-600" />}
+                        <span>Theme</span>
+                      </span>
+                      <span className="capitalize text-slate-500 dark:text-slate-400 text-[11px] font-semibold">{theme}</span>
+                    </button>
+                    <NavLink
+                      to="/history"
+                      onClick={() => setUserDropdownOpen(false)}
+                      className="flex items-center space-x-2 px-4 py-2 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white"
+                    >
+                      <Clock size={14} />
+                      <span>My Activity History</span>
+                    </NavLink>
+                  </div>
+                  <div className="pt-1 border-t border-slate-100 dark:border-slate-800">
+                    <button
+                      onClick={() => {
+                        setUserDropdownOpen(false);
+                        handleLogout();
+                      }}
+                      className="w-full flex items-center space-x-2 px-4 py-2 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 font-semibold cursor-pointer"
+                    >
+                      <LogOut size={14} />
+                      <span>Sign Out</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Direct Top Nav Sign Out Button (Desktop only, mobile has bottom nav logout) */}
+            <button
+              onClick={handleLogout}
+              title="Sign Out"
+              className="hidden sm:flex items-center space-x-1.5 px-3 py-2 rounded-xl border border-rose-200 dark:border-rose-500/30 bg-rose-50 dark:bg-rose-500/10 hover:bg-rose-100 dark:hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-semibold transition-all cursor-pointer shadow-xs active:scale-95 whitespace-nowrap"
+            >
+              <LogOut size={15} />
+              <span>Sign Out</span>
+            </button>
+          </div>
         </header>
       </div>
 
@@ -344,77 +341,79 @@ export default function Layout() {
       {/* ========================================================================= */}
       {/* FIXED MOBILE BOTTOM NAVIGATION BAR (Home, Deal, Memory, AI, More, Logout) */}
       {/* ========================================================================= */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-900/95 border-t border-slate-200 dark:border-slate-800 backdrop-blur-lg px-1.5 py-1.5 flex items-center justify-around shadow-2xl safe-area-bottom">
-        <NavLink
-          to="/dashboard"
-          onClick={handleNavScrollToTop}
-          className={({ isActive }) =>
-            `flex flex-col items-center justify-center py-1 px-1.5 rounded-lg text-[10px] font-medium transition-colors ${
-              isActive ? 'text-indigo-600 dark:text-indigo-400 font-bold' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
-            }`
-          }
-        >
-          <LayoutDashboard size={19} className="mb-0.5" />
-          <span>Home</span>
-        </NavLink>
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-900/95 border-t border-slate-200 dark:border-slate-800 backdrop-blur-lg shadow-2xl safe-area-bottom">
+        <div className="grid grid-cols-6 w-full max-w-lg mx-auto px-1 py-1.5 items-center">
+          <NavLink
+            to="/dashboard"
+            onClick={handleNavScrollToTop}
+            className={({ isActive }) =>
+              `flex flex-col items-center justify-center py-1 px-0.5 rounded-lg text-[10px] font-medium transition-colors text-center ${
+                isActive ? 'text-indigo-600 dark:text-indigo-400 font-bold' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+              }`
+            }
+          >
+            <LayoutDashboard size={18} className="mb-0.5" />
+            <span className="truncate w-full">Home</span>
+          </NavLink>
 
-        <NavLink
-          to="/deal"
-          onClick={handleNavScrollToTop}
-          className={({ isActive }) =>
-            `flex flex-col items-center justify-center py-1 px-1.5 rounded-lg text-[10px] font-medium transition-colors ${
-              isActive ? 'text-indigo-600 dark:text-indigo-400 font-bold' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
-            }`
-          }
-        >
-          <Building2 size={19} className="mb-0.5" />
-          <span>Deal</span>
-        </NavLink>
+          <NavLink
+            to="/deal"
+            onClick={handleNavScrollToTop}
+            className={({ isActive }) =>
+              `flex flex-col items-center justify-center py-1 px-0.5 rounded-lg text-[10px] font-medium transition-colors text-center ${
+                isActive ? 'text-indigo-600 dark:text-indigo-400 font-bold' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+              }`
+            }
+          >
+            <Building2 size={18} className="mb-0.5" />
+            <span className="truncate w-full">Deal</span>
+          </NavLink>
 
-        <NavLink
-          to="/timeline"
-          onClick={handleNavScrollToTop}
-          className={({ isActive }) =>
-            `flex flex-col items-center justify-center py-1 px-1.5 rounded-lg text-[10px] font-medium transition-colors ${
-              isActive ? 'text-indigo-600 dark:text-indigo-400 font-bold' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
-            }`
-          }
-        >
-          <GitBranch size={19} className="mb-0.5" />
-          <span>Memory</span>
-        </NavLink>
+          <NavLink
+            to="/timeline"
+            onClick={handleNavScrollToTop}
+            className={({ isActive }) =>
+              `flex flex-col items-center justify-center py-1 px-0.5 rounded-lg text-[10px] font-medium transition-colors text-center ${
+                isActive ? 'text-indigo-600 dark:text-indigo-400 font-bold' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+              }`
+            }
+          >
+            <GitBranch size={18} className="mb-0.5" />
+            <span className="truncate w-full">Memory</span>
+          </NavLink>
 
-        <NavLink
-          to="/agent"
-          onClick={handleNavScrollToTop}
-          className={({ isActive }) =>
-            `flex flex-col items-center justify-center py-1 px-1.5 rounded-lg text-[10px] font-medium transition-colors ${
-              isActive ? 'text-indigo-600 dark:text-indigo-400 font-bold' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
-            }`
-          }
-        >
-          <Bot size={19} className="mb-0.5" />
-          <span>AI</span>
-        </NavLink>
+          <NavLink
+            to="/agent"
+            onClick={handleNavScrollToTop}
+            className={({ isActive }) =>
+              `flex flex-col items-center justify-center py-1 px-0.5 rounded-lg text-[10px] font-medium transition-colors text-center ${
+                isActive ? 'text-indigo-600 dark:text-indigo-400 font-bold' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+              }`
+            }
+          >
+            <Bot size={18} className="mb-0.5" />
+            <span className="truncate w-full">AI</span>
+          </NavLink>
 
-        <button
-          onClick={() => setMobileMoreOpen(true)}
-          className={`flex flex-col items-center justify-center py-1 px-1.5 rounded-lg text-[10px] font-medium transition-colors cursor-pointer ${
-            mobileMoreOpen ? 'text-indigo-600 dark:text-indigo-400 font-bold' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
-          }`}
-        >
-          <MoreHorizontal size={19} className="mb-0.5" />
-          <span>More</span>
-        </button>
+          <button
+            onClick={() => setMobileMoreOpen(true)}
+            className={`flex flex-col items-center justify-center py-1 px-0.5 rounded-lg text-[10px] font-medium transition-colors cursor-pointer text-center ${
+              mobileMoreOpen ? 'text-indigo-600 dark:text-indigo-400 font-bold' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+            }`}
+          >
+            <MoreHorizontal size={18} className="mb-0.5" />
+            <span className="truncate w-full">More</span>
+          </button>
 
-        <button
-          onClick={handleLogout}
-          title="Sign Out"
-          className="flex flex-col items-center justify-center py-1 px-1.5 rounded-lg text-[10px] font-semibold text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 transition-colors cursor-pointer"
-        >
-          <LogOut size={19} className="mb-0.5 text-rose-500 dark:text-rose-400" />
-          <span>Logout</span>
-        </button>
+          <button
+            onClick={handleLogout}
+            title="Sign Out"
+            className="flex flex-col items-center justify-center py-1 px-0.5 rounded-lg text-[10px] font-semibold text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 transition-colors cursor-pointer text-center"
+          >
+            <LogOut size={18} className="mb-0.5 text-rose-500 dark:text-rose-400" />
+            <span className="truncate w-full">Logout</span>
+          </button>
+        </div>
       </nav>
 
       {/* ========================================================================= */}

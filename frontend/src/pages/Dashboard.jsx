@@ -141,7 +141,7 @@ export default function Dashboard() {
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 flex flex-col justify-between shadow-sm">
           <div className="flex items-center justify-between text-slate-400 text-xs font-medium">
             <span>Active Deals</span>
-            <div className="w-7 h-7 rounded-lg bg-sky-500/10 text-sky-400 flex items-center justify-center">
+            <div className="w-7 h-7 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
               <Building2 size={15} />
             </div>
           </div>
@@ -207,7 +207,7 @@ export default function Dashboard() {
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
             <div className="space-y-3">
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-sky-600 flex items-center justify-center font-black text-white text-base shadow-sm">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-700 to-indigo-500 flex items-center justify-center font-black text-white text-base shadow-sm">
                   AC
                 </div>
                 <div>
@@ -272,7 +272,7 @@ export default function Dashboard() {
                 to="/agent"
                 className="w-full text-center px-4 py-2 rounded-xl bg-slate-850 hover:bg-slate-800 border border-slate-750 text-slate-300 text-xs font-medium transition-all flex items-center justify-center space-x-1.5"
               >
-                <Bot size={13} className="text-sky-400" />
+                <Bot size={13} className="text-indigo-600 dark:text-indigo-400" />
                 <span>Ask Agent</span>
               </Link>
             </div>
@@ -327,7 +327,7 @@ export default function Dashboard() {
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-left">
           <div className="p-3 rounded-xl bg-slate-950 border border-slate-850">
-            <div className="text-[10px] font-bold text-sky-400 uppercase">1. Remember</div>
+            <div className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase">1. Remember</div>
             <p className="text-xs text-slate-300 mt-0.5">Hindsight stores Sarah's API mandate and David's security doubts.</p>
           </div>
           <div className="p-3 rounded-xl bg-slate-950 border border-rose-500/20 bg-rose-500/5">
