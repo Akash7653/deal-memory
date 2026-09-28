@@ -36,7 +36,13 @@ export default function History() {
       setActivities(histData.activities || []);
       setDeals(dealsData.deals || []);
     } catch (err) {
-      setError(err.message || 'Failed to load activity history');
+      const msg = err.message || '';
+      if (msg.includes('User account not found') || msg.includes('Authentication required') || msg.includes('Invalid or expired')) {
+        localStorage.removeItem('dealmemory_token');
+        setError('Your session has expired or the user account was reset. Please sign in again.');
+      } else {
+        setError(msg || 'Failed to load activity history');
+      }
     } finally {
       setLoading(false);
     }
@@ -210,8 +216,25 @@ export default function History() {
           <p className="text-xs text-slate-500 dark:text-slate-400">Loading your activity history...</p>
         </div>
       ) : error ? (
-        <div className="bg-rose-50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-500/30 p-4 rounded-xl text-rose-700 dark:text-rose-300 text-xs">
-          {error}
+        <div className="bg-rose-50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-500/30 p-6 rounded-2xl text-center space-y-3.5 shadow-xs">
+          <p className="text-xs sm:text-sm text-rose-700 dark:text-rose-300 font-semibold">{error}</p>
+          <div className="flex items-center justify-center gap-3 pt-1">
+            <button
+              onClick={() => {
+                localStorage.removeItem('dealmemory_token');
+                window.location.href = '/login';
+              }}
+              className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-md shadow-purple-600/20 cursor-pointer active:scale-95"
+            >
+              Sign In to Refresh
+            </button>
+            <button
+              onClick={loadData}
+              className="px-4 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-bold cursor-pointer active:scale-95"
+            >
+              Retry
+            </button>
+          </div>
         </div>
       ) : activities.length === 0 ? (
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-12 text-center space-y-3 shadow-sm">

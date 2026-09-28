@@ -129,6 +129,9 @@ export async function fetchHistory(activityType = 'all', dealId = 'all', limit =
     headers: getAuthHeaders(),
   });
   if (!res.ok) {
+    if (res.status === 401) {
+      localStorage.removeItem('dealmemory_token');
+    }
     const err = await res.json().catch(() => ({}));
     throw new Error(err.detail || 'Failed to fetch user history');
   }
