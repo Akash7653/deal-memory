@@ -48,6 +48,30 @@ if ASSETS_DIR.exists():
     app.mount("/assets", StaticFiles(directory=str(ASSETS_DIR)), name="assets")
 
 
+@app.middleware("http")
+async def spa_fallback_middleware(request, call_next):
+    accept_header = request.headers.get("accept", "")
+    auth_header = request.headers.get("authorization", "")
+    path = request.url.path
+
+    # If browser is requesting an HTML page directly without auth header:
+    if request.method == "GET" and "text/html" in accept_header:
+        if not path.startswith("/assets/") and not path.startswith("/api/") and not auth_header:
+            index_file = DIST_DIR / "index.html"
+            if index_file.exists():
+                return FileResponse(index_file)
+
+    response = await call_next(request)
+
+    # If endpoint returned 404 or 401 on a browser GET page navigation, serve SPA index.html
+    if response.status_code in (404, 401) and request.method == "GET" and "text/html" in accept_header:
+        index_file = DIST_DIR / "index.html"
+        if index_file.exists():
+            return FileResponse(index_file)
+
+    return response
+
+
 @app.get("/")
 async def root():
     index_file = DIST_DIR / "index.html"

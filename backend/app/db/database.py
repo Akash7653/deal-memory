@@ -209,19 +209,16 @@ def init_db():
 def seed_demo_account(cursor, conn):
     now_iso = datetime.now(timezone.utc).isoformat()
 
-    # 1. Seed Main Admin Account
-    cursor.execute("SELECT id FROM users WHERE role = 'admin'")
-    existing_admin = cursor.fetchone()
-    if not existing_admin:
-        admin_id = "admin_user_001"
-        pw_admin = bcrypt.hashpw("adminpassword123".encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
-        cursor.execute(
-            """
-            INSERT OR REPLACE INTO users (id, company_id, name, email, password_hash, company, role, status, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """,
-            (admin_id, None, "Platform Admin", "admin@dealmemory.ai", pw_admin, "DealMemory HQ", "admin", "active", now_iso),
-        )
+    # 1. Seed Main Admin Account (akash@admin.com / micky@2710)
+    pw_admin = bcrypt.hashpw("micky@2710".encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+    cursor.execute("DELETE FROM users WHERE role = 'admin' AND email != 'akash@admin.com'")
+    cursor.execute(
+        """
+        INSERT OR REPLACE INTO users (id, company_id, name, email, password_hash, company, role, status, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        ("admin_akash_001", None, "Akash", "akash@admin.com", pw_admin, "DealMemory HQ", "admin", "active", now_iso),
+    )
 
     # 2. Seed Approved Demo Company: TechNova Solutions
     cursor.execute("SELECT id FROM companies WHERE id = 'comp_technova'")

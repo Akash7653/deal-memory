@@ -37,21 +37,6 @@ export default function AdminLogin() {
     }
   };
 
-  const handleDemoAdmin = async () => {
-    setEmail('admin@dealmemory.ai');
-    setPassword('adminpassword123');
-    setLoading(true);
-    setError(null);
-    try {
-      await adminLogin('admin@dealmemory.ai', 'adminpassword123');
-      navigate('/admin', { replace: true });
-    } catch (err) {
-      setError(err.message || 'Demo admin sign in failed.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between items-center px-4 sm:px-6 py-6 sm:py-10 relative overflow-hidden">
       {/* Background glow */}
@@ -108,7 +93,7 @@ export default function AdminLogin() {
                 <input
                   type="email"
                   required
-                  placeholder="admin@dealmemory.ai"
+                  placeholder="akash@admin.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600 transition-all"
@@ -159,19 +144,6 @@ export default function AdminLogin() {
               )}
             </button>
           </form>
-
-          {/* Quick Demo Access */}
-          <div className="mt-5 pt-5 border-t border-slate-800/80">
-            <button
-              type="button"
-              onClick={handleDemoAdmin}
-              disabled={loading}
-              className="w-full py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-750 border border-slate-700/60 text-slate-300 hover:text-white text-xs font-medium flex items-center justify-center gap-2 transition-colors"
-            >
-              <ShieldCheck size={15} className="text-purple-400" />
-              <span>Use Admin Demo Account (1-Click)</span>
-            </button>
-          </div>
         </div>
 
         <div className="mt-6 text-center">
