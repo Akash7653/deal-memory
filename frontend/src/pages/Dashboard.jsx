@@ -88,12 +88,12 @@ export default function Dashboard() {
   return (
     <div className="max-w-6xl mx-auto space-y-6 sm:space-y-7 animate-fade-in">
       {/* Header Profile with dynamic greeting */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-slate-850">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-slate-200 dark:border-slate-800">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
             {getGreeting()}, {user?.name || 'Sales Leader'}
           </h1>
-          <p className="text-xs sm:text-sm text-slate-400 mt-1">
+          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1">
             Here's what needs your attention today.
           </p>
         </div>
@@ -108,7 +108,7 @@ export default function Dashboard() {
           </button>
           <Link
             to="/history"
-            className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-850 border border-slate-800 text-slate-300 hover:text-white text-xs font-medium transition-all"
+            className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-850 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white text-xs font-medium transition-all"
           >
             <Clock size={15} />
             <span>Activity History</span>
@@ -119,73 +119,73 @@ export default function Dashboard() {
       {/* Metrics Strip - Refined Visual Hierarchy, Not Clumsy Giant Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {/* Metric 1: Pipeline Value */}
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 flex flex-col justify-between shadow-sm">
-          <div className="flex items-center justify-between text-slate-400 text-xs font-medium">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 flex flex-col justify-between shadow-xs">
+          <div className="flex items-center justify-between text-slate-600 dark:text-slate-400 text-xs font-medium">
             <span>Pipeline Value</span>
-            <div className="w-7 h-7 rounded-lg bg-indigo-500/10 text-indigo-400 flex items-center justify-center">
+            <div className="w-7 h-7 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
               <DollarSign size={15} />
             </div>
           </div>
           <div className="mt-3">
-            <div className="text-xl sm:text-2xl font-black text-white tracking-tight">
+            <div className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
               ${totalPipeline.toLocaleString()}
             </div>
-            <div className="text-[11px] text-slate-400 mt-0.5 flex items-center space-x-1">
-              <span className="text-emerald-400 font-medium">Active ARR</span>
+            <div className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5 flex items-center space-x-1">
+              <span className="text-emerald-600 dark:text-emerald-400 font-semibold">Active ARR</span>
               <span>across enterprise deals</span>
             </div>
           </div>
         </div>
 
         {/* Metric 2: Active Deals */}
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 flex flex-col justify-between shadow-sm">
-          <div className="flex items-center justify-between text-slate-400 text-xs font-medium">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 flex flex-col justify-between shadow-xs">
+          <div className="flex items-center justify-between text-slate-600 dark:text-slate-400 text-xs font-medium">
             <span>Active Deals</span>
             <div className="w-7 h-7 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
               <Building2 size={15} />
             </div>
           </div>
           <div className="mt-3">
-            <div className="text-xl sm:text-2xl font-black text-white tracking-tight">
+            <div className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
               {activeDealsCount}
             </div>
-            <div className="text-[11px] text-slate-400 mt-0.5">
+            <div className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5">
               <span>{deals.filter((d) => d.stage === 'Evaluation').length || 1} in Evaluation stage</span>
             </div>
           </div>
         </div>
 
-        {/* Metric 3: Deals Needing Attention */}
-        <div className="bg-slate-900 border border-amber-500/30 rounded-2xl p-4 sm:p-5 flex flex-col justify-between shadow-sm bg-amber-500/5">
-          <div className="flex items-center justify-between text-amber-300 text-xs font-medium">
+        {/* Metric 3: Deals Needing Attention - Amber */}
+        <div className="bg-amber-50/50 dark:bg-slate-900 border border-amber-300 dark:border-amber-500/30 rounded-2xl p-4 sm:p-5 flex flex-col justify-between shadow-xs">
+          <div className="flex items-center justify-between text-amber-800 dark:text-amber-300 text-xs font-bold">
             <span>Needs Attention</span>
-            <div className="w-7 h-7 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center">
+            <div className="w-7 h-7 rounded-lg bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center">
               <AlertTriangle size={15} />
             </div>
           </div>
           <div className="mt-3">
-            <div className="text-xl sm:text-2xl font-black text-amber-200 tracking-tight">
+            <div className="text-xl sm:text-2xl font-black text-amber-900 dark:text-amber-200 tracking-tight">
               {dealsNeedingAttention} Deal
             </div>
-            <div className="text-[11px] text-amber-300/80 mt-0.5">
+            <div className="text-[11px] text-amber-800 dark:text-amber-300/80 mt-0.5 font-medium">
               <span>ACME Corp • Stalled on ROI</span>
             </div>
           </div>
         </div>
 
-        {/* Metric 4: Learned Insights */}
-        <div className="bg-slate-900 border border-emerald-500/30 rounded-2xl p-4 sm:p-5 flex flex-col justify-between shadow-sm bg-emerald-500/5">
-          <div className="flex items-center justify-between text-emerald-300 text-xs font-medium">
+        {/* Metric 4: Learned Insights - Emerald */}
+        <div className="bg-emerald-50/50 dark:bg-slate-900 border border-emerald-300 dark:border-emerald-500/30 rounded-2xl p-4 sm:p-5 flex flex-col justify-between shadow-xs">
+          <div className="flex items-center justify-between text-emerald-800 dark:text-emerald-300 text-xs font-bold">
             <span>Learned Insights</span>
-            <div className="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+            <div className="w-7 h-7 rounded-lg bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
               <Lightbulb size={15} />
             </div>
           </div>
           <div className="mt-3">
-            <div className="text-xl sm:text-2xl font-black text-emerald-200 tracking-tight">
+            <div className="text-xl sm:text-2xl font-black text-emerald-900 dark:text-emerald-200 tracking-tight">
               {learnedInsightsCount} Insights
             </div>
-            <div className="text-[11px] text-emerald-300/80 mt-0.5">
+            <div className="text-[11px] text-emerald-800 dark:text-emerald-300/80 mt-0.5 font-medium">
               <span>Hindsight outcome reflection</span>
             </div>
           </div>
@@ -195,15 +195,15 @@ export default function Dashboard() {
       {/* Priority Deals Section */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-base font-bold text-white flex items-center space-x-2">
-            <Shield size={16} className="text-indigo-400" />
+          <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center space-x-2">
+            <Shield size={16} className="text-indigo-600 dark:text-indigo-400" />
             <span>Priority Deals Requiring Action</span>
           </h2>
-          <span className="text-xs text-slate-400">Grounded in Hindsight relationship memory</span>
+          <span className="text-xs text-slate-500 dark:text-slate-400">Grounded in Hindsight relationship memory</span>
         </div>
 
         {/* ACME Corp Flagship Card */}
-        <div className="bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-2xl p-5 sm:p-6 transition-all shadow-md">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 rounded-2xl p-5 sm:p-6 transition-all shadow-sm">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
             <div className="space-y-3">
               <div className="flex items-center space-x-3">
@@ -212,15 +212,15 @@ export default function Dashboard() {
                 </div>
                 <div>
                   <div className="flex items-center space-x-2.5">
-                    <h3 className="text-lg font-bold text-white">ACME Corp</h3>
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-semibold">
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">ACME Corp</h3>
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-500/20 font-semibold">
                       Evaluation
                     </span>
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-semibold">
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 font-semibold">
                       78% Health
                     </span>
                   </div>
-                  <div className="text-xs text-slate-400 mt-0.5">
+                  <div className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
                     $120,000 ARR • Key Champion: Sarah (VP Sales) • Blocker: David (CTO)
                   </div>
                 </div>
@@ -228,24 +228,24 @@ export default function Dashboard() {
 
               {/* Risk & Next Action Badges */}
               <div className="grid sm:grid-cols-2 gap-3 pt-1">
-                <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-rose-400 flex items-center space-x-1.5">
+                <div className="p-3 rounded-xl bg-rose-50/50 dark:bg-slate-950 border border-rose-200 dark:border-slate-800 space-y-1">
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-rose-700 dark:text-rose-400 flex items-center space-x-1.5">
                     <AlertTriangle size={12} />
                     <span>Current Risk</span>
                   </div>
-                  <div className="text-xs font-semibold text-slate-200">Integration Complexity & Security</div>
-                  <p className="text-[11px] text-slate-400 leading-relaxed">
+                  <div className="text-xs font-bold text-rose-950 dark:text-slate-200">Integration Complexity & Security</div>
+                  <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
                     David (CTO) paused talks after failed 15% discount; requires proof of enterprise API architecture.
                   </p>
                 </div>
 
-                <div className="p-3 rounded-xl bg-slate-950 border border-indigo-500/30 bg-indigo-500/5 space-y-1">
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-indigo-400 flex items-center space-x-1.5">
+                <div className="p-3 rounded-xl bg-indigo-50/50 dark:bg-slate-950 border border-indigo-200 dark:border-indigo-500/30 space-y-1">
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-indigo-700 dark:text-indigo-400 flex items-center space-x-1.5">
                     <CheckCircle2 size={12} />
                     <span>Prescribed Next Action</span>
                   </div>
-                  <div className="text-xs font-semibold text-white">Prove Integration ROI • Do NOT Discount</div>
-                  <p className="text-[11px] text-slate-400 leading-relaxed">
+                  <div className="text-xs font-bold text-slate-900 dark:text-white">Prove Integration ROI • Do NOT Discount</div>
+                  <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
                     Lead next meeting with operational savings modeling for CFO Michael and architecture briefing for David.
                   </p>
                 </div>
@@ -263,14 +263,14 @@ export default function Dashboard() {
               </Link>
               <Link
                 to="/meeting-prep"
-                className="w-full text-center px-4 py-2 rounded-xl bg-slate-850 hover:bg-slate-800 border border-slate-750 text-slate-200 text-xs font-semibold transition-all flex items-center justify-center space-x-1.5"
+                className="w-full text-center px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-850 hover:bg-slate-200 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-750 text-slate-800 dark:text-slate-200 text-xs font-semibold transition-all flex items-center justify-center space-x-1.5"
               >
-                <Sparkles size={13} className="text-indigo-400" />
+                <Sparkles size={13} className="text-indigo-600 dark:text-indigo-400" />
                 <span>Prepare Brief</span>
               </Link>
               <Link
                 to="/agent"
-                className="w-full text-center px-4 py-2 rounded-xl bg-slate-850 hover:bg-slate-800 border border-slate-750 text-slate-300 text-xs font-medium transition-all flex items-center justify-center space-x-1.5"
+                className="w-full text-center px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-850 hover:bg-slate-200 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-750 text-slate-700 dark:text-slate-300 text-xs font-medium transition-all flex items-center justify-center space-x-1.5"
               >
                 <Bot size={13} className="text-indigo-600 dark:text-indigo-400" />
                 <span>Ask Agent</span>
@@ -283,27 +283,27 @@ export default function Dashboard() {
         {deals.filter((d) => d.id !== 'acme').map((deal) => (
           <div
             key={deal.id}
-            className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 flex items-center justify-between gap-4"
+            className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 flex items-center justify-between gap-4 shadow-2xs"
           >
             <div className="flex items-center space-x-3">
-              <div className="w-9 h-9 rounded-xl bg-slate-800 text-slate-300 flex items-center justify-center font-bold text-xs">
+              <div className="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-slate-800 text-indigo-700 dark:text-slate-300 flex items-center justify-center font-bold text-xs">
                 {deal.company_name.slice(0, 2).toUpperCase()}
               </div>
               <div>
                 <div className="flex items-center space-x-2">
-                  <h4 className="text-sm font-bold text-white">{deal.company_name}</h4>
-                  <span className="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">
+                  <h4 className="text-sm font-bold text-slate-900 dark:text-white">{deal.company_name}</h4>
+                  <span className="text-[10px] px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 font-semibold">
                     {deal.stage}
                   </span>
                 </div>
-                <div className="text-xs text-slate-400 mt-0.5">
+                <div className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
                   ${(deal.deal_value || 0).toLocaleString()} ARR • Health: {deal.relationship_health || 80}%
                 </div>
               </div>
             </div>
             <Link
               to="/add-interaction"
-              className="text-xs font-semibold text-indigo-400 hover:text-indigo-300 flex items-center space-x-1"
+              className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 flex items-center space-x-1"
             >
               <span>Add Notes</span>
               <ArrowRight size={13} />
@@ -313,34 +313,34 @@ export default function Dashboard() {
       </div>
 
       {/* The Hindsight Intelligence Loop Banner */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-3">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-3 shadow-xs">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2 text-xs font-bold uppercase tracking-wider text-indigo-400">
+          <div className="flex items-center space-x-2 text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
             <BrainCircuit size={15} />
             <span>The Continuous Relationship Intelligence Loop</span>
           </div>
-          <Link to="/timeline" className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold flex items-center space-x-1">
+          <Link to="/timeline" className="text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 font-bold flex items-center space-x-1">
             <span>Explore Timeline</span>
             <ChevronRight size={14} />
           </Link>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-left">
-          <div className="p-3 rounded-xl bg-slate-950 border border-slate-850">
-            <div className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase">1. Remember</div>
-            <p className="text-xs text-slate-300 mt-0.5">Hindsight stores Sarah's API mandate and David's security doubts.</p>
+          <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-850">
+            <div className="text-[10px] font-bold text-indigo-700 dark:text-indigo-400 uppercase">1. Remember</div>
+            <p className="text-xs text-slate-700 dark:text-slate-300 mt-0.5">Hindsight stores Sarah's API mandate and David's security doubts.</p>
           </div>
-          <div className="p-3 rounded-xl bg-slate-950 border border-rose-500/20 bg-rose-500/5">
-            <div className="text-[10px] font-bold text-rose-400 uppercase">2. Outcome</div>
-            <p className="text-xs text-rose-200 mt-0.5">15% discount rejected by CFO Michael as unproven ROI.</p>
+          <div className="p-3 rounded-xl bg-rose-50/70 dark:bg-slate-950 border border-rose-200 dark:border-rose-500/20">
+            <div className="text-[10px] font-bold text-rose-700 dark:text-rose-400 uppercase">2. Outcome</div>
+            <p className="text-xs text-rose-900 dark:text-rose-200 mt-0.5 font-medium">15% discount rejected by CFO Michael as unproven ROI.</p>
           </div>
-          <div className="p-3 rounded-xl bg-slate-950 border border-indigo-500/20 bg-indigo-500/5">
-            <div className="text-[10px] font-bold text-indigo-400 uppercase">3. Learn</div>
-            <p className="text-xs text-indigo-200 mt-0.5">Price was a proxy for technical value skepticism.</p>
+          <div className="p-3 rounded-xl bg-indigo-50/70 dark:bg-slate-950 border border-indigo-200 dark:border-indigo-500/20">
+            <div className="text-[10px] font-bold text-indigo-700 dark:text-indigo-400 uppercase">3. Learn</div>
+            <p className="text-xs text-indigo-900 dark:text-indigo-200 mt-0.5 font-medium">Price was a proxy for technical value skepticism.</p>
           </div>
-          <div className="p-3 rounded-xl bg-slate-950 border border-emerald-500/20 bg-emerald-500/5">
-            <div className="text-[10px] font-bold text-emerald-400 uppercase">4. Adapt</div>
-            <p className="text-xs text-emerald-200 mt-0.5">Agent prescribes ROI business case instead of discounting.</p>
+          <div className="p-3 rounded-xl bg-emerald-50/70 dark:bg-slate-950 border border-emerald-200 dark:border-emerald-500/20">
+            <div className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase">4. Adapt</div>
+            <p className="text-xs text-emerald-900 dark:text-emerald-200 mt-0.5 font-medium">Agent prescribes ROI business case instead of discounting.</p>
           </div>
         </div>
       </div>

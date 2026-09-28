@@ -248,7 +248,7 @@ export default function Layout() {
             <button
               onClick={handleLogout}
               title="Sign Out"
-              className="hidden sm:flex items-center space-x-1.5 px-3 py-2 rounded-xl border border-rose-200 dark:border-rose-500/30 bg-rose-50 dark:bg-rose-500/10 hover:bg-rose-100 dark:hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-semibold transition-all cursor-pointer shadow-xs active:scale-95 whitespace-nowrap"
+              className="hidden sm:flex items-center space-x-1.5 px-3 py-2 rounded-xl border border-rose-300 dark:border-rose-500/30 bg-rose-50 dark:bg-rose-500/10 hover:bg-rose-100 dark:hover:bg-rose-500/20 text-rose-700 dark:text-rose-400 text-xs font-bold transition-all cursor-pointer shadow-xs active:scale-95 whitespace-nowrap"
             >
               <LogOut size={15} />
               <span>Sign Out</span>
@@ -259,10 +259,10 @@ export default function Layout() {
 
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar for Desktop */}
-        <aside className="w-64 border-r border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/60 hidden md:flex flex-col justify-between p-4 transition-colors">
+        <aside className="w-64 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 hidden md:flex flex-col justify-between p-4 transition-colors">
           <div className="space-y-6">
             <div>
-              <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-3 mb-2">
+              <div className="text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-400 px-3 mb-2">
                 Sales Navigation
               </div>
               <nav className="space-y-1">
@@ -273,10 +273,10 @@ export default function Layout() {
                       key={item.to}
                       to={item.to}
                       className={({ isActive }) =>
-                        `flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                        `flex items-center justify-between px-3 py-2.5 rounded-xl text-sm transition-all ${
                           isActive
-                            ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800/60 font-semibold'
-                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/60'
+                            ? 'bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/80 font-bold shadow-xs'
+                            : 'text-slate-700 dark:text-slate-400 hover:text-slate-950 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/60 font-medium'
                         }`
                       }
                     >
@@ -285,7 +285,7 @@ export default function Layout() {
                         <span>{item.label}</span>
                       </div>
                       {item.badge && (
-                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-slate-800 text-indigo-700 dark:text-slate-300 border border-indigo-200 dark:border-slate-700">
                           {item.badge}
                         </span>
                       )}
@@ -324,7 +324,7 @@ export default function Layout() {
 
             <button
               onClick={handleLogout}
-              className="w-full flex items-center justify-center space-x-2 py-2 px-3 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-slate-800/80 transition-colors cursor-pointer"
+              className="w-full flex items-center justify-center space-x-2 py-2 px-3 rounded-xl border border-rose-200 dark:border-slate-800 bg-rose-50/70 dark:bg-slate-900/60 text-xs font-bold text-rose-700 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-500/20 transition-colors cursor-pointer shadow-xs"
             >
               <LogOut size={14} />
               <span>Sign Out</span>
@@ -408,9 +408,9 @@ export default function Layout() {
           <button
             onClick={handleLogout}
             title="Sign Out"
-            className="flex flex-col items-center justify-center py-1 px-0.5 rounded-lg text-[10px] font-semibold text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 transition-colors cursor-pointer text-center"
+            className="flex flex-col items-center justify-center py-1 px-0.5 rounded-lg text-[10px] font-bold text-rose-700 dark:text-rose-400 hover:text-rose-800 dark:hover:text-rose-300 transition-colors cursor-pointer text-center"
           >
-            <LogOut size={18} className="mb-0.5 text-rose-500 dark:text-rose-400" />
+            <LogOut size={18} className="mb-0.5 text-rose-600 dark:text-rose-400" />
             <span className="truncate w-full">Logout</span>
           </button>
         </div>
