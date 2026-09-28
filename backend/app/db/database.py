@@ -115,7 +115,7 @@ def seed_demo_account(cursor, conn):
     if not existing:
         demo_id = "demo-user-001"
         pw_hash = bcrypt.hashpw("demopassword123".encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
-        now = datetime.utcnow().isoformat()
+        now = datetime.utcnow().isoformat() + "Z"
 
         cursor.execute(
             """
@@ -136,12 +136,12 @@ def seed_demo_account(cursor, conn):
 
         # Seed ACME sample activities
         activities = [
-            ("act_1", demo_id, "acme", "ACME Corp", "interaction", "Discovery Call with Sarah (VP Sales)", "Sarah outlined the core requirement for an API-first platform to unify sales pipeline data.", "2026-09-20T10:00:00"),
-            ("act_2", demo_id, "acme", "ACME Corp", "interaction", "Technical Evaluation with David (CTO)", "David raised critical concerns regarding integration complexity and security architecture.", "2026-09-22T14:30:00"),
-            ("act_3", demo_id, "acme", "ACME Corp", "interaction", "Commercial Review with Michael (CFO)", "Michael expressed budget pushback; pricing considered high without explicit ROI proof.", "2026-09-24T16:00:00"),
-            ("act_4", demo_id, "acme", "ACME Corp", "outcome", "Failed Strategy: 15% Upfront Discount", "Discount strategy rejected by CFO Michael. Proposal lacked quantified integration ROI.", "2026-09-26T11:15:00"),
-            ("act_5", demo_id, "acme", "ACME Corp", "learning", "Hindsight Reflection Triggered", "Extracted strategic takeaway: Price resistance is a proxy for unproven integration ROI.", "2026-09-27T09:00:00"),
-            ("act_6", demo_id, "acme", "ACME Corp", "meeting_prep", "Generated Executive Meeting Brief", "Recommended pivoting to ROI business case & addressing CTO security architecture.", "2026-09-27T17:30:00"),
+            ("act_1", demo_id, "acme", "ACME Corp", "interaction", "Discovery Call with Sarah (VP Sales)", "Sarah outlined the core requirement for an API-first platform to unify sales pipeline data.", "2026-09-20T10:00:00Z"),
+            ("act_2", demo_id, "acme", "ACME Corp", "interaction", "Technical Evaluation with David (CTO)", "David raised critical concerns regarding integration complexity and security architecture.", "2026-09-22T14:30:00Z"),
+            ("act_3", demo_id, "acme", "ACME Corp", "interaction", "Commercial Review with Michael (CFO)", "Michael expressed budget pushback; pricing considered high without explicit ROI proof.", "2026-09-24T16:00:00Z"),
+            ("act_4", demo_id, "acme", "ACME Corp", "outcome", "Failed Strategy: 15% Upfront Discount", "Discount strategy rejected by CFO Michael. Proposal lacked quantified integration ROI.", "2026-09-26T11:15:00Z"),
+            ("act_5", demo_id, "acme", "ACME Corp", "learning", "Hindsight Reflection Triggered", "Extracted strategic takeaway: Price resistance is a proxy for unproven integration ROI.", "2026-09-27T09:00:00Z"),
+            ("act_6", demo_id, "acme", "ACME Corp", "meeting_prep", "Generated Executive Meeting Brief", "Recommended pivoting to ROI business case & addressing CTO security architecture.", "2026-09-27T17:30:00Z"),
         ]
 
         for act in activities:

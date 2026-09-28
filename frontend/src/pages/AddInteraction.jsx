@@ -14,6 +14,14 @@ import {
 } from 'lucide-react';
 import { createInteraction } from '../api';
 
+const getTodayLocalDate = () => {
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 export default function AddInteraction() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
@@ -21,7 +29,7 @@ export default function AddInteraction() {
     contact_name: '',
     contact_role: '',
     interaction_type: 'technical',
-    date: new Date().toISOString().split('T')[0],
+    date: getTodayLocalDate(),
     content: '',
     outcome: '',
     tags: 'integration, evaluation',
@@ -43,7 +51,7 @@ export default function AddInteraction() {
       contact_name: formData.contact_name || 'Stakeholder',
       contact_role: formData.contact_role || 'Evaluator',
       interaction_type: formData.interaction_type,
-      date: formData.date,
+      date: formData.date || getTodayLocalDate(),
       content: formData.content,
       outcome: formData.outcome || undefined,
       tags: formData.tags
@@ -73,7 +81,7 @@ export default function AddInteraction() {
           Log Customer Interaction
         </h1>
         <p className="text-slate-600 dark:text-slate-400 text-sm mt-1">
-          Record call notes, objections, commitments, or outcomes into persistent memory bank <code className="text-purple-600 dark:text-purple-400 font-mono text-xs font-semibold">dealmemory-acme</code>.
+          Record call notes, objections, commitments, or outcomes into DealMemory for <code className="text-purple-600 dark:text-purple-400 font-mono text-xs font-semibold">dealmemory-acme</code>.
         </p>
       </div>
 

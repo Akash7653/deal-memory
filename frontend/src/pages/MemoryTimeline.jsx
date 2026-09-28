@@ -95,7 +95,7 @@ export default function MemoryTimeline() {
     },
     {
       step: '5. HINDSIGHT REFLECTION',
-      date: 'TODAY',
+      date: `TODAY (${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).toUpperCase()})`,
       type: 'reflection',
       category: 'Cognitive Reasoning',
       stakeholder: 'Hindsight Autonomous Memory Engine',

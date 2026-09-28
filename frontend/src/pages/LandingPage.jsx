@@ -233,22 +233,6 @@ export default function LandingPage() {
               </div>
             </div>
 
-            {/* Semantic Pillar Badges */}
-            <div className="mt-4 flex flex-wrap items-center gap-2 w-full max-w-xl">
-              <div className="flex items-center space-x-1.5 px-3 py-1 rounded-full bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800/60 text-purple-800 dark:text-purple-300 text-xs font-bold shadow-2xs">
-                <Database size={12} className="text-purple-600 dark:text-purple-400 flex-shrink-0" />
-                <span>Persistent Memory Bank</span>
-              </div>
-              <div className="flex items-center space-x-1.5 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-emerald-800 dark:text-emerald-300 text-xs font-bold shadow-2xs">
-                <CheckCircle2 size={12} className="text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
-                <span>100% Grounded Recommendations</span>
-              </div>
-              <div className="flex items-center space-x-1.5 px-3 py-1 rounded-full bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 text-amber-800 dark:text-amber-300 text-xs font-bold shadow-2xs">
-                <AlertTriangle size={12} className="text-amber-600 dark:text-amber-400 flex-shrink-0" />
-                <span>Prevents Failed Discount Tactics</span>
-              </div>
-            </div>
-
             {/* CTA Buttons */}
             <div className="mt-6 flex flex-row items-center gap-3.5 w-auto">
               <NavLink
@@ -275,39 +259,32 @@ export default function LandingPage() {
           </div>
         </div>
 
-        {/* Mobile View ONLY: Left Side Pure Animation (no card, transparent background mixing with page) & Right Side Text */}
-        <div className="sm:hidden grid grid-cols-12 gap-2.5 items-center text-left w-full">
-          {/* User's LEFT Side: Pure Animation Only, Transparent Background */}
-          <div className="col-span-5 flex items-center justify-center bg-transparent">
-            <HindsightBrainAnimation onlyAnimation={true} />
-          </div>
-
-          {/* User's RIGHT Side: Headlines, Explanations, Badges & CTAs */}
-          <div className="col-span-7 flex flex-col items-start text-left">
-            {/* Hindsight Live Cognitive Badge */}
-            <div className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 text-[9px] shadow-xs mb-1.5">
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse flex-shrink-0" />
-              <Brain size={11} className="text-purple-600 dark:text-purple-400 flex-shrink-0" />
-              <span className="font-semibold text-slate-800 dark:text-slate-200 truncate">Hindsight Memory</span>
+        {/* ========================================================================= */}
+        {/* MOBILE VIEW ONLY: Animation DOMINATES Left, Side Text Right, Centered Buttons Below */}
+        {/* ========================================================================= */}
+        <div className="sm:hidden flex flex-col items-center w-full">
+          {/* Single Row: Animation on Left (Dominating), Text on Right */}
+          <div className="grid grid-cols-12 gap-2 items-center text-left w-full">
+            {/* User's LEFT Side: Pure Animation Dominating */}
+            <div className="col-span-7 flex items-center justify-center bg-transparent scale-105 origin-center">
+              <HindsightBrainAnimation onlyAnimation={true} />
             </div>
 
-            {/* Main Headline */}
-            <h1 className="text-xs xs:text-sm font-black tracking-tight text-slate-900 dark:text-white leading-tight">
-              Your CRM remembers the deal.{' '}
-              <span className="inline-block bg-gradient-to-r from-purple-700 via-purple-600 to-emerald-600 dark:from-purple-400 dark:via-purple-300 dark:to-emerald-400 bg-clip-text text-transparent font-black">
-                DealMemory remembers what actually worked.
-              </span>
-            </h1>
-
-            {/* Explanatory Content for Hindsight Memory */}
-            <div className="mt-2 p-2 rounded-xl bg-white/70 dark:bg-slate-900/70 border border-slate-200 dark:border-slate-800 shadow-xs w-full">
-              <div className="text-[9px] font-bold uppercase tracking-wider text-purple-700 dark:text-purple-400 mb-0.5">
-                Persistent Relationship Memory
+            {/* User's RIGHT Side: Clean Supporting Text */}
+            <div className="col-span-5 flex flex-col items-start text-left pr-1">
+              <div className="inline-flex items-center space-x-1 px-1.5 py-0.5 rounded-full bg-white/90 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 text-[8px] shadow-2xs mb-1">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse flex-shrink-0" />
+                <span className="font-bold text-slate-800 dark:text-slate-200 truncate">Hindsight AI</span>
               </div>
-              <p className="text-[9px] text-slate-700 dark:text-slate-300 leading-snug font-medium">
-                DealMemory remembers customer interactions, outcomes, and lessons through Hindsight — so every future conversation starts with context.
-              </p>
-              <div className="mt-1 flex items-center space-x-1.5 text-[8px] font-bold text-emerald-700 dark:text-emerald-400">
+
+              <h1 className="text-[11px] xs:text-xs font-black tracking-tight text-slate-900 dark:text-white leading-tight">
+                Your CRM remembers deals.{' '}
+                <span className="bg-gradient-to-r from-purple-700 via-purple-600 to-emerald-600 dark:from-purple-400 dark:via-purple-300 dark:to-emerald-400 bg-clip-text text-transparent">
+                  DealMemory learns what works.
+                </span>
+              </h1>
+
+              <div className="mt-1.5 flex items-center space-x-1 text-[8px] font-bold text-emerald-700 dark:text-emerald-400">
                 <span>Remember</span>
                 <span className="text-slate-400">→</span>
                 <span>Learn</span>
@@ -315,40 +292,25 @@ export default function LandingPage() {
                 <span>Adapt</span>
               </div>
             </div>
+          </div>
 
-            {/* Semantic Pillar Badges */}
-            <div className="mt-2 flex flex-col gap-1 w-full">
-              <div className="flex items-center space-x-1 px-1.5 py-0.5 rounded-full bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800/60 text-purple-800 dark:text-purple-300 text-[8px] font-bold">
-                <Database size={9} className="text-purple-600 dark:text-purple-400 flex-shrink-0" />
-                <span className="truncate">Persistent Memory Bank</span>
-              </div>
-              <div className="flex items-center space-x-1 px-1.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-emerald-800 dark:text-emerald-300 text-[8px] font-bold">
-                <CheckCircle2 size={9} className="text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
-                <span className="truncate">100% Grounded Recommendations</span>
-              </div>
-              <div className="flex items-center space-x-1 px-1.5 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 text-amber-800 dark:text-amber-300 text-[8px] font-bold">
-                <AlertTriangle size={9} className="text-amber-600 dark:text-amber-400 flex-shrink-0" />
-                <span className="truncate">Prevents Failed Discount Tactics</span>
-              </div>
-            </div>
+          {/* Centered CTA Buttons in Middle Below Animation & Text Row */}
+          <div className="mt-4 flex flex-row items-center justify-center gap-2.5 w-full max-w-xs mx-auto">
+            <NavLink
+              to="/register"
+              className="flex-1 flex items-center justify-center space-x-1.5 px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs shadow-md shadow-purple-600/20 text-center active:scale-95"
+            >
+              <span>Explore Deal</span>
+              <ArrowRight size={13} />
+            </NavLink>
 
-            {/* CTA Buttons */}
-            <div className="mt-2.5 flex flex-col gap-1.5 w-full">
-              <NavLink
-                to="/register"
-                className="flex items-center justify-center px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-[10px] shadow-sm text-center active:scale-95"
-              >
-                <span>Explore DealMemory</span>
-              </NavLink>
-
-              <button
-                onClick={() => scrollToSection('pipeline')}
-                className="flex items-center justify-center space-x-1 px-3 py-1.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 font-bold text-[10px] text-center active:scale-95"
-              >
-                <Layers size={11} className="text-purple-600 dark:text-purple-400" />
-                <span>See How It Learns</span>
-              </button>
-            </div>
+            <button
+              onClick={() => scrollToSection('pipeline')}
+              className="flex-1 flex items-center justify-center space-x-1.5 px-3 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 font-bold text-xs text-center active:scale-95 shadow-2xs"
+            >
+              <Layers size={13} className="text-purple-600 dark:text-purple-400" />
+              <span>See How It Learns</span>
+            </button>
           </div>
         </div>
 

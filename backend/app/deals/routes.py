@@ -46,7 +46,7 @@ def log_activity(user_id: str, deal_id: Optional[str], company: Optional[str], a
                 activity_type,
                 title,
                 description,
-                datetime.utcnow().isoformat(),
+                datetime.utcnow().isoformat() + "Z",
             ),
         )
         conn.commit()
@@ -174,7 +174,7 @@ async def get_user_deals(
 async def create_deal(req: DealCreate, user: dict = Depends(get_current_user)):
     """Create a new user-owned deal."""
     deal_id = f"deal_{uuid.uuid4().hex[:8]}"
-    now = datetime.utcnow().isoformat()
+    now = datetime.utcnow().isoformat() + "Z"
 
     conn = get_db_connection()
     cursor = conn.cursor()

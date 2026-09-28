@@ -321,20 +321,33 @@ export default function Layout() {
                 Vectorize persistent cognitive architecture
               </div>
             </div>
-
-            <button
-              onClick={handleLogout}
-              className="w-full flex items-center justify-center space-x-2 py-2 px-3 rounded-xl border border-rose-200 dark:border-slate-800 bg-rose-50/70 dark:bg-slate-900/60 text-xs font-bold text-rose-700 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-500/20 transition-colors cursor-pointer shadow-xs"
-            >
-              <LogOut size={14} />
-              <span>Sign Out</span>
-            </button>
           </div>
         </aside>
 
         {/* Main Content Area: pb-24 on mobile so bottom bar never obscures content! */}
-        <main className="flex-1 overflow-y-auto bg-slate-50 dark:bg-slate-950 p-4 sm:p-6 lg:p-8 pb-24 md:pb-8 transition-colors">
-          <Outlet />
+        <main className="flex-1 overflow-y-auto bg-slate-50 dark:bg-slate-950 p-4 sm:p-6 lg:p-8 pb-24 md:pb-8 transition-colors flex flex-col justify-between">
+          <div className="flex-1">
+            <Outlet />
+          </div>
+
+          {/* Desktop Footer */}
+          <footer className="hidden md:flex mt-12 pt-6 pb-2 border-t border-slate-200 dark:border-slate-800 items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+            <div className="flex items-center space-x-2">
+              <div className="w-5 h-5 rounded-lg bg-gradient-to-tr from-purple-700 to-purple-500 flex items-center justify-center text-white">
+                <Database size={11} className="text-white" />
+              </div>
+              <span className="font-bold text-slate-800 dark:text-slate-200">DealMemory</span>
+              <span>© {new Date().getFullYear()} — AI Relationship Intelligence</span>
+            </div>
+            <div className="flex items-center space-x-4">
+              <span className="flex items-center space-x-1.5 text-emerald-600 dark:text-emerald-400 font-medium">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span>Hindsight Bank: Connected</span>
+              </span>
+              <span>•</span>
+              <span className="text-purple-600 dark:text-purple-400 font-medium">Continuous Learning Active</span>
+            </div>
+          </footer>
         </main>
       </div>
 
