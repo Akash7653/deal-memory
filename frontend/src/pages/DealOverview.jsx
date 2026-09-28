@@ -41,53 +41,67 @@ export default function DealOverview() {
 
   return (
     <div className="max-w-6xl mx-auto space-y-7 animate-fade-in">
-      {/* Enterprise Header */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 relative overflow-hidden shadow-xs">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+      {/* Enterprise Header - ACME Deal Overview Card */}
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 sm:p-7 shadow-xs">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          {/* Company identity & Deal metrics */}
           <div className="flex items-start space-x-4">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-indigo-700 to-indigo-500 flex items-center justify-center font-black text-xl text-white shadow-md shadow-indigo-600/25 flex-shrink-0">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-tr from-purple-700 to-purple-500 flex items-center justify-center font-black text-lg sm:text-xl text-white shadow-md shadow-purple-600/25 flex-shrink-0">
               AC
             </div>
-            <div>
-              <div className="flex items-center space-x-3">
-                <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+            <div className="space-y-1.5 flex-1 min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="text-xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight truncate">
                   ACME Corp
                 </h1>
-                <span className="text-xs px-2.5 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-500/20 font-semibold">
+                <span className="text-xs px-2.5 py-0.5 rounded-full bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800/60 font-semibold">
                   Evaluation
                 </span>
-                <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 font-semibold">
-                  Relationship Health: 78%
-                </span>
               </div>
-              <div className="flex flex-wrap items-center gap-3 text-xs text-slate-600 dark:text-slate-400 mt-2">
-                <span className="text-slate-900 dark:text-white font-bold text-sm">$120,000 ARR</span>
+
+              {/* Deal value & metadata */}
+              <div className="flex flex-wrap items-center gap-2.5 text-xs text-slate-600 dark:text-slate-400">
+                <span className="text-slate-900 dark:text-white font-extrabold text-sm sm:text-base">$120,000 ARR</span>
                 <span>•</span>
                 <span>B2B Enterprise CRM</span>
-                <span>•</span>
-                <span className="text-slate-600 dark:text-slate-400">Memory Bank: <code className="text-indigo-600 dark:text-indigo-400 font-bold">dealmemory-acme</code></span>
-                <span>•</span>
-                <span className="text-slate-500 dark:text-slate-400">Last Interaction: Sept 26, 2026</span>
+                <span className="hidden sm:inline">•</span>
+                <span className="hidden sm:inline">Memory Bank: <code className="text-purple-700 dark:text-purple-300 font-bold bg-purple-50 dark:bg-purple-950/40 px-1.5 py-0.5 rounded border border-purple-200 dark:border-purple-900/40">dealmemory-acme</code></span>
               </div>
             </div>
           </div>
 
-          <div className="flex items-center space-x-2.5">
-            <Link
-              to="/meeting-prep"
-              className="px-4 py-2.5 text-xs font-semibold rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white flex items-center space-x-2 shadow-md shadow-indigo-600/20 transition-all cursor-pointer"
-            >
-              <Sparkles size={14} />
-              <span>Prepare Meeting</span>
-            </Link>
-            <Link
-              to="/agent"
-              className="px-4 py-2.5 text-xs font-semibold rounded-xl bg-slate-100 dark:bg-slate-850 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-750 flex items-center space-x-1.5 transition-colors cursor-pointer"
-            >
-              <Bot size={14} className="text-indigo-600 dark:text-indigo-400" />
-              <span>Ask Agent</span>
-              <ArrowRight size={13} />
-            </Link>
+          {/* Relationship Health & Action Controls */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-3 lg:pt-0 border-t lg:border-t-0 border-slate-100 dark:border-slate-800">
+            {/* Relationship Health Indicator - Always stays strictly inside card */}
+            <div className="px-4 py-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 flex items-center justify-between sm:justify-start space-x-3 shadow-2xs">
+              <div className="text-left">
+                <div className="text-[10px] font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-400">
+                  Relationship Health
+                </div>
+                <div className="text-lg sm:text-xl font-black text-emerald-700 dark:text-emerald-300 leading-tight">
+                  78%
+                </div>
+              </div>
+              <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse flex-shrink-0" />
+            </div>
+
+            {/* Quick Actions */}
+            <div className="flex items-center space-x-2">
+              <Link
+                to="/meeting-prep"
+                className="flex-1 sm:flex-initial px-4 py-2.5 text-xs font-semibold rounded-xl bg-purple-600 hover:bg-purple-700 text-white flex items-center justify-center space-x-1.5 shadow-md shadow-purple-600/20 transition-all cursor-pointer active:scale-95 whitespace-nowrap"
+              >
+                <Sparkles size={14} />
+                <span>Prepare Meeting</span>
+              </Link>
+              <Link
+                to="/agent"
+                className="flex-1 sm:flex-initial px-4 py-2.5 text-xs font-semibold rounded-xl bg-slate-100 dark:bg-slate-850 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-750 flex items-center justify-center space-x-1.5 transition-colors cursor-pointer active:scale-95 whitespace-nowrap"
+              >
+                <Bot size={14} className="text-purple-600 dark:text-purple-400" />
+                <span>Ask Agent</span>
+              </Link>
+            </div>
           </div>
         </div>
       </div>
@@ -104,20 +118,20 @@ export default function DealOverview() {
           <div className="text-sm font-bold text-slate-900 dark:text-white">$120,000 ARR</div>
           <div className="text-[11px] text-slate-500 dark:text-slate-400">Annual Contract</div>
         </div>
-        <div className="bg-emerald-50/40 dark:bg-slate-900 border border-emerald-200 dark:border-slate-800 rounded-xl p-3.5 space-y-1 shadow-2xs">
-          <div className="text-[10px] font-semibold text-emerald-800 dark:text-slate-400 uppercase">Relationship Health</div>
+        <div className="bg-emerald-50/40 dark:bg-slate-900 border border-emerald-200 dark:border-emerald-800/60 rounded-xl p-3.5 space-y-1 shadow-2xs">
+          <div className="text-[10px] font-semibold text-emerald-800 dark:text-emerald-400 uppercase">Health Score</div>
           <div className="text-sm font-bold text-emerald-700 dark:text-emerald-400">78% Health</div>
-          <div className="text-[11px] text-emerald-800 dark:text-slate-400">Champion Active</div>
+          <div className="text-[11px] text-emerald-800 dark:text-emerald-300 font-medium">Champion Active</div>
         </div>
-        <div className="bg-rose-50/40 dark:bg-slate-900 border border-rose-200 dark:border-slate-800 rounded-xl p-3.5 space-y-1 shadow-2xs">
-          <div className="text-[10px] font-semibold text-rose-800 dark:text-slate-400 uppercase">Last Interaction</div>
+        <div className="bg-rose-50/40 dark:bg-slate-900 border border-rose-200 dark:border-rose-900/40 rounded-xl p-3.5 space-y-1 shadow-2xs">
+          <div className="text-[10px] font-semibold text-rose-800 dark:text-rose-400 uppercase">Last Interaction</div>
           <div className="text-sm font-bold text-slate-800 dark:text-slate-200">Sept 26, 2026</div>
           <div className="text-[11px] text-rose-700 dark:text-rose-400 font-medium">Discount Rejected</div>
         </div>
-        <div className="bg-indigo-50/50 dark:bg-slate-900 border border-indigo-200 dark:border-indigo-500/30 rounded-xl p-3.5 space-y-1 col-span-2 sm:col-span-1 shadow-2xs">
-          <div className="text-[10px] font-semibold text-indigo-700 dark:text-indigo-400 uppercase">Next Action</div>
+        <div className="bg-purple-50/50 dark:bg-slate-900 border border-purple-200 dark:border-purple-900/40 rounded-xl p-3.5 space-y-1 col-span-2 sm:col-span-1 shadow-2xs">
+          <div className="text-[10px] font-semibold text-purple-700 dark:text-purple-400 uppercase">Next Action</div>
           <div className="text-sm font-bold text-slate-900 dark:text-white">Prove ROI</div>
-          <div className="text-[11px] text-indigo-700 dark:text-indigo-300 font-medium">Technical Briefing</div>
+          <div className="text-[11px] text-purple-700 dark:text-purple-300 font-medium">Technical Briefing</div>
         </div>
       </div>
 
@@ -152,7 +166,7 @@ export default function DealOverview() {
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center space-x-2">
-            <Users size={16} className="text-indigo-600 dark:text-indigo-400" />
+            <Users size={16} className="text-purple-600 dark:text-purple-400" />
             <span>Stakeholders & Account Map</span>
           </h3>
           <span className="text-xs text-slate-500 dark:text-slate-400">3 Stakeholders Retained in Hindsight</span>
@@ -162,7 +176,7 @@ export default function DealOverview() {
           {/* Sarah */}
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 sm:p-5 rounded-2xl space-y-2 shadow-xs">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-full bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 flex items-center justify-center font-bold text-sm border border-indigo-200 dark:border-indigo-500/20">
+              <div className="w-10 h-10 rounded-full bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 flex items-center justify-center font-bold text-sm border border-purple-200 dark:border-purple-800/60">
                 S
               </div>
               <div>
@@ -170,7 +184,7 @@ export default function DealOverview() {
                 <div className="text-xs text-slate-500 dark:text-slate-400">VP Sales</div>
               </div>
             </div>
-            <div className="text-xs text-indigo-700 dark:text-indigo-400 font-semibold pt-1">
+            <div className="text-xs text-purple-700 dark:text-purple-300 font-semibold pt-1">
               Business Champion
             </div>
             <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
@@ -221,7 +235,7 @@ export default function DealOverview() {
       {/* Deal Risk Radar Section */}
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 sm:p-6 space-y-4 shadow-xs">
         <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-850">
-          <div className="flex items-center space-x-2 text-indigo-600 dark:text-indigo-400 text-xs font-bold uppercase tracking-wider">
+          <div className="flex items-center space-x-2 text-purple-600 dark:text-purple-400 text-xs font-bold uppercase tracking-wider">
             <Shield size={16} />
             <span>Deal Risk Radar</span>
           </div>
@@ -265,9 +279,9 @@ export default function DealOverview() {
             <span className="font-bold text-slate-900 dark:text-white">Biggest Risk:</span>{' '}
             <span className="text-slate-700 dark:text-slate-300">Integration complexity & unverified ROI with David (CTO).</span>
           </div>
-          <div className="text-indigo-600 dark:text-indigo-400 font-semibold flex items-center space-x-1.5 flex-shrink-0">
+          <div className="text-purple-600 dark:text-purple-400 font-semibold flex items-center space-x-1.5 flex-shrink-0">
             <span>Recommended Action:</span>
-            <Link to="/meeting-prep" className="underline hover:text-indigo-500">
+            <Link to="/meeting-prep" className="underline hover:text-purple-700 dark:hover:text-purple-300">
               Schedule technical briefing
             </Link>
           </div>

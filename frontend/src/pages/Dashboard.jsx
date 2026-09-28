@@ -101,14 +101,14 @@ export default function Dashboard() {
         <div className="flex items-center space-x-2.5">
           <button
             onClick={() => setShowCreateDealModal(true)}
-            className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md shadow-indigo-600/20 transition-all cursor-pointer"
+            className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold shadow-md shadow-purple-600/20 transition-all cursor-pointer active:scale-95"
           >
             <PlusCircle size={15} />
             <span>New Deal</span>
           </button>
           <Link
             to="/history"
-            className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-850 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white text-xs font-medium transition-all"
+            className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-850 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white text-xs font-medium transition-all active:scale-95 shadow-2xs"
           >
             <Clock size={15} />
             <span>Activity History</span>
@@ -116,76 +116,76 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Metrics Strip - Refined Visual Hierarchy, Not Clumsy Giant Cards */}
+      {/* Metrics Strip - 4 Summary Cards with Subtle Theme-Aware Gradients */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        {/* Metric 1: Pipeline Value */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 flex flex-col justify-between shadow-xs">
-          <div className="flex items-center justify-between text-slate-600 dark:text-slate-400 text-xs font-medium">
-            <span>Pipeline Value</span>
-            <div className="w-7 h-7 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
-              <DollarSign size={15} />
+        {/* Metric 1: Pipeline Value - Subtle Violet Gradient */}
+        <div className="bg-gradient-to-br from-white via-white to-purple-50/70 dark:from-slate-900 dark:via-slate-900 dark:to-purple-950/30 border border-purple-200/80 dark:border-purple-900/50 rounded-2xl p-4 sm:p-5 flex flex-col justify-between min-h-[126px] sm:min-h-[136px] shadow-xs transition-shadow">
+          <div className="flex items-center justify-between text-slate-700 dark:text-slate-300 text-xs font-semibold">
+            <span className="truncate">Pipeline Value</span>
+            <div className="w-8 h-8 rounded-xl bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 flex items-center justify-center flex-shrink-0">
+              <DollarSign size={16} />
             </div>
           </div>
-          <div className="mt-3">
+          <div className="mt-2.5">
             <div className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
               ${totalPipeline.toLocaleString()}
             </div>
-            <div className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5 flex items-center space-x-1">
-              <span className="text-emerald-600 dark:text-emerald-400 font-semibold">Active ARR</span>
-              <span>across enterprise deals</span>
+            <div className="text-[11px] text-slate-600 dark:text-slate-400 mt-1 flex items-center space-x-1 truncate">
+              <span className="text-emerald-700 dark:text-emerald-400 font-bold">Active ARR</span>
+              <span>across enterprise</span>
             </div>
           </div>
         </div>
 
-        {/* Metric 2: Active Deals */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 flex flex-col justify-between shadow-xs">
-          <div className="flex items-center justify-between text-slate-600 dark:text-slate-400 text-xs font-medium">
-            <span>Active Deals</span>
-            <div className="w-7 h-7 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
-              <Building2 size={15} />
+        {/* Metric 2: Active Deals - Subtle Slate Gradient */}
+        <div className="bg-gradient-to-br from-white via-white to-slate-100/70 dark:from-slate-900 dark:via-slate-900 dark:to-slate-800/40 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 flex flex-col justify-between min-h-[126px] sm:min-h-[136px] shadow-xs transition-shadow">
+          <div className="flex items-center justify-between text-slate-700 dark:text-slate-300 text-xs font-semibold">
+            <span className="truncate">Active Deals</span>
+            <div className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 flex items-center justify-center flex-shrink-0">
+              <Building2 size={16} />
             </div>
           </div>
-          <div className="mt-3">
+          <div className="mt-2.5">
             <div className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
               {activeDealsCount}
             </div>
-            <div className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5">
+            <div className="text-[11px] text-slate-600 dark:text-slate-400 mt-1 truncate">
               <span>{deals.filter((d) => d.stage === 'Evaluation').length || 1} in Evaluation stage</span>
             </div>
           </div>
         </div>
 
-        {/* Metric 3: Deals Needing Attention - Amber */}
-        <div className="bg-amber-50/50 dark:bg-slate-900 border border-amber-300 dark:border-amber-500/30 rounded-2xl p-4 sm:p-5 flex flex-col justify-between shadow-xs">
+        {/* Metric 3: Needs Attention - Subtle Amber Gradient */}
+        <div className="bg-gradient-to-br from-white via-white to-amber-50/70 dark:from-slate-900 dark:via-slate-900 dark:to-amber-950/30 border border-amber-300/80 dark:border-amber-700/50 rounded-2xl p-4 sm:p-5 flex flex-col justify-between min-h-[126px] sm:min-h-[136px] shadow-xs transition-shadow">
           <div className="flex items-center justify-between text-amber-800 dark:text-amber-300 text-xs font-bold">
-            <span>Needs Attention</span>
-            <div className="w-7 h-7 rounded-lg bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center">
-              <AlertTriangle size={15} />
+            <span className="truncate">Needs Attention</span>
+            <div className="w-8 h-8 rounded-xl bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 flex items-center justify-center flex-shrink-0">
+              <AlertTriangle size={16} />
             </div>
           </div>
-          <div className="mt-3">
+          <div className="mt-2.5">
             <div className="text-xl sm:text-2xl font-black text-amber-900 dark:text-amber-200 tracking-tight">
               {dealsNeedingAttention} Deal
             </div>
-            <div className="text-[11px] text-amber-800 dark:text-amber-300/80 mt-0.5 font-medium">
+            <div className="text-[11px] text-amber-800 dark:text-amber-300/90 mt-1 font-semibold truncate">
               <span>ACME Corp • Stalled on ROI</span>
             </div>
           </div>
         </div>
 
-        {/* Metric 4: Learned Insights - Emerald */}
-        <div className="bg-emerald-50/50 dark:bg-slate-900 border border-emerald-300 dark:border-emerald-500/30 rounded-2xl p-4 sm:p-5 flex flex-col justify-between shadow-xs">
+        {/* Metric 4: Learned Insights - Subtle Emerald Gradient */}
+        <div className="bg-gradient-to-br from-white via-white to-emerald-50/70 dark:from-slate-900 dark:via-slate-900 dark:to-emerald-950/30 border border-emerald-300/80 dark:border-emerald-700/50 rounded-2xl p-4 sm:p-5 flex flex-col justify-between min-h-[126px] sm:min-h-[136px] shadow-xs transition-shadow">
           <div className="flex items-center justify-between text-emerald-800 dark:text-emerald-300 text-xs font-bold">
-            <span>Learned Insights</span>
-            <div className="w-7 h-7 rounded-lg bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-              <Lightbulb size={15} />
+            <span className="truncate">Learned Insights</span>
+            <div className="w-8 h-8 rounded-xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 flex items-center justify-center flex-shrink-0">
+              <Lightbulb size={16} />
             </div>
           </div>
-          <div className="mt-3">
+          <div className="mt-2.5">
             <div className="text-xl sm:text-2xl font-black text-emerald-900 dark:text-emerald-200 tracking-tight">
               {learnedInsightsCount} Insights
             </div>
-            <div className="text-[11px] text-emerald-800 dark:text-emerald-300/80 mt-0.5 font-medium">
+            <div className="text-[11px] text-emerald-800 dark:text-emerald-300/90 mt-1 font-semibold truncate">
               <span>Hindsight outcome reflection</span>
             </div>
           </div>
@@ -196,7 +196,7 @@ export default function Dashboard() {
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center space-x-2">
-            <Shield size={16} className="text-indigo-600 dark:text-indigo-400" />
+            <Shield size={16} className="text-purple-600 dark:text-purple-400" />
             <span>Priority Deals Requiring Action</span>
           </h2>
           <span className="text-xs text-slate-500 dark:text-slate-400">Grounded in Hindsight relationship memory</span>
@@ -207,16 +207,16 @@ export default function Dashboard() {
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
             <div className="space-y-3">
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-700 to-indigo-500 flex items-center justify-center font-black text-white text-base shadow-sm">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-700 to-purple-500 flex items-center justify-center font-black text-white text-base shadow-sm">
                   AC
                 </div>
                 <div>
                   <div className="flex items-center space-x-2.5">
                     <h3 className="text-lg font-bold text-slate-900 dark:text-white">ACME Corp</h3>
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-500/20 font-semibold">
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-800/60 font-semibold">
                       Evaluation
                     </span>
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 font-semibold">
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60 font-semibold">
                       78% Health
                     </span>
                   </div>
@@ -228,7 +228,7 @@ export default function Dashboard() {
 
               {/* Risk & Next Action Badges */}
               <div className="grid sm:grid-cols-2 gap-3 pt-1">
-                <div className="p-3 rounded-xl bg-rose-50/50 dark:bg-slate-950 border border-rose-200 dark:border-slate-800 space-y-1">
+                <div className="p-3 rounded-xl bg-rose-50/50 dark:bg-slate-950 border border-rose-200 dark:border-rose-900/40 space-y-1">
                   <div className="text-[10px] font-bold uppercase tracking-wider text-rose-700 dark:text-rose-400 flex items-center space-x-1.5">
                     <AlertTriangle size={12} />
                     <span>Current Risk</span>
@@ -239,8 +239,8 @@ export default function Dashboard() {
                   </p>
                 </div>
 
-                <div className="p-3 rounded-xl bg-indigo-50/50 dark:bg-slate-950 border border-indigo-200 dark:border-indigo-500/30 space-y-1">
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-indigo-700 dark:text-indigo-400 flex items-center space-x-1.5">
+                <div className="p-3 rounded-xl bg-purple-50/50 dark:bg-slate-950 border border-purple-200 dark:border-purple-900/40 space-y-1">
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-purple-700 dark:text-purple-400 flex items-center space-x-1.5">
                     <CheckCircle2 size={12} />
                     <span>Prescribed Next Action</span>
                   </div>
@@ -256,23 +256,23 @@ export default function Dashboard() {
             <div className="flex lg:flex-col items-center gap-2 self-start lg:self-auto flex-shrink-0">
               <Link
                 to="/deal"
-                className="w-full text-center px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-md shadow-indigo-600/20 transition-all flex items-center justify-center space-x-1.5"
+                className="w-full text-center px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-md shadow-purple-600/20 transition-all flex items-center justify-center space-x-1.5 active:scale-95"
               >
                 <span>Deal Overview</span>
                 <ChevronRight size={14} />
               </Link>
               <Link
                 to="/meeting-prep"
-                className="w-full text-center px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-850 hover:bg-slate-200 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-750 text-slate-800 dark:text-slate-200 text-xs font-semibold transition-all flex items-center justify-center space-x-1.5"
+                className="w-full text-center px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-850 hover:bg-slate-200 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-750 text-slate-800 dark:text-slate-200 text-xs font-semibold transition-all flex items-center justify-center space-x-1.5 active:scale-95"
               >
-                <Sparkles size={13} className="text-indigo-600 dark:text-indigo-400" />
+                <Sparkles size={13} className="text-purple-600 dark:text-purple-400" />
                 <span>Prepare Brief</span>
               </Link>
               <Link
                 to="/agent"
-                className="w-full text-center px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-850 hover:bg-slate-200 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-750 text-slate-700 dark:text-slate-300 text-xs font-medium transition-all flex items-center justify-center space-x-1.5"
+                className="w-full text-center px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-850 hover:bg-slate-200 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-750 text-slate-700 dark:text-slate-300 text-xs font-medium transition-all flex items-center justify-center space-x-1.5 active:scale-95"
               >
-                <Bot size={13} className="text-indigo-600 dark:text-indigo-400" />
+                <Bot size={13} className="text-purple-600 dark:text-purple-400" />
                 <span>Ask Agent</span>
               </Link>
             </div>
@@ -286,7 +286,7 @@ export default function Dashboard() {
             className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 flex items-center justify-between gap-4 shadow-2xs"
           >
             <div className="flex items-center space-x-3">
-              <div className="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-slate-800 text-indigo-700 dark:text-slate-300 flex items-center justify-center font-bold text-xs">
+              <div className="w-9 h-9 rounded-xl bg-purple-50 dark:bg-slate-800 text-purple-700 dark:text-slate-300 flex items-center justify-center font-bold text-xs">
                 {deal.company_name.slice(0, 2).toUpperCase()}
               </div>
               <div>
@@ -303,7 +303,7 @@ export default function Dashboard() {
             </div>
             <Link
               to="/add-interaction"
-              className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 flex items-center space-x-1"
+              className="text-xs font-bold text-purple-600 dark:text-purple-400 hover:text-purple-700 flex items-center space-x-1"
             >
               <span>Add Notes</span>
               <ArrowRight size={13} />
@@ -315,11 +315,11 @@ export default function Dashboard() {
       {/* The Hindsight Intelligence Loop Banner */}
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-3 shadow-xs">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2 text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+          <div className="flex items-center space-x-2 text-xs font-bold uppercase tracking-wider text-purple-700 dark:text-purple-400">
             <BrainCircuit size={15} />
             <span>The Continuous Relationship Intelligence Loop</span>
           </div>
-          <Link to="/timeline" className="text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 font-bold flex items-center space-x-1">
+          <Link to="/timeline" className="text-xs text-purple-600 dark:text-purple-400 hover:text-purple-700 font-bold flex items-center space-x-1">
             <span>Explore Timeline</span>
             <ChevronRight size={14} />
           </Link>
@@ -327,16 +327,16 @@ export default function Dashboard() {
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-left">
           <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-850">
-            <div className="text-[10px] font-bold text-indigo-700 dark:text-indigo-400 uppercase">1. Remember</div>
+            <div className="text-[10px] font-bold text-purple-700 dark:text-purple-400 uppercase">1. Remember</div>
             <p className="text-xs text-slate-700 dark:text-slate-300 mt-0.5">Hindsight stores Sarah's API mandate and David's security doubts.</p>
           </div>
           <div className="p-3 rounded-xl bg-rose-50/70 dark:bg-slate-950 border border-rose-200 dark:border-rose-500/20">
             <div className="text-[10px] font-bold text-rose-700 dark:text-rose-400 uppercase">2. Outcome</div>
             <p className="text-xs text-rose-900 dark:text-rose-200 mt-0.5 font-medium">15% discount rejected by CFO Michael as unproven ROI.</p>
           </div>
-          <div className="p-3 rounded-xl bg-indigo-50/70 dark:bg-slate-950 border border-indigo-200 dark:border-indigo-500/20">
-            <div className="text-[10px] font-bold text-indigo-700 dark:text-indigo-400 uppercase">3. Learn</div>
-            <p className="text-xs text-indigo-900 dark:text-indigo-200 mt-0.5 font-medium">Price was a proxy for technical value skepticism.</p>
+          <div className="p-3 rounded-xl bg-purple-50/70 dark:bg-slate-950 border border-purple-200 dark:border-purple-500/20">
+            <div className="text-[10px] font-bold text-purple-700 dark:text-purple-400 uppercase">3. Learn</div>
+            <p className="text-xs text-purple-900 dark:text-purple-200 mt-0.5 font-medium">Price was a proxy for technical value skepticism.</p>
           </div>
           <div className="p-3 rounded-xl bg-emerald-50/70 dark:bg-slate-950 border border-emerald-200 dark:border-emerald-500/20">
             <div className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase">4. Adapt</div>
@@ -345,18 +345,18 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Create New Deal Modal */}
+      {/* Create New Deal Modal with Light/Dark Mode */}
       {showCreateDealModal && (
         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
               <div className="flex items-center space-x-2">
-                <Building2 size={18} className="text-indigo-400" />
-                <h3 className="text-base font-bold text-white">Create New Enterprise Deal</h3>
+                <Building2 size={18} className="text-purple-600 dark:text-purple-400" />
+                <h3 className="text-base font-bold text-slate-900 dark:text-white">Create New Enterprise Deal</h3>
               </div>
               <button
                 onClick={() => setShowCreateDealModal(false)}
-                className="text-slate-400 hover:text-white cursor-pointer"
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-white cursor-pointer"
               >
                 ✕
               </button>
@@ -364,7 +364,7 @@ export default function Dashboard() {
 
             <form onSubmit={handleCreateDeal} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                   Company Name
                 </label>
                 <input
@@ -373,12 +373,12 @@ export default function Dashboard() {
                   placeholder="e.g. Snowflake, Datadog"
                   value={newCompanyName}
                   onChange={(e) => setNewCompanyName(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 transition-colors"
+                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3.5 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-purple-600 transition-colors"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                   Annual Contract Value (ARR in USD)
                 </label>
                 <input
@@ -388,22 +388,22 @@ export default function Dashboard() {
                   step="5000"
                   value={newDealValue}
                   onChange={(e) => setNewDealValue(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 transition-colors"
+                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3.5 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-purple-600 transition-colors"
                 />
               </div>
 
-              <div className="flex items-center justify-end space-x-2 pt-3 border-t border-slate-800">
+              <div className="flex items-center justify-end space-x-2 pt-3 border-t border-slate-200 dark:border-slate-800">
                 <button
                   type="button"
                   onClick={() => setShowCreateDealModal(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white cursor-pointer"
+                  className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={creatingDeal}
-                  className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-md shadow-indigo-600/20 disabled:opacity-50 cursor-pointer"
+                  className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-md shadow-purple-600/20 disabled:opacity-50 cursor-pointer active:scale-95"
                 >
                   {creatingDeal ? 'Creating...' : 'Initialize Deal'}
                 </button>

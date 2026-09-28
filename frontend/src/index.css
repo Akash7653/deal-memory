@@ -17,6 +17,7 @@
     --color-bg: #f9fafb;
     --color-surface: #ffffff;
     --color-surface-subtle: #f3f4f6;
+    --color-surface-secondary: #f3f4f6;
     --color-border: #e5e7eb;
     --color-border-card: #d1d5db;
     --color-text: #111827;
@@ -33,6 +34,7 @@
     --color-bg: #0d0e12;
     --color-surface: #14151a;
     --color-surface-subtle: #1a1c22;
+    --color-surface-secondary: #1a1c22;
     --color-border: #23252c;
     --color-border-card: #2b2d35;
     --color-text: #f9fafb;
@@ -120,8 +122,8 @@ html.light h4:not([class*="bg-clip-text"]) {
 }
 
 /* Any text-white element outside solid buttons/gradients becomes dark in light mode */
-html:not(.dark) .text-white:not(button):not(button *):not(a[class*="bg-indigo-600"]):not(a[class*="bg-indigo-600"] *):not(a[class*="bg-indigo-500"]):not(a[class*="bg-indigo-500"] *):not([class*="bg-clip-text"]):not([class*="text-transparent"]),
-html.light .text-white:not(button):not(button *):not(a[class*="bg-indigo-600"]):not(a[class*="bg-indigo-600"] *):not(a[class*="bg-indigo-500"]):not(a[class*="bg-indigo-500"] *):not([class*="bg-clip-text"]):not([class*="text-transparent"]) {
+html:not(.dark) .text-white:not(button):not(button *):not(a[class*="bg-purple-600"]):not(a[class*="bg-purple-600"] *):not(a[class*="bg-purple-500"]):not(a[class*="bg-purple-500"] *):not(a[class*="bg-indigo-600"]):not(a[class*="bg-indigo-600"] *):not([class*="bg-clip-text"]):not([class*="text-transparent"]),
+html.light .text-white:not(button):not(button *):not(a[class*="bg-purple-600"]):not(a[class*="bg-purple-600"] *):not(a[class*="bg-purple-500"]):not(a[class*="bg-purple-500"] *):not(a[class*="bg-indigo-600"]):not(a[class*="bg-indigo-600"] *):not([class*="bg-clip-text"]):not([class*="text-transparent"]) {
   color: #111827 !important;
 }
 
@@ -158,18 +160,18 @@ html:not(.dark) .text-rose-200, html:not(.dark) .text-rose-300,
 html.light .text-rose-200, html.light .text-rose-300 {
   color: #9f1239 !important;
 }
-html:not(.dark) .text-indigo-200, html:not(.dark) .text-indigo-300,
-html.light .text-indigo-200, html.light .text-indigo-300 {
-  color: #3730a3 !important;
-}
 html:not(.dark) .text-purple-200, html:not(.dark) .text-purple-300,
 html.light .text-purple-200, html.light .text-purple-300 {
   color: #581c87 !important;
 }
+html:not(.dark) .text-indigo-200, html:not(.dark) .text-indigo-300,
+html.light .text-indigo-200, html.light .text-indigo-300 {
+  color: #3730a3 !important;
+}
 
 /* Light mode support for subtle chip and badge backgrounds without forcing white text */
-html:not(.dark) .bg-indigo-50, html.light .bg-indigo-50 {
-  background-color: #f5f3ff !important;
+html:not(.dark) .bg-purple-50, html.light .bg-purple-50 {
+  background-color: #faf5ff !important;
 }
 html:not(.dark) .bg-rose-50, html.light .bg-rose-50 {
   background-color: #fff1f2 !important;
@@ -182,6 +184,10 @@ html:not(.dark) .bg-amber-50, html.light .bg-amber-50 {
 }
 
 /* Explicit high-visibility styles for primary buttons in light mode */
+html:not(.dark) button.bg-purple-600,
+html.light button.bg-purple-600,
+html:not(.dark) a.bg-purple-600,
+html.light a.bg-purple-600,
 html:not(.dark) button.bg-indigo-600,
 html.light button.bg-indigo-600,
 html:not(.dark) a.bg-indigo-600,

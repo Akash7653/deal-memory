@@ -59,15 +59,15 @@ export default function History() {
   const getActivityIcon = (type) => {
     switch (type) {
       case 'interaction':
-        return <Building2 size={16} className="text-indigo-500 dark:text-indigo-400" />;
+        return <Building2 size={16} className="text-purple-500 dark:text-purple-400" />;
       case 'outcome':
         return <AlertTriangle size={16} className="text-rose-500 dark:text-rose-400" />;
       case 'learning':
         return <Sparkles size={16} className="text-emerald-500 dark:text-emerald-400" />;
       case 'meeting_prep':
-        return <CalendarCheck2 size={16} className="text-indigo-500 dark:text-indigo-400" />;
+        return <CalendarCheck2 size={16} className="text-purple-500 dark:text-purple-400" />;
       case 'ai_question':
-        return <Bot size={16} className="text-indigo-500 dark:text-indigo-400" />;
+        return <Bot size={16} className="text-purple-500 dark:text-purple-400" />;
       default:
         return <Clock size={16} className="text-slate-500 dark:text-slate-400" />;
     }
@@ -77,7 +77,7 @@ export default function History() {
     switch (type) {
       case 'interaction':
         return (
-          <span className="text-[10px] px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 font-semibold uppercase">
+          <span className="text-[10px] px-2 py-0.5 rounded bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 font-semibold uppercase">
             Interaction
           </span>
         );
@@ -95,13 +95,13 @@ export default function History() {
         );
       case 'meeting_prep':
         return (
-          <span className="text-[10px] px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 font-semibold uppercase">
+          <span className="text-[10px] px-2 py-0.5 rounded bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 font-semibold uppercase">
             Meeting Prep
           </span>
         );
       case 'ai_question':
         return (
-          <span className="text-[10px] px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 font-semibold uppercase">
+          <span className="text-[10px] px-2 py-0.5 rounded bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 font-semibold uppercase">
             AI Question
           </span>
         );
@@ -134,7 +134,7 @@ export default function History() {
             <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
               Your Activity History
             </h1>
-            <span className="text-xs px-2.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 font-semibold">
+            <span className="text-xs px-2.5 py-0.5 rounded-full bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 font-semibold">
               Isolated Workspace
             </span>
           </div>
@@ -164,7 +164,7 @@ export default function History() {
         <select
           value={selectedType}
           onChange={(e) => setSelectedType(e.target.value)}
-          className="bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-indigo-500 transition-colors"
+          className="bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-purple-500 transition-colors"
         >
           <option value="all">All Activities</option>
           <option value="interaction">Interactions</option>
@@ -178,7 +178,7 @@ export default function History() {
         <select
           value={selectedDeal}
           onChange={(e) => setSelectedDeal(e.target.value)}
-          className="bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-indigo-500 transition-colors"
+          className="bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-purple-500 transition-colors"
         >
           <option value="all">All Deals</option>
           <option value="acme">ACME Corp (Demo)</option>
@@ -199,7 +199,7 @@ export default function History() {
       {/* History List */}
       {loading ? (
         <div className="text-center py-12 space-y-3">
-          <div className="w-8 h-8 rounded-full border-2 border-indigo-500/30 border-t-indigo-500 animate-spin mx-auto" />
+          <div className="w-8 h-8 rounded-full border-2 border-purple-500/30 border-t-purple-500 animate-spin mx-auto" />
           <p className="text-xs text-slate-500 dark:text-slate-400">Loading your activity history...</p>
         </div>
       ) : error ? (
@@ -219,7 +219,7 @@ export default function History() {
           {activities.map((act) => (
             <div
               key={act.id}
-              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-indigo-300 dark:hover:border-slate-700 p-4 rounded-2xl transition-all shadow-sm flex items-start justify-between gap-4"
+              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-purple-300 dark:hover:border-slate-700 p-4 rounded-2xl transition-all shadow-sm flex items-start justify-between gap-4"
             >
               <div className="flex items-start space-x-3.5 flex-1">
                 <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/80 flex items-center justify-center flex-shrink-0 mt-0.5">

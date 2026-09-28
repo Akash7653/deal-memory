@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
   Database,
@@ -27,11 +27,33 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import HindsightBrainAnimation from '../components/HindsightBrainAnimation';
 
 export default function LandingPage() {
   const { isAuthenticated } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
+
+  // Initial landing page loader only (never on internal page navigation)
+  const [showLandingLoader, setShowLandingLoader] = useState(() => {
+    try {
+      return !sessionStorage.getItem('dm_landing_loader_shown');
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    if (showLandingLoader) {
+      const timer = setTimeout(() => {
+        setShowLandingLoader(false);
+        try {
+          sessionStorage.setItem('dm_landing_loader_shown', 'true');
+        } catch {}
+      }, 850);
+      return () => clearTimeout(timer);
+    }
+  }, [showLandingLoader]);
 
   const scrollToSection = (id) => {
     if (id === 'top') {
@@ -55,11 +77,32 @@ export default function LandingPage() {
 
   return (
     <div id="top" className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col pb-24 md:pb-0 transition-colors duration-200">
+      {/* Branded Initial Landing Page Loader (Requirement 15: Landing Page Only) */}
+      {showLandingLoader && (
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-white dark:bg-slate-950 transition-opacity duration-300">
+          <div className="relative flex flex-col items-center p-8 text-center animate-fade-in">
+            <div className="relative w-16 h-16 rounded-2xl bg-gradient-to-tr from-purple-700 via-purple-600 to-emerald-500 flex items-center justify-center shadow-xl shadow-purple-600/30 text-white mb-4">
+              <Brain size={32} className="text-white animate-pulse" />
+              <div className="absolute -inset-1 rounded-2xl bg-purple-500/20 blur-md -z-10 animate-ping" />
+            </div>
+            <h2 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+              DealMemory
+            </h2>
+            <p className="text-xs text-purple-700 dark:text-purple-400 font-bold tracking-wide uppercase mt-1">
+              Persistent Relationship Memory
+            </p>
+            <div className="w-40 h-1 bg-slate-200 dark:bg-slate-800 rounded-full mt-5 overflow-hidden">
+              <div className="h-full bg-gradient-to-r from-purple-600 via-purple-500 to-emerald-500 rounded-full animate-pulse" style={{ width: '80%' }} />
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Top Floating Island Header */}
       <div className="pt-2 sm:pt-4 px-2.5 sm:px-8 sticky top-0 z-40 bg-slate-50/80 dark:bg-slate-950/80 backdrop-blur-md">
         <header className="h-14 sm:h-16 max-w-7xl mx-auto border border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-2xl px-3 sm:px-8 flex items-center justify-between shadow-sm dark:shadow-xl dark:shadow-black/5">
           <NavLink to="/" className="flex items-center space-x-2 sm:space-x-3 flex-shrink-0">
-            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-indigo-700 to-indigo-500 flex items-center justify-center shadow-md shadow-indigo-600/30 text-white font-black text-base sm:text-xl flex-shrink-0">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-purple-700 to-purple-500 flex items-center justify-center shadow-md shadow-purple-600/30 text-white font-black text-base sm:text-xl flex-shrink-0">
               <Database size={18} className="text-white sm:w-[22px] sm:h-[22px]" />
             </div>
             <div>
@@ -67,7 +110,7 @@ export default function LandingPage() {
                 <span className="font-extrabold text-base sm:text-xl tracking-tight text-slate-900 dark:text-white">
                   DealMemory
                 </span>
-                <span className="hidden sm:inline-block text-[9px] sm:text-[10px] uppercase tracking-wider font-semibold px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
+                <span className="hidden sm:inline-block text-[9px] sm:text-[10px] uppercase tracking-wider font-semibold px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
                   Hindsight
                 </span>
               </div>
@@ -81,105 +124,124 @@ export default function LandingPage() {
               className="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer shadow-xs flex-shrink-0"
               title="Toggle theme"
             >
-              {theme === 'dark' ? <Sun size={16} className="text-amber-400" /> : <Moon size={16} className="text-indigo-600" />}
+              {theme === 'dark' ? <Sun size={16} className="text-amber-400" /> : <Moon size={16} className="text-purple-600" />}
             </button>
 
             {isAuthenticated ? (
               <NavLink
                 to="/dashboard"
-                className="flex items-center space-x-1.5 bg-indigo-600 hover:bg-indigo-500 text-white px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold shadow-md shadow-indigo-600/20 whitespace-nowrap flex-shrink-0"
+                className="flex items-center space-x-1.5 bg-purple-600 hover:bg-purple-700 text-white px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold shadow-md shadow-purple-600/20 whitespace-nowrap flex-shrink-0 transition-transform active:scale-95"
               >
                 <span>Dashboard</span>
                 <ArrowRight size={14} />
               </NavLink>
             ) : (
-              <>
+              <div className="flex items-center space-x-2 flex-shrink-0">
+                {/* Clearly recognizable premium button with visible border, violet brand color, and hover effect */}
                 <NavLink
                   to="/login"
-                  className="text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0"
+                  className="px-3.5 sm:px-5 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold border border-purple-600/30 dark:border-purple-500/50 bg-purple-50/90 hover:bg-purple-100/90 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300 dark:hover:bg-purple-900/60 shadow-xs transition-all hover:scale-[1.02] active:scale-95 whitespace-nowrap flex-shrink-0"
                 >
                   Sign In
                 </NavLink>
 
-                {/* Completely hidden on mobile to avoid overflow at 375px/390px/414px */}
+                {/* Explore Deal completely removed on mobile to avoid overflow at 375px/390px/414px */}
                 <NavLink
                   to="/register"
-                  className="hidden sm:inline-flex bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-xl text-sm font-semibold shadow-md shadow-indigo-600/20 transition-all whitespace-nowrap flex-shrink-0"
+                  className="hidden md:inline-flex bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-xl text-sm font-semibold shadow-md shadow-purple-600/20 transition-all hover:scale-[1.02] active:scale-95 whitespace-nowrap flex-shrink-0"
                 >
                   Explore Deal
                 </NavLink>
-              </>
+              </div>
             )}
           </div>
         </header>
       </div>
 
-      {/* Hero Section */}
-      <section className="relative px-6 sm:px-12 pt-10 sm:pt-14 pb-16 overflow-hidden max-w-7xl mx-auto flex flex-col items-center text-center animate-fade-in">
-        {/* Multi-Color Ambient Glows: Purple, Emerald, Amber, Rose */}
+      {/* Hero Section with Hindsight Memory Brain Animation */}
+      <section className="relative px-4 sm:px-8 lg:px-12 pt-8 sm:pt-12 pb-16 overflow-hidden max-w-7xl mx-auto w-full animate-fade-in">
+        {/* Multi-Color Ambient Glows based on 6-color system */}
         <div className="absolute top-10 left-10 w-96 h-96 bg-purple-500/15 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute top-10 right-10 w-96 h-96 bg-emerald-500/15 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-4 left-1/3 w-80 h-80 bg-rose-500/10 rounded-full blur-3xl pointer-events-none" />
 
-        {/* Hindsight Live Cognitive Badge */}
-        <div className="inline-flex items-center space-x-2 px-4 py-1.5 rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs shadow-xs mb-6">
-          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          <Brain size={14} className="text-purple-600 dark:text-purple-400" />
-          <span className="font-semibold text-slate-800 dark:text-slate-200">Hindsight by Vectorize</span>
-          <span className="text-slate-400">•</span>
-          <span className="text-indigo-700 dark:text-indigo-300 font-bold">Persistent Cognitive Memory</span>
-        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+          {/* Left Column: Headline, Narrative, and Pillar Tags */}
+          <div className="lg:col-span-7 flex flex-col items-center lg:items-start text-center lg:text-left">
+            {/* Hindsight Live Cognitive Badge */}
+            <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs shadow-xs mb-5">
+              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <Brain size={14} className="text-purple-600 dark:text-purple-400" />
+              <span className="font-semibold text-slate-800 dark:text-slate-200">Hindsight by Vectorize</span>
+              <span className="text-slate-400">•</span>
+              <span className="text-purple-700 dark:text-purple-400 font-bold">Persistent Cognitive Memory</span>
+            </div>
 
-        {/* Main Headline with High-Contrast Multi-Color Gradient */}
-        <h1 className="text-3xl sm:text-6xl lg:text-7xl font-black tracking-tight text-slate-900 dark:text-white max-w-4xl leading-[1.14]">
-          Your CRM remembers the deal.{' '}
-          <span className="inline-block bg-gradient-to-r from-purple-700 via-indigo-600 to-emerald-600 dark:from-purple-400 dark:via-indigo-300 dark:to-emerald-400 bg-clip-text text-transparent font-black drop-shadow-xs">
-            DealMemory remembers what actually worked.
-          </span>
-        </h1>
+            {/* Main Headline with 6-Color Palette Gradient */}
+            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-slate-900 dark:text-white leading-[1.12]">
+              Your CRM remembers the deal.{' '}
+              <span className="inline-block bg-gradient-to-r from-purple-700 via-purple-600 to-emerald-600 dark:from-purple-400 dark:via-purple-300 dark:to-emerald-400 bg-clip-text text-transparent font-black drop-shadow-xs">
+                DealMemory remembers what actually worked.
+              </span>
+            </h1>
 
-        <p className="mt-5 text-sm sm:text-lg text-slate-700 dark:text-slate-300 max-w-2xl leading-relaxed font-medium">
-          AI relationship intelligence for B2B sales — powered by persistent memory and outcome-based learning.
-        </p>
+            {/* Explanatory Content for Hindsight Memory */}
+            <div className="mt-5 p-4 rounded-2xl bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 shadow-sm max-w-xl">
+              <div className="text-xs font-bold uppercase tracking-wider text-purple-700 dark:text-purple-400 mb-1">
+                Persistent Relationship Memory
+              </div>
+              <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
+                DealMemory remembers customer interactions, outcomes, and lessons through Hindsight — so every future conversation starts with context.
+              </p>
+              <div className="mt-2.5 flex items-center space-x-2 text-[11px] font-bold text-emerald-700 dark:text-emerald-400">
+                <span>Remember</span>
+                <span className="text-slate-400">→</span>
+                <span>Learn</span>
+                <span className="text-slate-400">→</span>
+                <span>Adapt</span>
+              </div>
+            </div>
 
-        {/* Multi-Color Semantic Pillar Badges: Green, Red, Yellow, Purple */}
-        <div className="mt-6 flex flex-wrap items-center justify-center gap-2 sm:gap-2.5 max-w-3xl">
-          <div className="flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800/60 text-purple-800 dark:text-purple-300 text-xs font-bold shadow-2xs">
-            <Database size={13} className="text-purple-600 dark:text-purple-400" />
-            <span>Persistent Memory Bank</span>
+            {/* Semantic Pillar Badges */}
+            <div className="mt-5 flex flex-wrap items-center justify-center lg:justify-start gap-2 max-w-xl">
+              <div className="flex items-center space-x-1.5 px-3 py-1 rounded-full bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800/60 text-purple-800 dark:text-purple-300 text-xs font-bold shadow-2xs">
+                <Database size={12} className="text-purple-600 dark:text-purple-400" />
+                <span>Persistent Memory Bank</span>
+              </div>
+              <div className="flex items-center space-x-1.5 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-emerald-800 dark:text-emerald-300 text-xs font-bold shadow-2xs">
+                <CheckCircle2 size={12} className="text-emerald-600 dark:text-emerald-400" />
+                <span>100% Grounded Recommendations</span>
+              </div>
+              <div className="flex items-center space-x-1.5 px-3 py-1 rounded-full bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 text-amber-800 dark:text-amber-300 text-xs font-bold shadow-2xs">
+                <AlertTriangle size={12} className="text-amber-600 dark:text-amber-400" />
+                <span>Prevents Failed Discount Tactics</span>
+              </div>
+            </div>
+
+            {/* CTA Buttons */}
+            <div className="mt-7 flex flex-col sm:flex-row items-center space-y-3 sm:space-y-0 sm:space-x-4 w-full sm:w-auto">
+              <NavLink
+                to="/register"
+                className="w-full sm:w-auto flex items-center justify-center space-x-2 px-8 py-3.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-sm sm:text-base shadow-xl shadow-purple-600/25 transition-all hover:scale-[1.02] active:scale-95 cursor-pointer"
+              >
+                <span>Explore DealMemory</span>
+                <ArrowRight size={18} />
+              </NavLink>
+
+              <button
+                onClick={() => scrollToSection('pipeline')}
+                className="w-full sm:w-auto flex items-center justify-center space-x-2 px-6 py-3.5 rounded-xl bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-850 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white font-bold text-sm sm:text-base transition-all cursor-pointer shadow-xs active:scale-95"
+              >
+                <Layers size={17} className="text-purple-600 dark:text-purple-400" />
+                <span>See How It Learns</span>
+              </button>
+            </div>
           </div>
-          <div className="flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-emerald-800 dark:text-emerald-300 text-xs font-bold shadow-2xs">
-            <CheckCircle2 size={13} className="text-emerald-600 dark:text-emerald-400" />
-            <span>100% Grounded Recommendations</span>
-          </div>
-          <div className="flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 text-rose-800 dark:text-rose-300 text-xs font-bold shadow-2xs">
-            <XCircle size={13} className="text-rose-600 dark:text-rose-400" />
-            <span>Prevents Failed Discount Tactics</span>
-          </div>
-          <div className="flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 text-amber-800 dark:text-amber-300 text-xs font-bold shadow-2xs">
-            <AlertTriangle size={13} className="text-amber-600 dark:text-amber-400" />
-            <span>Early Risk & Blocker Alerts</span>
-          </div>
-        </div>
 
-        {/* CTA Buttons */}
-        <div className="mt-8 flex flex-col sm:flex-row items-center space-y-3 sm:space-y-0 sm:space-x-4 w-full sm:w-auto">
-          <NavLink
-            to="/register"
-            className="w-full sm:w-auto flex items-center justify-center space-x-2 px-8 py-3.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-sm sm:text-base shadow-xl shadow-indigo-600/25 transition-all hover:scale-[1.02] cursor-pointer"
-          >
-            <span>Explore DealMemory</span>
-            <ArrowRight size={18} />
-          </NavLink>
-
-          <button
-            onClick={() => scrollToSection('pipeline')}
-            className="w-full sm:w-auto flex items-center justify-center space-x-2 px-6 py-3.5 rounded-xl bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-850 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white font-bold text-sm sm:text-base transition-all cursor-pointer shadow-xs"
-          >
-            <Layers size={17} className="text-indigo-600 dark:text-indigo-400" />
-            <span>See How It Learns</span>
-          </button>
+          {/* Right Column: Hindsight Brain Animation (Side-by-side on desktop, stacked on mobile) */}
+          <div className="lg:col-span-5 w-full flex justify-center mt-6 lg:mt-0">
+            <HindsightBrainAnimation />
+          </div>
         </div>
 
         {/* Multi-Color Cognitive Pipeline Banner */}
@@ -216,11 +278,11 @@ export default function LandingPage() {
               </div>
             </div>
 
-            {/* 4. Indigo Purple */}
-            <div className="bg-indigo-50/80 dark:bg-slate-950 p-3 rounded-xl border border-indigo-300 dark:border-indigo-500/40 flex flex-col justify-between shadow-2xs">
-              <div className="text-[10px] text-indigo-800 dark:text-indigo-400 font-bold uppercase tracking-wider">4. Reflection</div>
+            {/* 4. Violet Purple */}
+            <div className="bg-purple-50/80 dark:bg-slate-950 p-3 rounded-xl border border-purple-300 dark:border-purple-500/40 flex flex-col justify-between shadow-2xs">
+              <div className="text-[10px] text-purple-800 dark:text-purple-400 font-bold uppercase tracking-wider">4. Reflection</div>
               <div className="text-xs font-bold text-slate-900 dark:text-slate-100 mt-1">Hindsight Reflect</div>
-              <div className="text-[11px] text-indigo-800 dark:text-indigo-300 font-medium">Value gap identified</div>
+              <div className="text-[11px] text-purple-800 dark:text-purple-300 font-medium">Value gap identified</div>
             </div>
 
             {/* 5. Emerald Green */}
@@ -307,7 +369,7 @@ export default function LandingPage() {
       <section id="how-it-works" className="scroll-mt-20 sm:scroll-mt-24 py-16 sm:py-20 border-t border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/40 px-6 sm:px-12">
         <div className="max-w-6xl mx-auto">
           <div className="text-center max-w-2xl mx-auto mb-12">
-            <span className="text-xs uppercase tracking-wider font-bold text-indigo-700 dark:text-indigo-400 px-3.5 py-1 rounded-full bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20">
+            <span className="text-xs uppercase tracking-wider font-bold text-purple-700 dark:text-purple-400 px-3.5 py-1 rounded-full bg-purple-50 dark:bg-purple-500/10 border border-purple-200 dark:border-purple-500/20">
               Live Proof in Action
             </span>
             <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-900 dark:text-white mt-4 tracking-tight">
@@ -483,7 +545,7 @@ export default function LandingPage() {
       </section>
 
       {/* Final Call to Action */}
-      <section className="py-20 px-6 sm:px-12 text-center border-t border-slate-200 dark:border-slate-800 bg-gradient-to-b from-slate-50 to-indigo-50/30 dark:from-slate-900/60 dark:to-slate-950">
+      <section className="py-20 px-6 sm:px-12 text-center border-t border-slate-200 dark:border-slate-800 bg-gradient-to-b from-slate-50 to-purple-50/20 dark:from-slate-900/60 dark:to-slate-950">
         <div className="max-w-3xl mx-auto space-y-6">
           <h2 className="text-2xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
             Start exploring DealMemory today.
@@ -494,7 +556,7 @@ export default function LandingPage() {
           <div className="pt-2 flex flex-col sm:flex-row items-center justify-center space-y-3 sm:space-y-0 sm:space-x-4">
             <NavLink
               to="/register"
-              className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-sm shadow-xl shadow-indigo-600/30 transition-all hover:scale-105"
+              className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-sm shadow-xl shadow-purple-600/30 transition-all hover:scale-105"
             >
               Start exploring DealMemory
             </NavLink>
@@ -511,57 +573,57 @@ export default function LandingPage() {
       {/* Footer */}
       <footer className="py-8 px-6 sm:px-12 border-t border-slate-200 dark:border-slate-800 text-center text-xs text-slate-500 dark:text-slate-400 flex flex-col sm:flex-row items-center justify-between max-w-7xl mx-auto w-full">
         <div className="flex items-center space-x-2">
-          <Database size={16} className="text-indigo-600 dark:text-indigo-400" />
+          <Database size={16} className="text-purple-600 dark:text-purple-400" />
           <span className="font-semibold text-slate-800 dark:text-slate-300">DealMemory</span>
           <span>• AI Relationship Intelligence for B2B Sales</span>
         </div>
         <div className="mt-3 sm:mt-0 text-slate-500 dark:text-slate-400">
-          Powered by <span className="text-indigo-600 dark:text-indigo-400 font-medium">Hindsight by Vectorize</span> & <span className="text-indigo-600 dark:text-indigo-400 font-medium">Groq</span>
+          Powered by <span className="text-purple-600 dark:text-purple-400 font-medium">Hindsight by Vectorize</span> & <span className="text-purple-600 dark:text-purple-400 font-medium">Groq</span>
         </div>
       </footer>
 
       {/* Dedicated Public Landing Page Mobile Bottom Nav */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-slate-900/95 border-t border-slate-200 dark:border-slate-800 backdrop-blur-lg shadow-2xl safe-area-bottom">
-        <div className="grid grid-cols-4 w-full max-w-md mx-auto px-1 py-1.5 items-center">
+        <div className="grid grid-cols-4 w-full max-w-md mx-auto px-1.5 py-1.5 items-center">
           <button
             onClick={() => scrollToSection('top')}
-            className="flex flex-col items-center justify-center py-1 px-1 text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors text-center cursor-pointer"
+            className="flex flex-col items-center justify-center py-1 px-1 text-slate-600 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors text-center cursor-pointer active:scale-95"
           >
-            <Home size={18} className="mb-0.5 text-indigo-500 dark:text-indigo-400" />
+            <Home size={18} className="mb-0.5 text-purple-600 dark:text-purple-400" />
             <span className="text-[10px] font-medium leading-tight truncate w-full">Home</span>
           </button>
 
           <button
             onClick={() => scrollToSection('how-it-works')}
-            className="flex flex-col items-center justify-center py-1 px-1 text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors text-center cursor-pointer"
+            className="flex flex-col items-center justify-center py-1 px-1 text-slate-600 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors text-center cursor-pointer active:scale-95"
           >
-            <Layers size={18} className="mb-0.5 text-indigo-500 dark:text-indigo-400" />
+            <Layers size={18} className="mb-0.5 text-purple-600 dark:text-purple-400" />
             <span className="text-[10px] font-medium leading-tight truncate w-full">How It Works</span>
           </button>
 
           <button
             onClick={() => scrollToSection('comparison')}
-            className="flex flex-col items-center justify-center py-1 px-1 text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors text-center cursor-pointer"
+            className="flex flex-col items-center justify-center py-1 px-1 text-slate-600 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors text-center cursor-pointer active:scale-95"
           >
-            <HelpCircle size={18} className="mb-0.5 text-indigo-500 dark:text-indigo-400" />
+            <HelpCircle size={18} className="mb-0.5 text-purple-600 dark:text-purple-400" />
             <span className="text-[10px] font-medium leading-tight truncate w-full">Why DM</span>
           </button>
 
           {isAuthenticated ? (
             <NavLink
               to="/dashboard"
-              className="flex flex-col items-center justify-center py-1 px-1 text-indigo-600 dark:text-indigo-400 font-bold text-center"
+              className="flex flex-col items-center justify-center py-1 px-1 text-purple-700 dark:text-purple-300 font-bold text-center active:scale-95"
             >
-              <LayoutDashboard size={18} className="mb-0.5" />
+              <LayoutDashboard size={18} className="mb-0.5 text-purple-600 dark:text-purple-400" />
               <span className="text-[10px] leading-tight truncate w-full">Dashboard</span>
             </NavLink>
           ) : (
             <NavLink
               to="/login"
-              className="flex flex-col items-center justify-center py-1 px-1 text-indigo-600 dark:text-indigo-400 font-bold text-center"
+              className="flex flex-col items-center justify-center py-1 px-1 text-purple-700 dark:text-purple-300 font-bold text-center rounded-lg bg-purple-50/80 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800/60 active:scale-95"
             >
-              <LogIn size={18} className="mb-0.5" />
-              <span className="text-[10px] leading-tight truncate w-full">Sign In</span>
+              <LogIn size={17} className="mb-0.5 text-purple-600 dark:text-purple-400" />
+              <span className="text-[10px] leading-tight truncate w-full font-bold">Sign In</span>
             </NavLink>
           )}
         </div>

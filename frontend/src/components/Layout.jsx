@@ -120,14 +120,14 @@ export default function Layout() {
         <header className="h-14 sm:h-16 border border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-2xl px-3 sm:px-6 flex items-center justify-between shadow-sm dark:shadow-xl dark:shadow-black/20">
           <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-shrink-0">
             <NavLink to="/dashboard" className="flex items-center space-x-2 sm:space-x-2.5 flex-shrink-0">
-              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-indigo-700 to-indigo-500 flex items-center justify-center shadow-md shadow-indigo-600/20 text-white font-black text-base sm:text-lg flex-shrink-0">
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-purple-700 to-purple-500 flex items-center justify-center shadow-md shadow-purple-600/20 text-white font-black text-base sm:text-lg flex-shrink-0">
                 <Database size={18} className="text-white" />
               </div>
               <div className="flex items-center space-x-1.5 sm:space-x-2">
                 <span className="font-bold text-base sm:text-lg tracking-tight text-slate-900 dark:text-white whitespace-nowrap">
                   DealMemory
                 </span>
-                <span className="hidden sm:inline-block text-[10px] uppercase tracking-wider font-semibold px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
+                <span className="hidden sm:inline-block text-[10px] uppercase tracking-wider font-semibold px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
                   Hindsight
                 </span>
               </div>
@@ -172,7 +172,7 @@ export default function Layout() {
               title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
               className="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors border border-slate-200 dark:border-slate-700/60 cursor-pointer shadow-xs flex-shrink-0"
             >
-              {theme === 'dark' ? <Sun size={17} className="text-amber-400" /> : <Moon size={17} className="text-indigo-600" />}
+              {theme === 'dark' ? <Sun size={17} className="text-amber-400" /> : <Moon size={17} className="text-purple-600" />}
             </button>
 
             {/* User Profile dropdown menu with matching dimensions and contained bounds */}
@@ -182,7 +182,7 @@ export default function Layout() {
                 className="h-9 px-1.5 sm:px-2 flex items-center space-x-1.5 rounded-xl bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700/60 transition-colors cursor-pointer shadow-xs flex-shrink-0"
                 title="Account menu"
               >
-                <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-indigo-600 to-indigo-800 flex items-center justify-center font-bold text-[11px] text-white shadow-xs flex-shrink-0">
+                <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-purple-600 to-purple-800 flex items-center justify-center font-bold text-[11px] text-white shadow-xs flex-shrink-0">
                   {userInitials}
                 </div>
                 <div className="hidden md:block text-left text-xs pr-1">
@@ -196,14 +196,14 @@ export default function Layout() {
                   <div className="px-4 py-2 border-b border-slate-100 dark:border-slate-800">
                     <div className="font-bold text-slate-900 dark:text-white text-sm">{user?.name || 'Account'}</div>
                     <div className="text-slate-500 dark:text-slate-400 truncate">{user?.email}</div>
-                    <div className="text-[10px] text-indigo-600 dark:text-indigo-400 font-semibold mt-0.5">{user?.company || 'Personal Workspace'}</div>
+                    <div className="text-[10px] text-purple-600 dark:text-purple-400 font-semibold mt-0.5">{user?.company || 'Personal Workspace'}</div>
                   </div>
                   <div className="py-1">
                     <button
                       onClick={openEditProfile}
                       className="w-full flex items-center space-x-2 px-4 py-2 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white cursor-pointer"
                     >
-                      <User size={14} className="text-indigo-500 dark:text-indigo-400" />
+                      <User size={14} className="text-purple-600 dark:text-purple-400" />
                       <span>Edit Profile</span>
                     </button>
                     <button
@@ -214,7 +214,7 @@ export default function Layout() {
                       className="w-full flex items-center justify-between px-4 py-2 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white cursor-pointer"
                     >
                       <span className="flex items-center space-x-2">
-                        {theme === 'dark' ? <Sun size={14} className="text-amber-400" /> : <Moon size={14} className="text-indigo-600" />}
+                        {theme === 'dark' ? <Sun size={14} className="text-amber-400" /> : <Moon size={14} className="text-purple-600" />}
                         <span>Theme</span>
                       </span>
                       <span className="capitalize text-slate-500 dark:text-slate-400 text-[11px] font-semibold">{theme}</span>
@@ -275,7 +275,7 @@ export default function Layout() {
                       className={({ isActive }) =>
                         `flex items-center justify-between px-3 py-2.5 rounded-xl text-sm transition-all ${
                           isActive
-                            ? 'bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/80 font-bold shadow-xs'
+                            ? 'bg-purple-50 dark:bg-purple-950/50 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800/80 font-bold shadow-xs'
                             : 'text-slate-700 dark:text-slate-400 hover:text-slate-950 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/60 font-medium'
                         }`
                       }
@@ -285,7 +285,7 @@ export default function Layout() {
                         <span>{item.label}</span>
                       </div>
                       {item.badge && (
-                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-slate-800 text-indigo-700 dark:text-slate-300 border border-indigo-200 dark:border-slate-700">
+                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-purple-50 dark:bg-slate-800 text-purple-700 dark:text-slate-300 border border-purple-200 dark:border-slate-700">
                           {item.badge}
                         </span>
                       )}
@@ -297,7 +297,7 @@ export default function Layout() {
 
             {/* Core Differentiator Callout Card */}
             <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3.5 rounded-2xl text-xs space-y-2 shadow-xs">
-              <div className="flex items-center space-x-2 text-indigo-600 dark:text-indigo-400 font-bold text-[11px]">
+              <div className="flex items-center space-x-2 text-purple-600 dark:text-purple-400 font-bold text-[11px]">
                 <Sparkles size={14} />
                 <span>Memory → Outcome → Learning</span>
               </div>
@@ -348,7 +348,7 @@ export default function Layout() {
             onClick={handleNavScrollToTop}
             className={({ isActive }) =>
               `flex flex-col items-center justify-center py-1 px-0.5 rounded-lg text-[10px] font-medium transition-colors text-center ${
-                isActive ? 'text-indigo-600 dark:text-indigo-400 font-bold' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+                isActive ? 'text-purple-600 dark:text-purple-400 font-bold' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
               }`
             }
           >
@@ -361,7 +361,7 @@ export default function Layout() {
             onClick={handleNavScrollToTop}
             className={({ isActive }) =>
               `flex flex-col items-center justify-center py-1 px-0.5 rounded-lg text-[10px] font-medium transition-colors text-center ${
-                isActive ? 'text-indigo-600 dark:text-indigo-400 font-bold' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+                isActive ? 'text-purple-600 dark:text-purple-400 font-bold' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
               }`
             }
           >
@@ -374,7 +374,7 @@ export default function Layout() {
             onClick={handleNavScrollToTop}
             className={({ isActive }) =>
               `flex flex-col items-center justify-center py-1 px-0.5 rounded-lg text-[10px] font-medium transition-colors text-center ${
-                isActive ? 'text-indigo-600 dark:text-indigo-400 font-bold' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+                isActive ? 'text-purple-600 dark:text-purple-400 font-bold' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
               }`
             }
           >
@@ -387,7 +387,7 @@ export default function Layout() {
             onClick={handleNavScrollToTop}
             className={({ isActive }) =>
               `flex flex-col items-center justify-center py-1 px-0.5 rounded-lg text-[10px] font-medium transition-colors text-center ${
-                isActive ? 'text-indigo-600 dark:text-indigo-400 font-bold' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+                isActive ? 'text-purple-600 dark:text-purple-400 font-bold' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
               }`
             }
           >
@@ -398,7 +398,7 @@ export default function Layout() {
           <button
             onClick={() => setMobileMoreOpen(true)}
             className={`flex flex-col items-center justify-center py-1 px-0.5 rounded-lg text-[10px] font-medium transition-colors cursor-pointer text-center ${
-              mobileMoreOpen ? 'text-indigo-600 dark:text-indigo-400 font-bold' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+              mobileMoreOpen ? 'text-purple-600 dark:text-purple-400 font-bold' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
             }`}
           >
             <MoreHorizontal size={18} className="mb-0.5" />
@@ -429,7 +429,7 @@ export default function Layout() {
             {/* Header & close */}
             <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-700 to-indigo-500 flex items-center justify-center font-bold text-white text-sm shadow-sm">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-purple-700 to-purple-500 flex items-center justify-center font-bold text-white text-sm shadow-sm">
                   {userInitials}
                 </div>
                 <div>
@@ -456,7 +456,7 @@ export default function Layout() {
                 className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-slate-850 hover:bg-slate-100 dark:hover:bg-slate-800 text-sm text-slate-800 dark:text-slate-200 font-semibold border border-slate-200/60 dark:border-slate-800 transition-colors"
               >
                 <div className="flex items-center space-x-3">
-                  <CalendarCheck2 size={18} className="text-indigo-600 dark:text-indigo-400" />
+                  <CalendarCheck2 size={18} className="text-purple-600 dark:text-purple-400" />
                   <span>Meeting Prep Brief</span>
                 </div>
                 <ChevronRight size={16} className="text-slate-400" />
@@ -468,7 +468,7 @@ export default function Layout() {
                 className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-slate-850 hover:bg-slate-100 dark:hover:bg-slate-800 text-sm text-slate-800 dark:text-slate-200 font-semibold border border-slate-200/60 dark:border-slate-800 transition-colors"
               >
                 <div className="flex items-center space-x-3">
-                  <Clock size={18} className="text-indigo-600 dark:text-indigo-400" />
+                  <Clock size={18} className="text-purple-600 dark:text-purple-400" />
                   <span>My Activity & AI History</span>
                 </div>
                 <ChevronRight size={16} className="text-slate-400" />
@@ -491,7 +491,7 @@ export default function Layout() {
                 className="w-full flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-slate-850 hover:bg-slate-100 dark:hover:bg-slate-800 text-sm text-slate-800 dark:text-slate-200 font-semibold border border-slate-200/60 dark:border-slate-800 transition-colors cursor-pointer"
               >
                 <div className="flex items-center space-x-3">
-                  <User size={18} className="text-indigo-600 dark:text-indigo-400" />
+                  <User size={18} className="text-purple-600 dark:text-purple-400" />
                   <span>Edit Profile</span>
                 </div>
                 <ChevronRight size={16} className="text-slate-400" />
@@ -507,7 +507,7 @@ export default function Layout() {
                 className="w-full flex items-center justify-between p-3 rounded-2xl bg-slate-100 dark:bg-slate-800/80 text-sm text-slate-800 dark:text-slate-200 cursor-pointer font-medium"
               >
                 <span className="flex items-center space-x-2.5">
-                  {theme === 'dark' ? <Sun size={17} className="text-amber-400" /> : <Moon size={17} className="text-indigo-600" />}
+                  {theme === 'dark' ? <Sun size={17} className="text-amber-400" /> : <Moon size={17} className="text-purple-600" />}
                   <span>Theme</span>
                 </span>
                 <span className="capitalize text-xs font-semibold px-2.5 py-0.5 rounded-md bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-300 border border-slate-200 dark:border-slate-600 shadow-xs">
@@ -527,7 +527,7 @@ export default function Layout() {
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
               <div className="flex items-center space-x-2.5">
-                <div className="w-8 h-8 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 flex items-center justify-center">
                   <User size={16} />
                 </div>
                 <h3 className="text-base font-bold text-slate-900 dark:text-white">Edit Your Profile</h3>
@@ -551,7 +551,7 @@ export default function Layout() {
                   value={profileName}
                   onChange={(e) => setProfileName(e.target.value)}
                   placeholder="e.g. Akash Koravena"
-                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 transition-colors"
+                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-purple-600 transition-colors"
                 />
               </div>
 
@@ -564,7 +564,7 @@ export default function Layout() {
                   value={profileCompany}
                   onChange={(e) => setProfileCompany(e.target.value)}
                   placeholder="e.g. Enterprise CRM Corp"
-                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 transition-colors"
+                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-purple-600 transition-colors"
                 />
               </div>
 
@@ -577,7 +577,7 @@ export default function Layout() {
                   value={profileRole}
                   onChange={(e) => setProfileRole(e.target.value)}
                   placeholder="e.g. Enterprise AE, VP Sales"
-                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 transition-colors"
+                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-purple-600 transition-colors"
                 />
               </div>
 
@@ -592,7 +592,7 @@ export default function Layout() {
                 <button
                   type="submit"
                   disabled={savingProfile}
-                  className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md shadow-indigo-600/20 disabled:opacity-50 cursor-pointer flex items-center space-x-1.5"
+                  className="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold shadow-md shadow-purple-600/20 disabled:opacity-50 cursor-pointer flex items-center space-x-1.5 active:scale-95"
                 >
                   {savingProfile ? (
                     <>

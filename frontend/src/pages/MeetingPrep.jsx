@@ -44,7 +44,7 @@ export default function MeetingPrep() {
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 relative overflow-hidden shadow-xs">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <div className="flex items-center space-x-2 text-indigo-700 dark:text-indigo-400 text-xs font-bold uppercase tracking-wider mb-1">
+            <div className="flex items-center space-x-2 text-purple-700 dark:text-purple-400 text-xs font-bold uppercase tracking-wider mb-1">
               <CalendarCheck2 size={16} />
               <span>Executive Meeting Briefing</span>
             </div>
@@ -52,7 +52,7 @@ export default function MeetingPrep() {
               <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
                 NEXT MEETING: ACME Corp
               </h1>
-              <span className="text-lg font-bold text-indigo-600 dark:text-indigo-400">$120,000 ARR</span>
+              <span className="text-lg font-bold text-purple-600 dark:text-purple-400">$120,000 ARR</span>
             </div>
             <p className="text-slate-600 dark:text-slate-400 text-xs sm:text-sm mt-1">
               Generated from Hindsight relationship memory + previous strategy outcomes.
@@ -65,12 +65,12 @@ export default function MeetingPrep() {
               disabled={loading}
               className="flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-850 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-300 text-xs border border-slate-200 dark:border-slate-750 transition-colors cursor-pointer"
             >
-              <RefreshCw size={13} className={loading ? 'animate-spin text-indigo-600 dark:text-indigo-400' : 'text-slate-500'} />
+              <RefreshCw size={13} className={loading ? 'animate-spin text-purple-600 dark:text-purple-400' : 'text-slate-500'} />
               <span>Regenerate Brief</span>
             </button>
             <Link
               to="/agent"
-              className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold flex items-center space-x-1.5 shadow-md shadow-indigo-600/20 transition-all cursor-pointer"
+              className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold flex items-center space-x-1.5 shadow-md shadow-purple-600/20 transition-all cursor-pointer active:scale-95"
             >
               <Bot size={15} />
               <span>Ask Agent</span>
@@ -81,7 +81,7 @@ export default function MeetingPrep() {
 
       {loading ? (
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-12 text-center space-y-3 shadow-xs">
-          <Sparkles size={24} className="mx-auto text-indigo-600 dark:text-indigo-400 animate-spin" />
+          <Sparkles size={24} className="mx-auto text-purple-600 dark:text-purple-400 animate-spin" />
           <div className="text-slate-900 dark:text-white font-bold text-sm">
             Recalling memories & synthesizing executive meeting intelligence...
           </div>
@@ -105,7 +105,7 @@ export default function MeetingPrep() {
           {/* 1. WHAT CHANGED */}
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 sm:p-6 space-y-3 shadow-xs">
             <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-850">
-              <span className="text-xs font-bold uppercase tracking-wider text-indigo-700 dark:text-indigo-400 flex items-center space-x-1.5">
+              <span className="text-xs font-bold uppercase tracking-wider text-purple-700 dark:text-purple-400 flex items-center space-x-1.5">
                 <Layers size={15} />
                 <span>1. What Changed in the Deal</span>
               </span>
@@ -118,9 +118,9 @@ export default function MeetingPrep() {
             </p>
 
             <div className="grid sm:grid-cols-3 gap-3 pt-1">
-              <div className="p-3.5 bg-indigo-50/50 dark:bg-slate-950 rounded-xl border border-indigo-200 dark:border-slate-800 space-y-1">
+              <div className="p-3.5 bg-purple-50/50 dark:bg-slate-950 rounded-xl border border-purple-200 dark:border-slate-800 space-y-1">
                 <div className="text-[11px] font-bold text-slate-900 dark:text-white">Sarah — VP Sales</div>
-                <div className="text-[10px] text-indigo-700 dark:text-indigo-400 font-semibold">Business Champion</div>
+                <div className="text-[10px] text-purple-700 dark:text-purple-400 font-semibold">Business Champion</div>
                 <p className="text-[11px] text-slate-600 dark:text-slate-400">Needs API-first sync to unify internal pipeline data.</p>
               </div>
 
@@ -142,7 +142,7 @@ export default function MeetingPrep() {
           <div className="grid md:grid-cols-2 gap-5">
             {/* What We Learned */}
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-3 shadow-xs">
-              <div className="flex items-center space-x-2 text-indigo-700 dark:text-indigo-400 text-xs font-bold uppercase tracking-wider pb-2 border-b border-slate-100 dark:border-slate-850">
+              <div className="flex items-center space-x-2 text-purple-700 dark:text-purple-400 text-xs font-bold uppercase tracking-wider pb-2 border-b border-slate-100 dark:border-slate-850">
                 <Lightbulb size={15} />
                 <span>2. What Hindsight Learned</span>
               </div>
@@ -198,7 +198,7 @@ export default function MeetingPrep() {
             <div className="space-y-3 text-xs sm:text-sm text-slate-800 dark:text-slate-200">
               <div className="p-3.5 rounded-xl bg-white dark:bg-slate-950 border border-emerald-200 dark:border-slate-800 space-y-1 shadow-2xs">
                 <div className="font-bold text-slate-900 dark:text-white flex items-center space-x-2">
-                  <MessageSquare size={13} className="text-indigo-600 dark:text-indigo-400" />
+                  <MessageSquare size={13} className="text-purple-600 dark:text-purple-400" />
                   <span>For Sarah (VP Sales):</span>
                 </div>
                 <p className="text-slate-600 dark:text-slate-300 text-xs">

@@ -5,11 +5,9 @@ const ThemeContext = createContext();
 export function ThemeProvider({ children }) {
   const [theme, setTheme] = useState(() => {
     const saved = localStorage.getItem('dealmemory-theme');
-    if (saved === 'light' || saved === 'dark') return saved;
-    if (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
-      return 'light';
-    }
-    return 'dark';
+    if (saved === 'dark' || saved === 'light') return saved;
+    // Default theme is explicitly Light Mode for fresh visitors
+    return 'light';
   });
 
   useEffect(() => {
@@ -42,3 +40,4 @@ export function useTheme() {
   }
   return context;
 }
+

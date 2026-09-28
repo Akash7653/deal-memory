@@ -43,9 +43,13 @@ export default function App() {
             >
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/deal" element={<DealOverview />} />
+              <Route path="/deals" element={<Navigate to="/deal" replace />} />
+              <Route path="/deals/:id" element={<DealOverview />} />
               <Route path="/timeline" element={<MemoryTimeline />} />
+              <Route path="/memory" element={<Navigate to="/timeline" replace />} />
               <Route path="/meeting-prep" element={<MeetingPrep />} />
               <Route path="/agent" element={<AiAgent />} />
+              <Route path="/ai" element={<Navigate to="/agent" replace />} />
               <Route path="/history" element={<History />} />
               <Route path="/add-interaction" element={<AddInteraction />} />
             </Route>

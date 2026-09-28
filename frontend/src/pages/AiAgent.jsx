@@ -169,7 +169,7 @@ Instead, structure the next meeting around Value-Based Technical Demonstration:
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 relative overflow-hidden shadow-sm transition-colors">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-start space-x-3.5">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-indigo-700 to-indigo-500 flex items-center justify-center text-white shadow-md shadow-indigo-600/20 flex-shrink-0">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-purple-700 to-purple-500 flex items-center justify-center text-white shadow-md shadow-purple-600/20 flex-shrink-0">
               <Bot size={24} />
             </div>
             <div>
@@ -200,7 +200,7 @@ Instead, structure the next meeting around Value-Based Technical Demonstration:
               onClick={() => setActiveTab('chat')}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                 activeTab === 'chat'
-                  ? 'bg-indigo-600 text-white shadow-sm'
+                  ? 'bg-purple-600 text-white shadow-sm'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
@@ -210,7 +210,7 @@ Instead, structure the next meeting around Value-Based Technical Demonstration:
               onClick={() => setActiveTab('playground')}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center space-x-1.5 ${
                 activeTab === 'playground'
-                  ? 'bg-indigo-600 text-white shadow-sm'
+                  ? 'bg-purple-600 text-white shadow-sm'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
@@ -227,7 +227,7 @@ Instead, structure the next meeting around Value-Based Technical Demonstration:
         /* ========================================================================= */
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 space-y-6 shadow-sm transition-colors">
           <div>
-            <div className="flex items-center space-x-2 text-indigo-600 dark:text-indigo-400 text-xs font-bold uppercase tracking-wider mb-1">
+            <div className="flex items-center space-x-2 text-purple-600 dark:text-purple-400 text-xs font-bold uppercase tracking-wider mb-1">
               <Sparkles size={15} />
               <span>Live Hindsight Demonstration</span>
             </div>
@@ -249,12 +249,12 @@ Instead, structure the next meeting around Value-Based Technical Demonstration:
                   value={playgroundInput}
                   onChange={(e) => setPlaygroundInput(e.target.value)}
                   placeholder="e.g. Sarah confirmed that the API integration has been approved."
-                  className="flex-1 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 transition-colors"
+                  className="flex-1 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-purple-600 transition-colors"
                 />
                 <button
                   type="submit"
                   disabled={playgroundStatus === 'retaining'}
-                  className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-md shadow-indigo-600/20 disabled:opacity-50 transition-all flex items-center justify-center space-x-2 flex-shrink-0 cursor-pointer"
+                  className="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs shadow-md shadow-purple-600/20 disabled:opacity-50 transition-all flex items-center justify-center space-x-2 flex-shrink-0 cursor-pointer active:scale-95"
                 >
                   {playgroundStatus === 'retaining' ? (
                     <>
@@ -304,23 +304,23 @@ Instead, structure the next meeting around Value-Based Technical Demonstration:
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-6 gap-2 text-[11px]">
               <div className="p-2.5 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300">
-                <span className="text-indigo-600 dark:text-indigo-400 font-bold block">1. Interaction</span>
+                <span className="text-purple-600 dark:text-purple-400 font-bold block">1. Interaction</span>
                 User records fact
               </div>
               <div className="p-2.5 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300">
-                <span className="text-indigo-600 dark:text-indigo-400 font-bold block">2. Retain</span>
+                <span className="text-purple-600 dark:text-purple-400 font-bold block">2. Retain</span>
                 Hindsight retain()
               </div>
               <div className="p-2.5 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300">
-                <span className="text-indigo-600 dark:text-indigo-400 font-bold block">3. Memory</span>
+                <span className="text-purple-600 dark:text-purple-400 font-bold block">3. Memory</span>
                 Bank updated
               </div>
               <div className="p-2.5 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300">
-                <span className="text-indigo-600 dark:text-indigo-400 font-bold block">4. Recall</span>
+                <span className="text-purple-600 dark:text-purple-400 font-bold block">4. Recall</span>
                 Semantic search
               </div>
               <div className="p-2.5 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300">
-                <span className="text-indigo-600 dark:text-indigo-400 font-bold block">5. Reflection</span>
+                <span className="text-purple-600 dark:text-purple-400 font-bold block">5. Reflection</span>
                 Learned pattern
               </div>
               <div className="p-2.5 bg-emerald-50 dark:bg-slate-950 rounded-xl border border-emerald-200 dark:border-emerald-500/30 text-emerald-800 dark:text-emerald-200">
@@ -346,11 +346,11 @@ Instead, structure the next meeting around Value-Based Technical Demonstration:
                   key={i}
                   onClick={() => handleAsk(sq.q)}
                   disabled={loading}
-                  className="text-left p-3.5 rounded-2xl bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-850 border border-slate-200 dark:border-slate-800 hover:border-indigo-400 dark:hover:border-indigo-500/40 transition-all text-xs group cursor-pointer shadow-xs"
+                  className="text-left p-3.5 rounded-2xl bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-850 border border-slate-200 dark:border-slate-800 hover:border-purple-400 dark:hover:border-purple-500/40 transition-all text-xs group cursor-pointer shadow-xs"
                 >
-                  <div className="font-semibold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-300 flex items-center justify-between">
+                  <div className="font-semibold text-slate-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-300 flex items-center justify-between">
                     <span>{sq.label}</span>
-                    <ArrowRight size={13} className="text-slate-400 group-hover:text-indigo-500" />
+                    <ArrowRight size={13} className="text-slate-400 group-hover:text-purple-500" />
                   </div>
                   <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">{sq.desc}</div>
                 </button>
@@ -364,7 +364,7 @@ Instead, structure the next meeting around Value-Based Technical Demonstration:
               <div key={idx} className="space-y-3">
                 {item.role === 'user' ? (
                   <div className="flex justify-end">
-                    <div className="max-w-[85%] bg-indigo-600 text-white p-3.5 rounded-2xl rounded-tr-sm text-xs sm:text-sm font-medium shadow-md shadow-indigo-600/20">
+                    <div className="max-w-[85%] bg-purple-600 text-white p-3.5 rounded-2xl rounded-tr-sm text-xs sm:text-sm font-medium shadow-md shadow-purple-600/20">
                       {item.question}
                     </div>
                   </div>
@@ -396,7 +396,7 @@ Instead, structure the next meeting around Value-Based Technical Demonstration:
                             [idx]: !prev[idx],
                           }))
                         }
-                        className="flex items-center space-x-1.5 text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-semibold cursor-pointer"
+                        className="flex items-center space-x-1.5 text-xs text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 font-semibold cursor-pointer"
                       >
                         <ShieldCheck size={14} />
                         <span>Why This Recommendation? (View Grounding Sources)</span>
@@ -437,12 +437,12 @@ Instead, structure the next meeting around Value-Based Technical Demonstration:
               value={question}
               onChange={(e) => setQuestion(e.target.value)}
               placeholder="Ask DealMemory anything about ACME Corp..."
-              className="flex-1 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-indigo-500 transition-colors shadow-xs"
+              className="flex-1 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-purple-600 transition-colors shadow-xs"
             />
             <button
               type="submit"
               disabled={loading || !question.trim()}
-              className="px-5 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-md shadow-indigo-600/20 disabled:opacity-50 transition-all flex items-center space-x-1.5 cursor-pointer"
+              className="px-5 py-3 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs shadow-md shadow-purple-600/20 disabled:opacity-50 transition-all flex items-center space-x-1.5 cursor-pointer active:scale-95"
             >
               {loading ? (
                 <div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />

@@ -65,7 +65,7 @@ export default function AddInteraction() {
   return (
     <div className="max-w-2xl mx-auto space-y-6 animate-fade-in">
       <div>
-        <div className="flex items-center space-x-2 text-indigo-500 dark:text-indigo-400 text-xs font-semibold uppercase tracking-wider mb-1">
+        <div className="flex items-center space-x-2 text-purple-500 dark:text-purple-400 text-xs font-semibold uppercase tracking-wider mb-1">
           <Database size={15} />
           <span>Hindsight Memory Ingestion</span>
         </div>
@@ -73,7 +73,7 @@ export default function AddInteraction() {
           Log Customer Interaction
         </h1>
         <p className="text-slate-600 dark:text-slate-400 text-sm mt-1">
-          Record call notes, objections, commitments, or outcomes into persistent memory bank <code className="text-indigo-600 dark:text-indigo-400 font-mono text-xs font-semibold">dealmemory-acme</code>.
+          Record call notes, objections, commitments, or outcomes into persistent memory bank <code className="text-purple-600 dark:text-purple-400 font-mono text-xs font-semibold">dealmemory-acme</code>.
         </p>
       </div>
 
@@ -95,7 +95,7 @@ export default function AddInteraction() {
               {successResponse.stored_memory?.tags?.map((t, idx) => (
                 <span
                   key={idx}
-                  className="px-2 py-0.5 rounded bg-indigo-50 dark:bg-indigo-950/40 text-[10px] text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 font-medium"
+                  className="px-2 py-0.5 rounded bg-purple-50 dark:bg-purple-950/40 text-[10px] text-purple-600 dark:text-purple-400 border border-purple-200 dark:border-purple-800 font-medium"
                 >
                   #{t}
                 </span>
@@ -106,7 +106,7 @@ export default function AddInteraction() {
           <div className="flex items-center space-x-3 pt-2">
             <Link
               to="/timeline"
-              className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs flex items-center space-x-1.5 shadow-md shadow-indigo-600/20 transition-all cursor-pointer"
+              className="px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-semibold text-xs flex items-center space-x-1.5 shadow-md shadow-purple-600/20 transition-all cursor-pointer"
             >
               <span>View in Memory Timeline</span>
               <ArrowRight size={14} />
@@ -155,7 +155,7 @@ export default function AddInteraction() {
                 onChange={(e) =>
                   setFormData({ ...formData, company: e.target.value })
                 }
-                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 transition-colors"
+                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-purple-500 transition-colors"
               />
             </div>
 
@@ -168,7 +168,7 @@ export default function AddInteraction() {
                 onChange={(e) =>
                   setFormData({ ...formData, interaction_type: e.target.value })
                 }
-                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 transition-colors"
+                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-purple-500 transition-colors"
               >
                 <option value="discovery">Discovery Call</option>
                 <option value="technical">Technical Evaluation</option>
@@ -192,7 +192,7 @@ export default function AddInteraction() {
                 onChange={(e) =>
                   setFormData({ ...formData, contact_name: e.target.value })
                 }
-                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 transition-colors placeholder-slate-400"
+                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-purple-500 transition-colors placeholder-slate-400"
               />
             </div>
 
@@ -207,7 +207,7 @@ export default function AddInteraction() {
                 onChange={(e) =>
                   setFormData({ ...formData, contact_role: e.target.value })
                 }
-                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 transition-colors placeholder-slate-400"
+                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-purple-500 transition-colors placeholder-slate-400"
               />
             </div>
 
@@ -221,7 +221,7 @@ export default function AddInteraction() {
                 onChange={(e) =>
                   setFormData({ ...formData, date: e.target.value })
                 }
-                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 transition-colors"
+                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-purple-500 transition-colors"
               />
             </div>
           </div>
@@ -238,7 +238,7 @@ export default function AddInteraction() {
               onChange={(e) =>
                 setFormData({ ...formData, content: e.target.value })
               }
-              className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl p-3.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 leading-relaxed placeholder-slate-400 transition-colors"
+              className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl p-3.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-purple-500 leading-relaxed placeholder-slate-400 transition-colors"
             />
           </div>
 
@@ -253,7 +253,7 @@ export default function AddInteraction() {
               onChange={(e) =>
                 setFormData({ ...formData, outcome: e.target.value })
               }
-              className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 transition-colors placeholder-slate-400"
+              className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-purple-500 transition-colors placeholder-slate-400"
             />
           </div>
 
@@ -268,19 +268,19 @@ export default function AddInteraction() {
               onChange={(e) =>
                 setFormData({ ...formData, tags: e.target.value })
               }
-              className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 transition-colors placeholder-slate-400"
+              className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-purple-500 transition-colors placeholder-slate-400"
             />
           </div>
 
           <div className="pt-2 flex items-center justify-between border-t border-slate-200 dark:border-slate-800">
             <span className="text-[11px] text-slate-500 dark:text-slate-400">
-              Retains to Hindsight bank via <code className="text-indigo-600 dark:text-indigo-400 font-mono">aretain()</code>
+              Retains to Hindsight bank via <code className="text-purple-600 dark:text-purple-400 font-mono">aretain()</code>
             </span>
 
             <button
               type="submit"
               disabled={loading || !formData.content.trim()}
-              className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-bold text-xs flex items-center space-x-1.5 shadow-lg shadow-indigo-600/25 transition-all cursor-pointer"
+              className="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white font-bold text-xs flex items-center space-x-1.5 shadow-lg shadow-purple-600/25 transition-all cursor-pointer"
             >
               <span>{loading ? 'Retaining in Hindsight...' : 'Retain in Memory'}</span>
               <Sparkles size={14} />
