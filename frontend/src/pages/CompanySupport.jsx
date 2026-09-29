@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   MessageSquare,
   Send,
@@ -8,9 +8,18 @@ import {
   Clock,
   Sparkles,
   HelpCircle,
-  AlertCircle
+  AlertCircle,
+  PhoneOff,
+  Download,
+  Trash2,
+  CheckCircle2
 } from 'lucide-react';
-import { fetchCompanySupportMessages, sendCompanySupportMessage } from '../api';
+import {
+  fetchCompanySupportMessages,
+  sendCompanySupportMessage,
+  endCompanySupportSession,
+  clearCompanySupportMessages
+} from '../api';
 import { useAuth } from '../context/AuthContext';
 
 export default function CompanySupport() {
@@ -19,36 +28,137 @@ export default function CompanySupport() {
   const [inputText, setInputText] = useState('');
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [actionInProgress, setActionInProgress] = useState(false);
+  const messagesEndRef = useRef(null);
 
-  const loadMessages = async () => {
-    setLoading(true);
+  const loadMessages = async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const data = await fetchCompanySupportMessages();
-      setMessages(data);
+      setMessages(Array.isArray(data) ? data : []);
     } catch (e) {
       console.error('Failed to load support messages:', e);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
+  // Initial load + silent auto-refresh every 3 seconds
   useEffect(() => {
-    loadMessages();
+    loadMessages(false);
+    const interval = setInterval(() => {
+      loadMessages(true);
+    }, 3000);
+    return () => clearInterval(interval);
   }, []);
+
+  // Smooth scroll to bottom whenever messages update
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
 
   const handleSend = async (e) => {
     e.preventDefault();
-    if (!inputText.trim()) return;
+    if (!inputText.trim() || sending) return;
 
+    const messageText = inputText.trim();
     setSending(true);
     try {
-      await sendCompanySupportMessage(inputText.trim());
+      await sendCompanySupportMessage(messageText);
       setInputText('');
-      await loadMessages();
+      await loadMessages(true);
     } catch (e) {
       alert(e.message || 'Failed to send message to platform admin.');
     } finally {
       setSending(false);
+    }
+  };
+
+  // End active support session
+  const handleEndChat = async () => {
+    if (
+      !window.confirm(
+        'Are you sure you want to end this support session? A closure notice will be recorded, and you can send a message at any time to reopen.'
+      )
+    ) {
+      return;
+    }
+
+    setActionInProgress(true);
+    try {
+      await endCompanySupportSession();
+      await loadMessages(true);
+    } catch (e) {
+      alert(e.message || 'Failed to end support session.');
+    } finally {
+      setActionInProgress(false);
+    }
+  };
+
+  // Save / export chat transcript as text file
+  const handleSaveChat = () => {
+    if (!messages || messages.length === 0) {
+      alert('No support messages to export yet.');
+      return;
+    }
+
+    const companyTitle = company?.name || user?.company_name || user?.company || 'Workspace';
+    const lines = [
+      '=======================================================',
+      'DEALMEMORY OPERATIONAL SUPPORT CHAT TRANSCRIPT',
+      `Company: ${companyTitle}`,
+      `Exported: ${new Date().toLocaleString()}`,
+      `Total Messages: ${messages.length}`,
+      '=======================================================\n',
+    ];
+
+    messages.forEach((m) => {
+      const isSys = m.sender_role === 'system';
+      const isAdm =
+        m.sender_role === 'admin' ||
+        m.sender_type === 'admin' ||
+        m.is_admin === true ||
+        m.sender_name === 'Platform Admin' ||
+        m.sender_name === 'DealMemory Platform Admin';
+
+      const sender = isSys
+        ? '[SYSTEM]'
+        : isAdm
+        ? 'DealMemory Platform Admin'
+        : m.sender_name || m.user_name || user?.name || 'You';
+
+      const time = m.created_at ? new Date(m.created_at).toLocaleString() : 'Recent';
+      lines.push(`[${time}] ${sender}:`);
+      lines.push(`${m.message}\n`);
+    });
+
+    const blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `dealmemory-support-${companyTitle.toLowerCase().replace(/[^a-z0-9]/g, '-')}-${Date.now()}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // Clear chat history
+  const handleClearChat = async () => {
+    if (
+      !window.confirm(
+        'Clear all conversation history from this workspace? All current messages will be removed. (Tip: You can use "Save Chat" to download a transcript first).'
+      )
+    ) {
+      return;
+    }
+
+    setActionInProgress(true);
+    try {
+      await clearCompanySupportMessages();
+      await loadMessages(true);
+    } catch (e) {
+      alert(e.message || 'Failed to clear chat.');
+    } finally {
+      setActionInProgress(false);
     }
   };
 
@@ -64,19 +174,47 @@ export default function CompanySupport() {
             <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
               Admin Support
             </span>
+            <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span>Live Auto-Sync</span>
+            </span>
           </div>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
             Direct operational support channel with DealMemory platform engineers.
           </p>
         </div>
 
-        <button
-          onClick={loadMessages}
-          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-xs"
-        >
-          <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
-          <span>Refresh</span>
-        </button>
+        {/* Top Control Actions */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <button
+            onClick={handleSaveChat}
+            disabled={messages.length === 0}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-2xs cursor-pointer disabled:opacity-40"
+            title="Download full chat transcript"
+          >
+            <Download size={13} />
+            <span>Save Chat</span>
+          </button>
+
+          <button
+            onClick={handleEndChat}
+            disabled={actionInProgress || messages.length === 0}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 text-xs font-semibold text-amber-700 dark:text-amber-300 transition-colors shadow-2xs cursor-pointer disabled:opacity-40"
+            title="End active support conversation session"
+          >
+            <PhoneOff size={13} />
+            <span>End Chat</span>
+          </button>
+
+          <button
+            onClick={() => loadMessages(false)}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-2xs cursor-pointer"
+            title="Force refresh chat"
+          >
+            <RefreshCw size={13} className={loading ? 'animate-spin' : ''} />
+            <span>Refresh</span>
+          </button>
+        </div>
       </div>
 
       {/* Critical Isolation Distinction Callout */}
@@ -93,7 +231,7 @@ export default function CompanySupport() {
       </div>
 
       {/* Chat Box Card */}
-      <div className="bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xs overflow-hidden flex flex-col h-[520px]">
+      <div className="bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xs overflow-hidden flex flex-col h-[530px]">
         {/* Chat Header */}
         <div className="p-3.5 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/40 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -102,23 +240,47 @@ export default function CompanySupport() {
               DealMemory Platform Support
             </span>
           </div>
-          <span className="text-[10px] text-slate-400 font-medium">
-            Company: {company?.name || user?.company_name || user?.company || 'Your Workspace'}
-          </span>
+
+          <div className="flex items-center gap-3">
+            <span className="text-[10px] text-slate-400 font-medium">
+              Company: {company?.name || user?.company_name || user?.company || 'Your Workspace'}
+            </span>
+            <button
+              onClick={handleClearChat}
+              disabled={actionInProgress || messages.length === 0}
+              className="text-[10px] text-slate-400 hover:text-rose-500 flex items-center gap-1 transition-colors disabled:opacity-30 cursor-pointer"
+              title="Clear conversation history"
+            >
+              <Trash2 size={11} />
+              <span>Clear</span>
+            </button>
+          </div>
         </div>
 
         {/* Message Thread */}
         <div className="flex-1 p-4 space-y-3.5 overflow-y-auto">
           {loading && messages.length === 0 ? (
-            <div className="py-16 text-center text-xs text-slate-400">Loading messages...</div>
+            <div className="py-20 text-center text-xs text-slate-400">Loading messages...</div>
           ) : messages.length === 0 ? (
-            <div className="py-16 text-center">
+            <div className="py-20 text-center">
               <MessageSquare className="w-8 h-8 text-slate-300 dark:text-slate-700 mx-auto mb-2" />
               <p className="text-xs font-semibold text-slate-600 dark:text-slate-400">No support messages yet.</p>
               <p className="text-[11px] text-slate-400 mt-0.5">Need help setting up integration or importing deals? Ask us below!</p>
             </div>
           ) : (
             messages.map((m) => {
+              // System Message
+              if (m.sender_role === 'system') {
+                return (
+                  <div key={m.id} className="flex justify-center my-2.5">
+                    <div className="px-3.5 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/60 text-[11px] font-medium text-slate-600 dark:text-slate-300 flex items-center gap-1.5 shadow-2xs">
+                      <CheckCircle2 size={12} className="text-amber-500" />
+                      <span>{m.message}</span>
+                    </div>
+                  </div>
+                );
+              }
+
               const isAdmin =
                 m.sender_role === 'admin' ||
                 m.sender_type === 'admin' ||
@@ -158,6 +320,7 @@ export default function CompanySupport() {
               );
             })
           )}
+          <div ref={messagesEndRef} />
         </div>
 
         {/* Reply Bar */}
@@ -167,6 +330,7 @@ export default function CompanySupport() {
             placeholder="Type your support message..."
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
+            disabled={sending}
             className="flex-1 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-purple-600 transition-all"
           />
           <button

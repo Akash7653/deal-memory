@@ -85,3 +85,52 @@ async def send_company_support_message(
             "created_at": now_iso,
         },
     }
+
+
+@router.post("/end")
+async def end_company_support_session(current_user: dict = Depends(get_current_user)):
+    """End the current support session with a system closure marker."""
+    company_id = current_user.get("company_id")
+    if not company_id:
+        raise HTTPException(status_code=400, detail="User must belong to a company to manage support.")
+
+    msg_id = f"msg_{uuid.uuid4().hex[:10]}"
+    now_iso = datetime.now(timezone.utc).isoformat()
+    close_text = f"Support session ended by {current_user.get('name', 'User')}. Send a new message at any time to reopen the channel."
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        INSERT INTO support_messages (id, company_id, user_id, sender_role, sender_name, message, created_at)
+        VALUES (?, ?, ?, 'system', 'DealMemory Support System', ?, ?)
+        """,
+        (msg_id, company_id, current_user["id"], close_text, now_iso),
+    )
+    conn.commit()
+    conn.close()
+
+    return {
+        "status": "success",
+        "message": "Support session ended successfully.",
+        "notice": close_text,
+    }
+
+
+@router.delete("/messages")
+async def clear_company_support_messages(current_user: dict = Depends(get_current_user)):
+    """Clear/archive support messages for this company workspace."""
+    company_id = current_user.get("company_id")
+    if not company_id:
+        raise HTTPException(status_code=400, detail="User must belong to a company.")
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM support_messages WHERE company_id = ?", (company_id,))
+    conn.commit()
+    conn.close()
+
+    return {
+        "status": "success",
+        "message": "Support conversation history cleared successfully.",
+    }

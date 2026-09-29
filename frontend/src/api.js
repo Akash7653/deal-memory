@@ -309,6 +309,30 @@ export async function sendSupportMessage(message) {
   return res.json();
 }
 
+export async function endCompanySupportSession() {
+  const res = await fetch(`${API_BASE}/support/end`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || 'Failed to end support session');
+  }
+  return res.json();
+}
+
+export async function clearCompanySupportMessages() {
+  const res = await fetch(`${API_BASE}/support/messages`, {
+    method: 'DELETE',
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || 'Failed to clear support chat');
+  }
+  return res.json();
+}
+
 export const fetchCompanySupportMessages = fetchSupportMessages;
 export const sendCompanySupportMessage = sendSupportMessage;
 

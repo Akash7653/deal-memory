@@ -17,7 +17,8 @@ import {
   Search,
   Info,
   Phone,
-  ArrowLeft
+  ArrowLeft,
+  Download,
 } from 'lucide-react';
 import { fetchAdminConversations, sendAdminSupportMessage } from '../../api';
 
@@ -30,8 +31,8 @@ export default function AdminConversations() {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
 
-  const loadData = async () => {
-    setLoading(true);
+  const loadData = async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const data = await fetchAdminConversations();
       const list = Array.isArray(data) ? data : (data?.conversations || []);
@@ -50,15 +51,57 @@ export default function AdminConversations() {
       }
     } catch (e) {
       console.error('Failed to load support conversations:', e);
-      setConversations([]);
+      if (!silent) setConversations([]);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadData();
+    loadData(false);
+    const interval = setInterval(() => {
+      loadData(true);
+    }, 3500);
+    return () => clearInterval(interval);
   }, []);
+
+  const handleSaveChat = (conv) => {
+    if (!conv || !conv.messages || conv.messages.length === 0) {
+      alert('No support messages to export for this company yet.');
+      return;
+    }
+
+    const lines = [
+      '=======================================================',
+      'DEALMEMORY PLATFORM ADMIN SUPPORT TRANSCRIPT',
+      `Company: ${conv.company_name}`,
+      `Exported: ${new Date().toLocaleString()}`,
+      `Total Messages: ${conv.messages.length}`,
+      '=======================================================\n',
+    ];
+
+    conv.messages.forEach((m) => {
+      const isSys = m.sender_role === 'system';
+      const isAdm =
+        m.sender_role === 'admin' ||
+        m.sender_type === 'admin' ||
+        m.is_admin ||
+        m.sender_name === 'Platform Admin';
+
+      const sender = isSys ? '[SYSTEM]' : (isAdm ? 'Platform Admin' : (m.sender_name || m.user_name || conv.company_name));
+      const time = m.created_at ? new Date(m.created_at).toLocaleString() : 'Recent';
+      lines.push(`[${time}] ${sender}:`);
+      lines.push(`${m.message}\n`);
+    });
+
+    const blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `dealmemory-admin-support-${conv.company_name.toLowerCase().replace(/[^a-z0-9]/g, '-')}-${Date.now()}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   const activeConv = conversations.find((c) => c.company_id === selectedCompanyId) || conversations[0];
 
@@ -269,6 +312,16 @@ export default function AdminConversations() {
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    onClick={() => handleSaveChat(activeConv)}
+                    disabled={!activeConv.messages || activeConv.messages.length === 0}
+                    className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-[11px] font-semibold transition-colors disabled:opacity-40 cursor-pointer"
+                    title="Export transcript"
+                  >
+                    <Download size={12} />
+                    <span>Save Chat</span>
+                  </button>
+
                   <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold">
                     <ShieldCheck size={12} />
                     <span>Isolated Thread</span>
@@ -298,6 +351,18 @@ export default function AdminConversations() {
                   </div>
                 ) : (
                   activeConv.messages.map((m) => {
+                    // System Message
+                    if (m.sender_role === 'system') {
+                      return (
+                        <div key={m.id} className="flex justify-center my-2.5">
+                          <div className="px-3.5 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/60 text-[11px] font-medium text-slate-600 dark:text-slate-300 flex items-center gap-1.5 shadow-2xs">
+                            <CheckCircle2 size={12} className="text-amber-500" />
+                            <span>{m.message}</span>
+                          </div>
+                        </div>
+                      );
+                    }
+
                     const isAdmin = m.sender_role === 'admin' || m.sender_type === 'admin' || m.is_admin || m.sender_name === 'Platform Admin';
                     const senderName = isAdmin ? 'Platform Admin' : (m.sender_name || m.user_name || activeConv.company_name);
 
