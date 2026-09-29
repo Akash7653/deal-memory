@@ -103,7 +103,7 @@ export default function CompanySupport() {
             </span>
           </div>
           <span className="text-[10px] text-slate-400 font-medium">
-            Company: {company?.name || 'TechNova Solutions'}
+            Company: {company?.name || user?.company_name || user?.company || 'Your Workspace'}
           </span>
         </div>
 
@@ -119,24 +119,37 @@ export default function CompanySupport() {
             </div>
           ) : (
             messages.map((m) => {
-              const isAdmin = m.sender_type === 'admin' || m.is_admin;
+              const isAdmin =
+                m.sender_role === 'admin' ||
+                m.sender_type === 'admin' ||
+                m.is_admin === true ||
+                m.sender_name === 'Platform Admin' ||
+                m.sender_name === 'DealMemory Platform Admin';
+
+              const senderLabel = isAdmin
+                ? 'DealMemory Platform Admin'
+                : (m.sender_name || m.user_name || (user?.company_id === m.company_id ? user?.name : 'Company User') || 'You');
+
               return (
                 <div
                   key={m.id}
                   className={`flex flex-col ${isAdmin ? 'items-start' : 'items-end'}`}
                 >
                   <div className="flex items-center gap-1.5 text-[10px] text-slate-400 mb-1 px-1">
-                    <span className="font-semibold text-slate-700 dark:text-slate-300">
-                      {isAdmin ? 'DealMemory Platform Admin' : (m.user_name || user?.name || 'You')}
+                    {isAdmin && (
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block mr-0.5" />
+                    )}
+                    <span className={`font-semibold ${isAdmin ? 'text-purple-600 dark:text-purple-400' : 'text-slate-700 dark:text-slate-300'}`}>
+                      {senderLabel}
                     </span>
                     <span>•</span>
-                    <span>{new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                    <span>{m.created_at ? new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Recent'}</span>
                   </div>
                   <div
-                    className={`max-w-md p-3 rounded-2xl text-xs leading-relaxed ${
+                    className={`max-w-md p-3.5 rounded-2xl text-xs leading-relaxed ${
                       isAdmin
-                        ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-bl-xs border border-slate-200 dark:border-slate-700/80 shadow-xs'
-                        : 'bg-purple-600 text-white rounded-br-xs shadow-xs'
+                        ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-tl-xs border border-slate-200 dark:border-slate-700/80 shadow-xs'
+                        : 'bg-purple-600 text-white rounded-tr-xs shadow-xs'
                     }`}
                   >
                     {m.message}

@@ -298,7 +298,7 @@ export default function AdminConversations() {
                   </div>
                 ) : (
                   activeConv.messages.map((m) => {
-                    const isAdmin = m.sender_role === 'admin' || m.sender_type === 'admin' || m.is_admin;
+                    const isAdmin = m.sender_role === 'admin' || m.sender_type === 'admin' || m.is_admin || m.sender_name === 'Platform Admin';
                     const senderName = isAdmin ? 'Platform Admin' : (m.sender_name || m.user_name || activeConv.company_name);
 
                     return (

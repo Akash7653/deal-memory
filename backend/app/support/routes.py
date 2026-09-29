@@ -34,11 +34,18 @@ async def get_company_support_messages(current_user: dict = Depends(get_current_
     rows = cursor.fetchall()
     conn.close()
 
+    msgs = [dict(r) for r in rows]
+    for m in msgs:
+        is_adm = (m.get("sender_role") == "admin") or (m.get("sender_name") == "Platform Admin")
+        m["is_admin"] = is_adm
+        m["sender_type"] = "admin" if is_adm else "company_user"
+        m["user_name"] = m.get("sender_name")
+
     return {
         "status": "success",
         "company_id": company_id,
         "company_name": current_user.get("company_name"),
-        "messages": [dict(r) for r in rows],
+        "messages": msgs,
     }
 
 
