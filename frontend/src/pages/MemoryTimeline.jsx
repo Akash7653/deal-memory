@@ -32,6 +32,7 @@ export default function MemoryTimeline() {
   const [liveMemories, setLiveMemories] = useState([]);
   const [learnedInsights, setLearnedInsights] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [dealsLoaded, setDealsLoaded] = useState(false);
   const [filter, setFilter] = useState('all');
 
   // Load available deals
@@ -40,18 +41,29 @@ export default function MemoryTimeline() {
       .then((data) => {
         const list = data.deals || [];
         setDeals(list);
-        if (!selectedDealId) {
-          if (dealParam && list.some((d) => d.id === dealParam)) {
-            setSelectedDealId(dealParam);
-          } else if (list.length > 0) {
-            setSelectedDealId(list[0].id);
-          }
+        setDealsLoaded(true);
+        if (dealParam && list.some((d) => d.id === dealParam)) {
+          setSelectedDealId(dealParam);
+        } else if (list.length > 0 && !selectedDealId) {
+          setSelectedDealId(list[0].id);
+        } else if (list.length === 0) {
+          setSelectedDealId('');
+          setLoading(false);
         }
       })
       .catch((err) => {
         console.error('Failed to fetch deals:', err);
+        setDealsLoaded(true);
+        setLoading(false);
       });
   }, []);
+
+  // Synchronize selectedDealId with route search param
+  useEffect(() => {
+    if (dealParam && dealParam !== selectedDealId && deals.some((d) => d.id === dealParam)) {
+      setSelectedDealId(dealParam);
+    }
+  }, [dealParam, deals]);
 
   const currentDeal = deals.find((d) => d.id === selectedDealId);
 
@@ -79,15 +91,84 @@ export default function MemoryTimeline() {
   };
 
   useEffect(() => {
-    if (selectedDealId) {
+    if (selectedDealId && currentDeal) {
       loadData(selectedDealId);
+    } else if (dealsLoaded && (!selectedDealId || !currentDeal)) {
+      setLoading(false);
     }
-  }, [selectedDealId]);
+  }, [selectedDealId, currentDeal, dealsLoaded]);
 
   const handleSelectDeal = (id) => {
     setSelectedDealId(id);
     setSearchParams(id ? { deal: id } : {});
   };
+
+  // Case 1: Company has zero deals
+  if (dealsLoaded && deals.length === 0) {
+    return (
+      <div className="max-w-4xl mx-auto p-12 text-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xs space-y-5 animate-fade-in my-8">
+        <div className="w-16 h-16 rounded-2xl bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 flex items-center justify-center mx-auto shadow-inner">
+          <GitBranch size={32} />
+        </div>
+        <div className="space-y-2">
+          <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+            No Active Deals Found
+          </h2>
+          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 max-w-md mx-auto leading-relaxed">
+            Your company workspace does not have any active deals yet. Create a deal to begin tracking customer interactions, relationship timelines, and cognitive Hindsight learning.
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center justify-center gap-3 pt-3">
+          <Link
+            to="/deal"
+            className="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-md shadow-purple-600/20 transition-all cursor-pointer active:scale-95 flex items-center space-x-2"
+          >
+            <Building2 size={15} />
+            <span>Create First Deal</span>
+          </Link>
+          <Link
+            to="/dashboard"
+            className="px-5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-850 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-750 text-xs font-semibold transition-all cursor-pointer active:scale-95"
+          >
+            Return to Dashboard
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  // Case 2: Deal query parameter is provided, but deal does not exist or belongs to another company
+  if (dealsLoaded && deals.length > 0 && selectedDealId && !currentDeal) {
+    return (
+      <div className="max-w-4xl mx-auto p-12 text-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xs space-y-5 animate-fade-in my-8">
+        <div className="w-16 h-16 rounded-2xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 flex items-center justify-center mx-auto shadow-inner">
+          <AlertTriangle size={32} />
+        </div>
+        <div className="space-y-2">
+          <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+            Deal Not Found or Access Restricted
+          </h2>
+          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 max-w-md mx-auto leading-relaxed">
+            The deal <code className="font-mono text-purple-600 dark:text-purple-400">{selectedDealId}</code> does not exist or is not authorized for your company workspace.
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center justify-center gap-3 pt-3">
+          <button
+            onClick={() => handleSelectDeal(deals[0].id)}
+            className="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-md shadow-purple-600/20 transition-all cursor-pointer active:scale-95"
+          >
+            View {deals[0].company_name}
+          </button>
+          <Link
+            to="/deal"
+            className="px-5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-850 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-750 text-xs font-semibold transition-all cursor-pointer active:scale-95"
+          >
+            All Deals Overview
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   const isAcme = selectedDealId === 'acme' && deals.some((d) => d.id === 'acme');
   let dynamicSteps = [];

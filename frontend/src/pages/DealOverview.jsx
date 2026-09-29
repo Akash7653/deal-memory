@@ -17,8 +17,9 @@ import {
   Layers,
   Bot,
   FileText,
+  Plus,
 } from 'lucide-react';
-import { fetchDealMemory, fetchDeals, fetchDealIntelligence, formatDisplayDate } from '../api';
+import { fetchDealMemory, fetchDeals, fetchDealIntelligence, createDeal, formatDisplayDate } from '../api';
 import { useAuth } from '../context/AuthContext';
 
 export default function DealOverview() {
@@ -31,25 +32,43 @@ export default function DealOverview() {
   const [memories, setMemories] = useState([]);
   const [intelligence, setIntelligence] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [dealsLoaded, setDealsLoaded] = useState(false);
   const [error, setError] = useState(null);
+
+  // Create deal modal state
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [newCompanyName, setNewCompanyName] = useState('');
+  const [newDealValue, setNewDealValue] = useState('75000');
+  const [creatingDeal, setCreatingDeal] = useState(false);
 
   useEffect(() => {
     fetchDeals(true)
       .then((data) => {
         const list = data.deals || [];
         setDeals(list);
-        if (!selectedDealId) {
-          if (dealParam && list.some((d) => d.id === dealParam)) {
-            setSelectedDealId(dealParam);
-          } else if (list.length > 0) {
-            setSelectedDealId(list[0].id);
-          }
+        setDealsLoaded(true);
+        if (dealParam && list.some((d) => d.id === dealParam)) {
+          setSelectedDealId(dealParam);
+        } else if (list.length > 0 && !selectedDealId) {
+          setSelectedDealId(list[0].id);
+        } else if (list.length === 0) {
+          setSelectedDealId('');
+          setLoading(false);
         }
       })
       .catch((err) => {
         console.error('Failed to load deals in Overview:', err);
+        setDealsLoaded(true);
+        setLoading(false);
       });
   }, []);
+
+  // Synchronize selectedDealId with route search param
+  useEffect(() => {
+    if (dealParam && dealParam !== selectedDealId && deals.some((d) => d.id === dealParam)) {
+      setSelectedDealId(dealParam);
+    }
+  }, [dealParam, deals]);
 
   const currentDeal = deals.find((d) => d.id === selectedDealId);
 
@@ -75,17 +94,191 @@ export default function DealOverview() {
   };
 
   useEffect(() => {
-    if (selectedDealId) {
+    if (selectedDealId && currentDeal) {
       loadDealData(selectedDealId);
+    } else if (dealsLoaded && (!selectedDealId || !currentDeal)) {
+      setLoading(false);
     }
-  }, [selectedDealId]);
+  }, [selectedDealId, currentDeal, dealsLoaded]);
 
   const handleSelectDeal = (id) => {
     setSelectedDealId(id);
     setSearchParams(id ? { deal: id } : {});
   };
 
-  const dealTitle = currentDeal?.company_name || intelligence?.company_name || 'Customer Deal';
+  const handleCreateDeal = async (e) => {
+    e.preventDefault();
+    if (!newCompanyName.trim() || creatingDeal) return;
+    setCreatingDeal(true);
+    try {
+      const res = await createDeal({
+        company_name: newCompanyName.trim(),
+        deal_value: parseInt(newDealValue) || 50000,
+        stage: 'Discovery',
+      });
+      const createdId = res.deal?.id;
+      setShowCreateModal(false);
+      setNewCompanyName('');
+      setNewDealValue('75000');
+      
+      // Refresh deals list
+      const data = await fetchDeals(true);
+      const list = data.deals || [];
+      setDeals(list);
+      if (createdId) {
+        setSelectedDealId(createdId);
+        setSearchParams({ deal: createdId });
+      } else if (list.length > 0) {
+        setSelectedDealId(list[0].id);
+        setSearchParams({ deal: list[0].id });
+      }
+    } catch (err) {
+      console.error('Failed to create deal:', err);
+    } finally {
+      setCreatingDeal(false);
+    }
+  };
+
+  const renderCreateDealModal = () => {
+    if (!showCreateModal) return null;
+    return (
+      <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in text-left">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
+            <div className="flex items-center space-x-2">
+              <Building2 size={18} className="text-purple-600 dark:text-purple-400" />
+              <h3 className="text-base font-bold text-slate-900 dark:text-white">Create New Enterprise Deal</h3>
+            </div>
+            <button
+              onClick={() => setShowCreateModal(false)}
+              className="text-slate-400 hover:text-slate-600 dark:hover:text-white cursor-pointer"
+            >
+              ✕
+            </button>
+          </div>
+
+          <form onSubmit={handleCreateDeal} className="space-y-4">
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                Company / Account Name
+              </label>
+              <input
+                type="text"
+                required
+                placeholder="e.g. Snowflake, Acme Corp"
+                value={newCompanyName}
+                onChange={(e) => setNewCompanyName(e.target.value)}
+                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3.5 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-purple-600 transition-colors"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                Annual Contract Value (ARR in USD)
+              </label>
+              <input
+                type="number"
+                required
+                min="5000"
+                step="5000"
+                value={newDealValue}
+                onChange={(e) => setNewDealValue(e.target.value)}
+                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3.5 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-purple-600 transition-colors"
+              />
+            </div>
+
+            <div className="flex items-center justify-end space-x-2 pt-3 border-t border-slate-200 dark:border-slate-800">
+              <button
+                type="button"
+                onClick={() => setShowCreateModal(false)}
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={creatingDeal}
+                className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-md shadow-purple-600/20 disabled:opacity-50 cursor-pointer active:scale-95"
+              >
+                {creatingDeal ? 'Creating...' : 'Initialize Deal'}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  };
+
+  // Case 1: Company has zero deals
+  if (dealsLoaded && deals.length === 0) {
+    return (
+      <div className="max-w-4xl mx-auto p-12 text-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xs space-y-5 animate-fade-in my-8">
+        <div className="w-16 h-16 rounded-2xl bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 flex items-center justify-center mx-auto shadow-inner">
+          <Building2 size={32} />
+        </div>
+        <div className="space-y-2">
+          <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+            No deals found
+          </h2>
+          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 max-w-md mx-auto leading-relaxed">
+            Your company workspace currently has 0 active deals. Create your first enterprise deal to track relationship health, stakeholder requirements, and AI sales intelligence.
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center justify-center gap-3 pt-3">
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-md shadow-purple-600/20 transition-all cursor-pointer active:scale-95 flex items-center space-x-2"
+          >
+            <Plus size={15} />
+            <span>Create First Deal</span>
+          </button>
+          <Link
+            to="/dashboard"
+            className="px-5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-850 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-750 text-xs font-semibold transition-all cursor-pointer active:scale-95"
+          >
+            Go to Dashboard
+          </Link>
+        </div>
+
+        {renderCreateDealModal()}
+      </div>
+    );
+  }
+
+  // Case 2: Deal query parameter is provided, but deal does not exist or belongs to another company
+  if (dealsLoaded && deals.length > 0 && selectedDealId && !currentDeal) {
+    return (
+      <div className="max-w-4xl mx-auto p-12 text-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xs space-y-5 animate-fade-in my-8">
+        <div className="w-16 h-16 rounded-2xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 flex items-center justify-center mx-auto shadow-inner">
+          <AlertTriangle size={32} />
+        </div>
+        <div className="space-y-2">
+          <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+            Deal Not Found or Access Restricted
+          </h2>
+          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 max-w-md mx-auto leading-relaxed">
+            The deal <code className="font-mono text-purple-600 dark:text-purple-400">{selectedDealId}</code> does not exist or does not belong to your company workspace.
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center justify-center gap-3 pt-3">
+          <button
+            onClick={() => handleSelectDeal(deals[0].id)}
+            className="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-md shadow-purple-600/20 transition-all cursor-pointer active:scale-95"
+          >
+            View {deals[0].company_name}
+          </button>
+          <Link
+            to="/dashboard"
+            className="px-5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-850 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-750 text-xs font-semibold transition-all cursor-pointer active:scale-95"
+          >
+            Return to Dashboard
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const dealTitle = currentDeal?.company_name || intelligence?.company_name || 'Enterprise Deal';
   const dealValue = currentDeal?.deal_value
     ? `$${currentDeal.deal_value.toLocaleString()} ARR`
     : intelligence?.deal_value
@@ -115,26 +308,9 @@ export default function DealOverview() {
     subtitle: 'Log interaction or schedule technical review',
   };
 
-  if (!loading && deals.length === 0 && !selectedDealId) {
-    return (
-      <div className="max-w-6xl mx-auto p-12 text-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl space-y-4">
-        <Building2 className="w-12 h-12 text-purple-600 dark:text-purple-400 mx-auto" />
-        <h2 className="text-xl font-bold text-slate-900 dark:text-white">No Deals in Workspace</h2>
-        <p className="text-sm text-slate-600 dark:text-slate-400">
-          Create an enterprise deal to begin tracking relationship intelligence and memory.
-        </p>
-        <Link
-          to="/"
-          className="inline-flex items-center px-4 py-2 rounded-xl bg-purple-600 text-white text-xs font-bold"
-        >
-          Go to Dashboard
-        </Link>
-      </div>
-    );
-  }
-
   return (
     <div className="max-w-6xl mx-auto space-y-7 animate-fade-in">
+      {renderCreateDealModal()}
       {/* Enterprise Header - Deal Overview Card */}
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 sm:p-7 shadow-xs">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
@@ -230,19 +406,26 @@ export default function DealOverview() {
             {/* Quick Actions */}
             <div className="flex items-center space-x-2">
               <Link
-                to={`/meeting-prep?deal=${selectedDealId}`}
+                to={`/meeting-prep?deal=${currentDeal.id}`}
                 className="flex-1 sm:flex-initial px-4 py-2.5 text-xs font-semibold rounded-xl bg-purple-600 hover:bg-purple-700 text-white flex items-center justify-center space-x-1.5 shadow-md shadow-purple-600/20 transition-all cursor-pointer active:scale-95 whitespace-nowrap"
               >
                 <Sparkles size={14} />
                 <span>Prepare Meeting</span>
               </Link>
               <Link
-                to={`/agent?deal=${selectedDealId}`}
+                to={`/agent?deal=${currentDeal.id}`}
                 className="flex-1 sm:flex-initial px-4 py-2.5 text-xs font-semibold rounded-xl bg-slate-100 dark:bg-slate-850 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-750 flex items-center justify-center space-x-1.5 transition-colors cursor-pointer active:scale-95 whitespace-nowrap"
               >
                 <Bot size={14} className="text-purple-600 dark:text-purple-400" />
                 <span>Ask Agent</span>
               </Link>
+              <button
+                onClick={() => setShowCreateModal(true)}
+                className="px-3.5 py-2.5 text-xs font-semibold rounded-xl bg-purple-50 dark:bg-purple-950/40 hover:bg-purple-100 dark:hover:bg-purple-900/50 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800/60 flex items-center justify-center space-x-1.5 transition-colors cursor-pointer active:scale-95 whitespace-nowrap"
+              >
+                <Plus size={14} />
+                <span>New Deal</span>
+              </button>
             </div>
           </div>
         </div>
