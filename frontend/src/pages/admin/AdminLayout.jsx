@@ -67,30 +67,6 @@ export default function AdminLayout() {
             </NavLink>
           </div>
 
-          {/* Desktop Center Navigation Links */}
-          <nav className="hidden xl:flex items-center space-x-1">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <NavLink
-                  key={item.to}
-                  to={item.to}
-                  end={item.end}
-                  className={({ isActive }) =>
-                    `flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
-                      isActive
-                        ? 'bg-purple-600 text-white shadow-xs'
-                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60'
-                    }`
-                  }
-                >
-                  <Icon size={14} />
-                  <span>{item.label}</span>
-                </NavLink>
-              );
-            })}
-          </nav>
-
           {/* Right Actions */}
           <div className="flex items-center space-x-2 sm:space-x-3">
             {/* View App Link */}
@@ -147,8 +123,8 @@ export default function AdminLayout() {
           </div>
         </header>
 
-        {/* Always-Visible Responsive Sub-Navigation Bar on All Devices */}
-        <div className="mt-2.5 flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+        {/* Responsive Sub-Navigation Bar on Mobile / Tablet */}
+        <div className="mt-2.5 flex lg:hidden items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
           {navItems.map((item) => {
             const Icon = item.icon;
             return (

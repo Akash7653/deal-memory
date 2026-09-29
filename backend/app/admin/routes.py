@@ -417,7 +417,7 @@ async def get_admin_conversations(admin_user: dict = Depends(get_current_admin))
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    cursor.execute("SELECT id, name, industry, size, status, contact_person, contact_email FROM companies WHERE status = 'approved'")
+    cursor.execute("SELECT id, name, industry, size, status, contact_person, contact_email FROM companies WHERE status != 'rejected' ORDER BY created_at DESC")
     companies = [dict(r) for r in cursor.fetchall()]
 
     for c in companies:
