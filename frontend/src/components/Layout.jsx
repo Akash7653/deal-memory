@@ -116,7 +116,7 @@ export default function Layout() {
   };
 
   const userInitials = getInitials(user?.name);
-  const companyDisplayName = company?.name || user?.company || 'TechNova Solutions';
+  const companyDisplayName = company?.name || user?.company || user?.company_name || 'Enterprise Workspace';
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col transition-colors duration-150">

@@ -22,7 +22,7 @@ import { fetchDealMemory, fetchDeals, fetchDealIntelligence, formatDisplayDate }
 import { useAuth } from '../context/AuthContext';
 
 export default function DealOverview() {
-  const { user } = useAuth();
+  const { user, company } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const dealParam = searchParams.get('deal') || '';
 
@@ -94,9 +94,11 @@ export default function DealOverview() {
   const dealStage = currentDeal?.stage || intelligence?.stage || 'Discovery';
   const dealInitials = dealTitle.slice(0, 2).toUpperCase();
 
-  const healthScore = intelligence?.relationship_health ?? currentDeal?.relationship_health;
-  const healthDisplay = healthScore != null ? `${healthScore}%` : 'Not enough data';
-  const memoryBankName = user?.company_id ? `dealmemory-${user.company_id}` : 'dealmemory-bank';
+  const healthScore = intelligence?.relationship_health ?? currentDeal?.relationship_health ?? 0;
+  const isUnscored = healthScore === 0;
+  const healthDisplay = isUnscored ? '0%' : `${healthScore}%`;
+  const effectiveBankId = company?.id || user?.company_id || (user?.email && user.email.includes('@') ? user.email.split('@')[0] : 'bank');
+  const memoryBankName = `dealmemory-${effectiveBankId}`;
 
   const stakeholders = intelligence?.stakeholders || [];
   const risks = intelligence?.risks || [];
@@ -181,16 +183,48 @@ export default function DealOverview() {
           {/* Relationship Health & Action Controls */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-3 lg:pt-0 border-t lg:border-t-0 border-slate-100 dark:border-slate-800">
             {/* Relationship Health Indicator */}
-            <div className="px-4 py-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 flex items-center justify-between sm:justify-start space-x-3 shadow-2xs">
+            <div className={`px-4 py-2.5 rounded-xl border flex items-center justify-between sm:justify-start space-x-3 shadow-2xs ${
+              isUnscored
+                ? 'bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800'
+                : healthScore >= 70
+                ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800/60'
+                : healthScore >= 40
+                ? 'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800/60'
+                : 'bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-800/60'
+            }`}>
               <div className="text-left">
-                <div className="text-[10px] font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-400">
+                <div className={`text-[10px] font-bold uppercase tracking-wider ${
+                  isUnscored
+                    ? 'text-slate-500 dark:text-slate-400'
+                    : healthScore >= 70
+                    ? 'text-emerald-800 dark:text-emerald-400'
+                    : healthScore >= 40
+                    ? 'text-amber-800 dark:text-amber-400'
+                    : 'text-rose-800 dark:text-rose-400'
+                }`}>
                   Relationship Health
                 </div>
-                <div className="text-lg sm:text-xl font-black text-emerald-700 dark:text-emerald-300 leading-tight">
-                  {healthDisplay}
+                <div className={`text-lg sm:text-xl font-black leading-tight ${
+                  isUnscored
+                    ? 'text-slate-700 dark:text-slate-300'
+                    : healthScore >= 70
+                    ? 'text-emerald-700 dark:text-emerald-300'
+                    : healthScore >= 40
+                    ? 'text-amber-700 dark:text-amber-300'
+                    : 'text-rose-700 dark:text-rose-300'
+                }`}>
+                  {isUnscored ? '0% (Unscored)' : healthDisplay}
                 </div>
               </div>
-              <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse flex-shrink-0" />
+              <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${
+                isUnscored
+                  ? 'bg-slate-400'
+                  : healthScore >= 70
+                  ? 'bg-emerald-500 animate-pulse'
+                  : healthScore >= 40
+                  ? 'bg-amber-500 animate-pulse'
+                  : 'bg-rose-500 animate-pulse'
+              }`} />
             </div>
 
             {/* Quick Actions */}
@@ -226,10 +260,26 @@ export default function DealOverview() {
           <div className="text-sm font-bold text-slate-900 dark:text-white">{dealValue}</div>
           <div className="text-[11px] text-slate-500 dark:text-slate-400">Annual Contract</div>
         </div>
-        <div className="bg-emerald-50/40 dark:bg-slate-900 border border-emerald-200 dark:border-emerald-800/60 rounded-xl p-3.5 space-y-1 shadow-2xs">
-          <div className="text-[10px] font-semibold text-emerald-800 dark:text-emerald-400 uppercase">Health Score</div>
-          <div className="text-sm font-bold text-emerald-700 dark:text-emerald-400">{healthDisplay}</div>
-          <div className="text-[11px] text-emerald-800 dark:text-emerald-300 font-medium">Champion Tracked</div>
+        <div className={`border rounded-xl p-3.5 space-y-1 shadow-2xs ${
+          isUnscored
+            ? 'bg-slate-50/50 dark:bg-slate-900 border-slate-200 dark:border-slate-800'
+            : healthScore >= 70
+            ? 'bg-emerald-50/40 dark:bg-slate-900 border-emerald-200 dark:border-emerald-800/60'
+            : 'bg-amber-50/40 dark:bg-slate-900 border-amber-200 dark:border-amber-800/60'
+        }`}>
+          <div className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase">Health Score</div>
+          <div className={`text-sm font-bold ${
+            isUnscored
+              ? 'text-slate-700 dark:text-slate-300'
+              : healthScore >= 70
+              ? 'text-emerald-700 dark:text-emerald-400'
+              : 'text-amber-700 dark:text-amber-400'
+          }`}>
+            {isUnscored ? '0% (No Learnings)' : healthDisplay}
+          </div>
+          <div className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+            {stakeholders.length > 0 ? `${stakeholders.length} Champion${stakeholders.length > 1 ? 's' : ''} Tracked` : 'No Champion Tracked Yet'}
+          </div>
         </div>
         <div className="bg-purple-50/40 dark:bg-slate-900 border border-purple-200 dark:border-purple-900/40 rounded-xl p-3.5 space-y-1 shadow-2xs">
           <div className="text-[10px] font-semibold text-purple-800 dark:text-purple-400 uppercase">Last Interaction</div>

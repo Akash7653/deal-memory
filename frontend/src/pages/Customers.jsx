@@ -19,7 +19,7 @@ import { fetchCompanyCustomers, createCompanyCustomer, fetchDeals, createDeal } 
 import { useAuth } from '../context/AuthContext';
 
 export default function Customers() {
-  const { company } = useAuth();
+  const { company, user } = useAuth();
   const [customers, setCustomers] = useState([]);
   const [deals, setDeals] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -123,7 +123,7 @@ export default function Customers() {
         customer_id: dealCustomer?.id,
         deal_value: parseInt(dealValue) || 100000,
         stage: dealStage,
-        relationship_health: 80,
+        relationship_health: 0,
         primary_contact: dealContact,
         competitor: dealCompetitor,
         expected_close: dealCloseDate,
@@ -163,7 +163,7 @@ export default function Customers() {
               Customers
             </h1>
             <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
-              {company?.name || 'TechNova Solutions'}
+              {company?.name || user?.company || user?.company_name || 'Enterprise Workspace'}
             </span>
           </div>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">

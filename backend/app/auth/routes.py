@@ -231,6 +231,7 @@ async def login(req: LoginRequest):
         "token": token,
         "user": {
             "id": user["id"],
+            "company_id": company_id,
             "name": user["name"],
             "email": user["email"],
             "role": user["role"],
@@ -250,6 +251,7 @@ async def get_me(current_user: dict = Depends(get_current_user)):
         "status": "success",
         "user": {
             "id": current_user["id"],
+            "company_id": current_user["company_id"],
             "name": current_user["name"],
             "email": current_user["email"],
             "role": current_user["role"],

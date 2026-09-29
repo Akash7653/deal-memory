@@ -313,7 +313,7 @@ export default function AdminDashboard() {
                 <div key={msg.id} className="py-3 space-y-1">
                   <div className="flex items-center justify-between text-[11px]">
                     <span className="font-semibold text-slate-800 dark:text-slate-200">
-                      {msg.company_name || 'TechNova Solutions'}
+                      {msg.company_name || 'Enterprise Workspace'}
                     </span>
                     <span className="text-slate-400 text-[10px]">
                       {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}

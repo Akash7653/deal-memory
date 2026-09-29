@@ -17,20 +17,34 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/deals", tags=["deals"])
 
 
+def resolve_company_id(user: Optional[dict]) -> str:
+    """Robustly resolve company ID from user dict or look up company in DB."""
+    if not user:
+        return "general"
+    comp_id = user.get("company_id")
+    if comp_id:
+        return str(comp_id)
+    comp_name = user.get("company") or user.get("company_name")
+    if comp_name:
+        try:
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("SELECT id FROM companies WHERE LOWER(name) = ? OR id = ?", (comp_name.strip().lower(), comp_name.strip()))
+            row = cursor.fetchone()
+            conn.close()
+            if row:
+                return str(row["id"])
+        except Exception:
+            pass
+    return str(user.get("id") or "general")
+
+
 def get_tenant_bank_id(deal_id_clean: str, user: Optional[dict] = None) -> str:
     """
     Determine company-isolated Hindsight memory bank.
-    Per Section 11:
     Hindsight must be isolated by company: dealmemory-{company_id}
-    (e.g. dealmemory-comp_technova, dealmemory-comp_apex, etc.)
     """
-    comp_id = "comp_technova"
-    if user and user.get("company_id"):
-        comp_id = str(user["company_id"]).lower()
-
-    if comp_id in ("comp_technova", "technova", "dealmemory-acme"):
-        return settings.HINDSIGHT_BANK_ID or "dealmemory-comp_technova"
-
+    comp_id = resolve_company_id(user)
     return f"dealmemory-{comp_id}"
 
 
@@ -46,10 +60,10 @@ def log_activity(user_id: str, deal_id: Optional[str], company: Optional[str], a
             """,
             (
                 f"act_{uuid.uuid4().hex[:8]}",
-                company_id or "comp_technova",
+                company_id or "general",
                 user_id,
                 deal_id,
-                company or "ACME Corp",
+                company or "Customer Account",
                 activity_type,
                 title,
                 description,
@@ -63,10 +77,10 @@ def log_activity(user_id: str, deal_id: Optional[str], company: Optional[str], a
 
 
 class DealCreate(BaseModel):
-    company_name: str = Field(..., description="Deal or company name (e.g. Globex Digital Transformation)")
+    company_name: str = Field(..., description="Deal or company name (e.g. Vertex Manufacturing Ltd Digital Transformation)")
     deal_value: int = Field(default=50000, description="Annual deal value in USD")
     stage: str = Field(default="Discovery", description="Pipeline stage (Discovery, Evaluation, Proposal, Negotiation)")
-    relationship_health: int = Field(default=75, ge=0, le=100, description="Health score percentage")
+    relationship_health: int = Field(default=0, ge=0, le=100, description="Health score percentage (0 if no learnings yet)")
     customer_id: Optional[str] = Field(default=None, description="Associated customer account ID")
     primary_contact: Optional[str] = Field(default=None, description="Primary contact (e.g. Rohan Mehta — CTO)")
     competitor: Optional[str] = Field(default=None, description="Competitor name (e.g. Salesforce)")
@@ -141,12 +155,38 @@ class CustomerCreate(BaseModel):
 
 
 @router.get("/customers")
-async def get_company_customers(user: Optional[dict] = Depends(get_optional_current_user)):
+async def get_company_customers(user: dict = Depends(get_current_user)):
     conn = get_db_connection()
     cursor = conn.cursor()
-    company_id = user.get("company_id") if user else "comp_technova"
-    cursor.execute("SELECT id, company_id, name, industry, contact_information, created_at FROM customers WHERE company_id = ? ORDER BY created_at DESC", (company_id,))
+    company_id = resolve_company_id(user)
+
+    cursor.execute(
+        "SELECT id, company_id, name, industry, contact_information, created_at FROM customers WHERE company_id = ? ORDER BY created_at DESC",
+        (company_id,),
+    )
     customers = [dict(r) for r in cursor.fetchall()]
+
+    # Also automatically discover customer accounts from deals belonging to this company
+    existing_names = {c["name"].strip().lower() for c in customers}
+    cursor.execute(
+        "SELECT id, company_name, stage, deal_value, created_at FROM deals WHERE company_id = ? ORDER BY created_at DESC",
+        (company_id,),
+    )
+    deals = cursor.fetchall()
+    for d in deals:
+        raw_name = d["company_name"].strip()
+        clean_name = raw_name.replace("Digital Transformation", "").replace("Enterprise Deal", "").strip() or raw_name
+        if clean_name.lower() not in existing_names and raw_name.lower() not in existing_names:
+            customers.append({
+                "id": f"cust_{d['id']}",
+                "company_id": company_id,
+                "name": clean_name,
+                "industry": "Enterprise Manufacturing" if "manufacturing" in clean_name.lower() else "Enterprise B2B",
+                "contact_information": f"Active Account (${(d['deal_value'] or 0):,} ARR • {d['stage']})",
+                "created_at": d["created_at"],
+            })
+            existing_names.add(clean_name.lower())
+
     conn.close()
     return {"status": "success", "count": len(customers), "customers": customers}
 
@@ -155,7 +195,7 @@ async def get_company_customers(user: Optional[dict] = Depends(get_optional_curr
 async def create_company_customer(req: CustomerCreate, user: dict = Depends(get_current_user)):
     conn = get_db_connection()
     cursor = conn.cursor()
-    company_id = user.get("company_id") or "comp_technova"
+    company_id = resolve_company_id(user)
     cust_id = f"cust_{uuid.uuid4().hex[:8]}"
     now_iso = datetime.utcnow().isoformat() + "Z"
 
@@ -378,14 +418,30 @@ async def get_dashboard_stats(user: dict = Depends(get_current_user)):
                 "next_action_desc": "Align security compliance responses with procurement timeline.",
             }
         else:
+            cursor.execute("SELECT COUNT(*) AS c FROM interactions WHERE deal_id = ? AND company_id = ?", (d_id, company_id))
+            p_inter_cnt = cursor.fetchone()["c"]
+            cursor.execute("SELECT result FROM outcomes WHERE deal_id = ? AND company_id = ?", (d_id, company_id))
+            p_outs = cursor.fetchall()
+            cursor.execute("SELECT COUNT(*) AS c FROM learnings WHERE deal_id = ? AND company_id = ?", (d_id, company_id))
+            p_learn_cnt = cursor.fetchone()["c"]
+
+            if p_inter_cnt == 0 and len(p_outs) == 0 and p_learn_cnt == 0:
+                calc_health = 0
+                champ_text = "No Champion Tracked Yet"
+            else:
+                s_cnt = sum(1 for o in p_outs if o["result"] == "successful")
+                f_cnt = sum(1 for o in p_outs if o["result"] == "unsuccessful")
+                calc_health = max(10, min(95, 45 + (min(p_inter_cnt, 3) * 8) + (s_cnt * 15) - (f_cnt * 15) + (p_learn_cnt * 10)))
+                champ_text = "Lead Decision Maker"
+
             p_deal = {
                 "id": d_id,
                 "company_name": d_name,
                 "short_name": d_name[:2].upper(),
                 "stage": d["stage"],
                 "deal_value": d["deal_value"],
-                "relationship_health": d["relationship_health"],
-                "champion": "Lead Decision Maker",
+                "relationship_health": calc_health,
+                "champion": champ_text,
                 "blocker": "None recorded",
                 "current_risk_title": "Initial Discovery Validation",
                 "current_risk_desc": "Reviewing initial customer integration specifications.",
@@ -452,14 +508,14 @@ async def get_deal_intelligence(
     - Winning Strategy & Strategy to Avoid (deal-specific)
     - Next Action & Relationship Health
     """
-    company_id = user.get("company_id")
-    deal_id_clean = deal_id.strip().lower()
+    company_id = resolve_company_id(user)
+    deal_id_clean = deal_id.strip()
 
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute(
-        "SELECT id, company_id, customer_id, company_name, deal_value, stage, relationship_health, created_at FROM deals WHERE id = ? AND company_id = ?",
-        (deal_id_clean, company_id),
+        "SELECT id, company_id, customer_id, company_name, deal_value, stage, relationship_health, created_at FROM deals WHERE (LOWER(id) = LOWER(?) OR id = ?) AND company_id = ?",
+        (deal_id_clean, deal_id_clean, company_id),
     )
     deal_row = cursor.fetchone()
     conn.close()
@@ -623,7 +679,28 @@ async def get_deal_intelligence(
         cursor = conn.cursor()
         cursor.execute("SELECT contact_name, contact_role FROM interactions WHERE deal_id = ? AND company_id = ? LIMIT 1", (deal_id_clean, company_id))
         inter_row = cursor.fetchone()
+
+        cursor.execute("SELECT COUNT(*) AS count FROM interactions WHERE deal_id = ? AND company_id = ?", (deal_id_clean, company_id))
+        inter_count = cursor.fetchone()["count"]
+
+        cursor.execute("SELECT result FROM outcomes WHERE deal_id = ? AND company_id = ?", (deal_id_clean, company_id))
+        outcome_rows = cursor.fetchall()
+        outcome_count = len(outcome_rows)
+        success_count = sum(1 for o in outcome_rows if o["result"] == "successful")
+        fail_count = sum(1 for o in outcome_rows if o["result"] == "unsuccessful")
+
+        cursor.execute("SELECT COUNT(*) AS count FROM learnings WHERE deal_id = ? AND company_id = ?", (deal_id_clean, company_id))
+        learning_count = cursor.fetchone()["count"]
         conn.close()
+
+        # Dynamic learning-driven relationship health
+        if inter_count == 0 and outcome_count == 0 and learning_count == 0:
+            health = 0
+            health_label = "0% — Needs Initial Interaction"
+        else:
+            computed_health = 45 + (min(inter_count, 3) * 8) + (success_count * 15) - (fail_count * 15) + (learning_count * 10)
+            health = max(10, min(95, computed_health))
+            health_label = f"{health}%"
 
         stakeholders = []
         if inter_row and inter_row["contact_name"]:
@@ -683,20 +760,32 @@ async def get_user_deals(
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    company_id = user.get("company_id")
-    if not company_id:
-        conn.close()
-        return {"status": "success", "count": 0, "deals": []}
+    company_id = resolve_company_id(user)
 
     cursor.execute(
         "SELECT id, company_id, customer_id, owner_user_id, company_name, deal_value, stage, relationship_health, created_at FROM deals WHERE company_id = ? ORDER BY created_at DESC",
         (company_id,),
     )
     rows = cursor.fetchall()
-    conn.close()
 
-    deals = [
-        {
+    deals = []
+    for r in rows:
+        d_id = r["id"]
+        cursor.execute("SELECT COUNT(*) AS c FROM interactions WHERE deal_id = ? AND company_id = ?", (d_id, company_id))
+        i_cnt = cursor.fetchone()["c"]
+        cursor.execute("SELECT result FROM outcomes WHERE deal_id = ? AND company_id = ?", (d_id, company_id))
+        outs = cursor.fetchall()
+        cursor.execute("SELECT COUNT(*) AS c FROM learnings WHERE deal_id = ? AND company_id = ?", (d_id, company_id))
+        l_cnt = cursor.fetchone()["c"]
+
+        if i_cnt == 0 and len(outs) == 0 and l_cnt == 0:
+            dyn_health = 0
+        else:
+            s_cnt = sum(1 for o in outs if o["result"] == "successful")
+            f_cnt = sum(1 for o in outs if o["result"] == "unsuccessful")
+            dyn_health = max(10, min(95, 45 + (min(i_cnt, 3) * 8) + (s_cnt * 15) - (f_cnt * 15) + (l_cnt * 10)))
+
+        deals.append({
             "id": r["id"],
             "company_id": r["company_id"],
             "customer_id": r["customer_id"],
@@ -704,13 +793,12 @@ async def get_user_deals(
             "company_name": r["company_name"],
             "deal_value": r["deal_value"],
             "stage": r["stage"],
-            "relationship_health": r["relationship_health"],
+            "relationship_health": dyn_health,
             "created_at": r["created_at"],
             "is_demo": r["id"] == "acme",
-        }
-        for r in rows
-    ]
+        })
 
+    conn.close()
     return {"status": "success", "count": len(deals), "deals": deals}
 
 
@@ -718,17 +806,36 @@ async def get_user_deals(
 async def create_deal(req: DealCreate, user: dict = Depends(get_current_user)):
     """Create a new company-owned deal."""
     deal_id = f"deal_{uuid.uuid4().hex[:8]}"
-    company_id = user.get("company_id") or "comp_technova"
+    company_id = resolve_company_id(user)
     now = datetime.utcnow().isoformat() + "Z"
 
     conn = get_db_connection()
     cursor = conn.cursor()
+
+    # Ensure a customer record exists in customers table
+    clean_cust_name = req.company_name.replace("Digital Transformation", "").strip() or req.company_name
+    cursor.execute(
+        "SELECT id FROM customers WHERE (LOWER(name) = ? OR LOWER(name) = ?) AND company_id = ?",
+        (clean_cust_name.lower(), req.company_name.strip().lower(), company_id),
+    )
+    cust_row = cursor.fetchone()
+    cust_id = req.customer_id
+    if not cust_row:
+        cust_id = cust_id or f"cust_{uuid.uuid4().hex[:8]}"
+        contact_info = f"{req.primary_contact or 'Primary Contact'} • {req.competitor or 'Competitor Tracked'}"
+        cursor.execute(
+            "INSERT INTO customers (id, company_id, name, industry, contact_information, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+            (cust_id, company_id, clean_cust_name, "Enterprise B2B", contact_info, now),
+        )
+    elif not cust_id:
+        cust_id = cust_row["id"]
+
     cursor.execute(
         """
         INSERT INTO deals (id, company_id, customer_id, owner_user_id, company_name, deal_value, stage, relationship_health, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?)
         """,
-        (deal_id, company_id, req.customer_id, user["id"], req.company_name.strip(), req.deal_value, req.stage, req.relationship_health, now),
+        (deal_id, company_id, cust_id, user["id"], req.company_name.strip(), req.deal_value, req.stage, now),
     )
     conn.commit()
     conn.close()
@@ -754,7 +861,7 @@ async def create_deal(req: DealCreate, user: dict = Depends(get_current_user)):
             "company_name": req.company_name,
             "deal_value": req.deal_value,
             "stage": req.stage,
-            "relationship_health": req.relationship_health,
+            "relationship_health": 0,
             "created_at": now,
         },
     }
