@@ -234,7 +234,7 @@ async def get_dashboard_stats(user: dict = Depends(get_current_user)):
     Dynamically calculate dashboard metrics and continuous intelligence loop
     strictly for the authenticated company tenant.
     """
-    company_id = user.get("company_id")
+    company_id = resolve_company_id(user)
     if not company_id:
         return {
             "status": "success",
@@ -955,7 +955,7 @@ async def create_deal_interaction(
                     """,
                     (
                         inter_id,
-                        user.get("company_id") or "comp_technova",
+                        resolve_company_id(user),
                         user["id"],
                         deal_id_clean,
                         interaction.company,
@@ -1075,7 +1075,7 @@ async def create_deal_outcome(
                     """,
                     (
                         out_id,
-                        user.get("company_id") or "comp_technova",
+                        resolve_company_id(user),
                         user["id"],
                         deal_id_clean,
                         outcome.company,
@@ -1207,7 +1207,7 @@ async def learn_from_deal_memory(
                     raw_summary = "Technical deep dive succeeded in resolving integration concerns; enterprise security validation is now the critical path."
     except Exception as e:
         logger.warning(f"Hindsight reflect service threw error or bank is uninitialized ({e}). Using resilient fallback learning...")
-        company_id = (user.get("company_id") if user else None) or "comp_technova"
+        company_id = resolve_company_id(user)
 
         # Check DB outcomes in fallback
         conn = get_db_connection()
@@ -1275,15 +1275,15 @@ async def prepare_for_meeting(
 ):
     """Generate comprehensive AI meeting intelligence using Hindsight memory recall and reflection strictly for the authenticated company and deal."""
     deal_id_clean = deal_id.strip().lower()
-    company_id = user.get("company_id")
+    company_id = resolve_company_id(user)
     bank_id = get_tenant_bank_id(deal_id_clean, user)
 
     # Verify deal belongs strictly to authenticated company
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute(
-        "SELECT id, company_name, stage, deal_value FROM deals WHERE id = ? AND company_id = ?",
-        (deal_id_clean, company_id),
+        "SELECT id, company_name, stage, deal_value FROM deals WHERE (LOWER(id) = LOWER(?) OR id = ?) AND company_id = ?",
+        (deal_id_clean, deal_id_clean, company_id),
     )
     deal_row = cursor.fetchone()
     if not deal_row:
@@ -1666,7 +1666,7 @@ async def get_deal_memory(
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
-            company_id = (user.get("company_id") if user else None) or "comp_technova"
+            company_id = resolve_company_id(user)
             cursor.execute(
                 "SELECT id, title, description, activity_type, created_at FROM activities WHERE deal_id = ? AND company_id = ? ORDER BY created_at DESC",
                 (deal_id_clean, company_id)
@@ -1710,7 +1710,7 @@ async def get_agent_state(
     - Authentic memory, learned insight, and active recommendation counts
     - Dynamic quick inquiry labels
     """
-    company_id = user.get("company_id")
+    company_id = resolve_company_id(user)
     company_name = user.get("company_name") or user.get("company") or "Personal Workspace"
     bank_id = get_tenant_bank_id("", user)
 
@@ -1719,22 +1719,42 @@ async def get_agent_state(
 
     # Get deals for this company
     cursor.execute("SELECT id, company_name, stage, deal_value, relationship_health FROM deals WHERE company_id = ? ORDER BY deal_value DESC", (company_id,))
-    deals = cursor.fetchall()
+    deals = [dict(r) for r in cursor.fetchall()]
     deals_count = len(deals)
 
     # Resolve active selected deal if requested
     selected_deal = None
     if deal_id and deal_id.lower() not in ("all", "agent", "general"):
-        deal_id_clean = deal_id.strip().lower()
-        selected_deal = next((d for d in deals if d["id"].lower() == deal_id_clean), None)
+        deal_id_clean = deal_id.strip()
+        selected_deal = next(
+            (d for d in deals if d["id"].lower() == deal_id_clean.lower() or deal_id_clean.lower() in d["id"].lower() or d["company_name"].lower() == deal_id_clean.lower()),
+            None,
+        )
+        if not selected_deal:
+            cursor.execute(
+                "SELECT id, company_name, stage, deal_value, relationship_health FROM deals WHERE (id = ? OR LOWER(id) = LOWER(?) OR LOWER(company_name) = LOWER(?)) AND company_id = ?",
+                (deal_id_clean, deal_id_clean, deal_id_clean, company_id),
+            )
+            row = cursor.fetchone()
+            if row:
+                selected_deal = dict(row)
 
-    # Get interactions count
+    # Get interactions and outcomes count
     if selected_deal:
-        cursor.execute("SELECT COUNT(*) FROM interactions WHERE company_id = ? AND deal_id = ?", (company_id, selected_deal["id"]))
+        cursor.execute(
+            "SELECT COUNT(*) FROM interactions WHERE company_id = ? AND (deal_id = ? OR LOWER(company) LIKE ?)",
+            (company_id, selected_deal["id"], f"%{selected_deal['company_name'].lower()}%"),
+        )
         interaction_count = cursor.fetchone()[0]
-        cursor.execute("SELECT COUNT(*) FROM outcomes WHERE company_id = ? AND deal_id = ?", (company_id, selected_deal["id"]))
+        cursor.execute(
+            "SELECT COUNT(*) FROM outcomes WHERE company_id = ? AND (deal_id = ? OR LOWER(company) LIKE ?)",
+            (company_id, selected_deal["id"], f"%{selected_deal['company_name'].lower()}%"),
+        )
         outcomes_count = cursor.fetchone()[0]
-        cursor.execute("SELECT COUNT(*) FROM learnings WHERE company_id = ? AND deal_id = ?", (company_id, selected_deal["id"]))
+        cursor.execute(
+            "SELECT COUNT(*) FROM learnings WHERE company_id = ? AND deal_id = ?",
+            (company_id, selected_deal["id"]),
+        )
         learnings_count = cursor.fetchone()[0]
     else:
         cursor.execute("SELECT COUNT(*) FROM interactions WHERE company_id = ?", (company_id,))
@@ -1758,6 +1778,15 @@ async def get_agent_state(
             budget="mid",
         )
         hindsight_mem_count = len(recall_res.results or [])
+        if hindsight_mem_count == 0 and selected_deal:
+            fallback_res = await hindsight_service.recall(
+                bank_id=bank_id,
+                query=f"{selected_deal['company_name']} relationship",
+                tags=None,
+                max_tokens=1024,
+                budget="mid",
+            )
+            hindsight_mem_count = len(fallback_res.results or [])
     except Exception as e:
         logger.warning(f"Error checking Hindsight count for bank {bank_id}: {e}")
 
@@ -1769,213 +1798,9 @@ async def get_agent_state(
     if selected_deal:
         target_id = selected_deal["id"]
         target_name = selected_deal["company_name"]
-        t_clean = target_id.lower()
+        default_question = f"How should I approach the next meeting with {target_name}?"
 
-        if "globes" in t_clean or "globes" in target_name.lower():
-            default_question = f"How should I approach the next meeting with {target_name}?"
-            quick_inquiry = "Grounds in API integration, security & migration concerns"
-            initial_briefing = {
-                "role": "assistant",
-                "question": default_question,
-                "answer": """### 1. Remembered Facts
-• Core Requirement: Rohan Mehta (CTO) explicitly stated during discovery that Globes Industries requires an API-first architecture to synchronize ERP and CRM data across manufacturing and supply chain systems.
-• Technical Architecture Alignment: On Sept 28, a technical deep dive successfully addressed API architecture, webhook latency, and data consistency requirements.
-• Security & Continuity Gatekeeper: Rohan Mehta confirmed technical architecture fit, but explicitly mandated enterprise security validation, SOC2 compliance documentation, and a detailed zero-downtime migration continuity plan before commercial negotiations can proceed.
-
-### 2. Learned Insights
-• Technical Validation is Progress, Not Closure: Proving API architecture feasibility progresses the deal, but enterprise security sign-off remains the prerequisite gatekeeper.
-• Compliance Precedes Commercials: Pushing pricing or premature commercial terms before completing security review will alienate CTO Rohan Mehta and stall executive momentum.
-
-### 3. Current Recommendations
-1. Prioritize Enterprise Security Validation: Lead the next conversation with verified SOC2 compliance documentation and enterprise security architecture benchmarks.
-2. Deliver Operational Migration Roadmap: Provide a detailed, zero-downtime ERP/CRM migration plan addressing data integrity safeguards.
-3. Hold Commercial Discussions: Conclude technical and security validation with Rohan Mehta prior to submitting final pricing proposals.""",
-                "grounding": {
-                    "memoriesUsed": 2,
-                    "learnedOutcomes": 1,
-                    "unsupportedClaims": 0,
-                },
-                "sources": [
-                    "Discovery Call with Rohan Mehta (CTO)",
-                    "Technical Deep Dive outcome (API architecture confirmed)",
-                    "Hindsight Strategic Reflection (Security validation prerequisite)",
-                ],
-                "timestamp": "Initial Briefing",
-            }
-            suggested_questions = [
-                {
-                    "label": "1. Meeting Strategy",
-                    "q": f"How should I approach the next meeting with {target_name}?",
-                    "desc": "Grounds in API integration, security & migration concerns",
-                },
-                {
-                    "label": "2. What to Avoid",
-                    "q": f"What should I avoid doing in the next {target_name} meeting?",
-                    "desc": "Warns against premature commercial terms before security review",
-                },
-                {
-                    "label": "3. Hallucination Test",
-                    "q": f"What did {target_name}'s legal department say about our contract?",
-                    "desc": "Proves zero hallucination & strict customer isolation",
-                },
-                {
-                    "label": "4. Technical Blockers",
-                    "q": "What are Rohan Mehta's primary technical and security concerns?",
-                    "desc": "Traces API integration, security validation, and migration safeguards",
-                },
-            ]
-        elif target_id == "acme" and company_id in ("comp_technova", "technova"):
-            default_question = "How should I approach the next meeting with ACME Corp?"
-            quick_inquiry = "Grounds in Sarah's API mandate, David's security doubts, & 15% discount failure"
-            initial_briefing = {
-                "role": "assistant",
-                "question": default_question,
-                "answer": """### 1. Remembered Facts
-• Core Requirement: Sarah (VP Sales) explicitly stated during discovery that ACME requires an API-first solution to streamline sales pipeline data across internal systems.
-• Technical Objection: David (CTO) expressed major concerns on Sept 22 regarding integration complexity and enterprise security architecture.
-• Commercial Objection: Michael (CFO) and Sarah reviewed the commercial proposal on Sept 24 and stated annual pricing exceeds their budget.
-• Failed Strategy: On Sept 26, you offered a 15% upfront annual discount. This was rejected. Michael explicitly stated the issue was not just raw numbers but a lack of clear integration ROI.
-
-### 2. Learned Insights
-• Discounting is Ineffective: The previous attempt to use pricing concessions failed. The client does not perceive the value of integration, so lowering the price does not solve their hesitation.
-• Root Cause is Value, Not Cost: The CFO's rejection indicates the budget constraint is a symptom of unproven ROI. Until technical value is proven, price will always seem high.
-• Technical Prerequisite: CTO David's concerns are the primary blocker. If the technical team does not sign off on architecture, the commercial team cannot justify spend.
-
-### 3. Current Recommendations
-Do NOT repeat the discount strategy. Leading with further price reductions reinforces the perception that the product lacks inherent value.
-
-Instead, structure the next meeting around Value-Based Technical Demonstration:
-1. Address the CTO First (David): Prepare a detailed technical briefing specifically on integration complexity and security. Show how your API-first approach simplifies architecture.
-2. Reframe for the CFO (Michael) & VP Sales (Sarah): Shift from price negotiation to ROI definition. Present a business case linking API-first pipeline streamlining to operational savings.
-3. Unified Stakeholder Alignment: Ensure David, Michael, and Sarah are aligned so technical buy-in directly justifies the commercial investment.""",
-                "grounding": {
-                    "memoriesUsed": 3,
-                    "learnedOutcomes": 1,
-                    "unsupportedClaims": 0,
-                },
-                "sources": [
-                    "Relationship history (Sarah, David, Michael)",
-                    "Previous outcome (15% discount rejected by CFO Michael)",
-                    "Learned insights (Value-skepticism / ROI justification)",
-                ],
-                "timestamp": "Initial Briefing",
-            }
-            suggested_questions = [
-                {
-                    "label": "1. Meeting Strategy",
-                    "q": "How should I approach the next meeting with ACME Corp?",
-                    "desc": "Main demo inquiry grounded in full history",
-                },
-                {
-                    "label": "2. What to Avoid",
-                    "q": "What should I avoid doing in the next ACME meeting?",
-                    "desc": "Exposes failed discount strategy warning",
-                },
-                {
-                    "label": "3. Hallucination Test",
-                    "q": "What did ACME's legal department say about our contract?",
-                    "desc": "Demonstrates zero hallucination on unrecorded facts",
-                },
-                {
-                    "label": "4. Pricing Failure Reason",
-                    "q": "Why did the 15% pricing discount fail with ACME?",
-                    "desc": "Traces CFO Michael’s specific reaction",
-                },
-            ]
-        elif "stark" in t_clean or "stark" in target_name.lower():
-            default_question = f"How should I approach the next meeting with {target_name}?"
-            quick_inquiry = "Grounds in carrier fleet tracking dispatch & SLA requirements"
-            initial_briefing = {
-                "role": "assistant",
-                "question": default_question,
-                "answer": f"""### 1. Remembered Facts
-• Core Stakeholder: Marcus Vance (VP Operations) is evaluating carrier telemetry data integration and fleet route SLA monitoring.
-• Key Requirements: High-uptime dispatch tracking and latency guarantees across logistics carrier feeds.
-
-### 2. Learned Insights
-• Operations leadership prioritizes demonstrated route dispatch uptime and integration benchmarks.
-
-### 3. Current Recommendations
-1. Present route dispatch SLA latency monitoring architecture.
-2. Deliver carrier telemetry integration documentation for Marcus Vance.""",
-                "grounding": {
-                    "memoriesUsed": 1,
-                    "learnedOutcomes": 0,
-                    "unsupportedClaims": 0,
-                },
-                "sources": [f"Discovery interaction with Marcus Vance ({target_name})"],
-                "timestamp": "Initial Briefing",
-            }
-            suggested_questions = [
-                {
-                    "label": "1. Meeting Strategy",
-                    "q": f"How should I approach the next meeting with {target_name}?",
-                    "desc": "Grounds in fleet operations workflow and logistics SLA requirements",
-                },
-                {
-                    "label": "2. What to Avoid",
-                    "q": f"What should I avoid doing in the next {target_name} meeting?",
-                    "desc": "Warns against presenting generic features without SLA uptime data",
-                },
-                {
-                    "label": "3. Hallucination Test",
-                    "q": f"What did {target_name}'s legal department say about our contract?",
-                    "desc": "Proves zero hallucination & strict customer isolation",
-                },
-                {
-                    "label": "4. Logistics Requirements",
-                    "q": "What are Marcus Vance's primary logistics and dispatch requirements?",
-                    "desc": "Reviews fleet tracking requirements and carrier route SLAs",
-                },
-            ]
-        elif "globex" in t_clean or "globex" in target_name.lower():
-            default_question = f"How should I approach the next meeting with {target_name}?"
-            quick_inquiry = "Grounds in procurement compliance & vendor onboarding"
-            initial_briefing = {
-                "role": "assistant",
-                "question": default_question,
-                "answer": f"""### 1. Remembered Facts
-• Key Stakeholder: Elena Rostova (Head of Procurement) managing financial services vendor compliance.
-• Requirement: Verified compliance documentation and procurement schedule alignment.
-
-### 2. Learned Insights
-• Compliance adherence and clear implementation schedules accelerate procurement review.
-
-### 3. Current Recommendations
-1. Submit vendor compliance documentation.
-2. Align project milestones with procurement timeline.""",
-                "grounding": {
-                    "memoriesUsed": 1,
-                    "learnedOutcomes": 0,
-                    "unsupportedClaims": 0,
-                },
-                "sources": [f"Procurement compliance notes ({target_name})"],
-                "timestamp": "Initial Briefing",
-            }
-            suggested_questions = [
-                {
-                    "label": "1. Meeting Strategy",
-                    "q": f"How should I approach the next meeting with {target_name}?",
-                    "desc": "Grounds in procurement compliance & vendor onboarding",
-                },
-                {
-                    "label": "2. What to Avoid",
-                    "q": f"What should I avoid doing in the next {target_name} meeting?",
-                    "desc": "Warns against bypassing procurement compliance checkpoints",
-                },
-                {
-                    "label": "3. Hallucination Test",
-                    "q": f"What did {target_name}'s legal department say about our contract?",
-                    "desc": "Proves zero hallucination & strict customer isolation",
-                },
-                {
-                    "label": "4. Procurement Alignment",
-                    "q": "What are Elena Rostova's primary procurement requirements?",
-                    "desc": "Reviews financial services vendor compliance specifications",
-                },
-            ]
-        else:
-            default_question = f"How should I approach the next meeting with {target_name}?"
+        if memories_count == 0 and learned_count == 0:
             quick_inquiry = f"Grounds in {target_name} relationship history"
             initial_briefing = {
                 "role": "assistant",
@@ -1996,28 +1821,106 @@ Record your first customer interaction to begin building persistent Hindsight me
                 "sources": [f"Verified tenant memory bank ({bank_id})"],
                 "timestamp": "Initial Briefing",
             }
-            suggested_questions = [
-                {
-                    "label": "1. Meeting Strategy",
-                    "q": f"How should I approach the next meeting with {target_name}?",
-                    "desc": f"Consults verified relationship memories for {target_name}",
+        else:
+            quick_inquiry = f"Grounds in {target_name} relationship history" + (" & learned outcomes" if learned_count > 0 else "")
+
+            # Reuse existing agent intelligence pipeline to generate dynamic grounded briefing
+            briefing_query = f"Provide an initial executive briefing for {target_name}. What is our relationship history, key stakeholder requirements, previous strategy outcomes, and recommended next action?"
+            agent_res = await deal_memory_agent.ask(
+                deal_id=target_id,
+                question=briefing_query,
+                bank_id=bank_id,
+                company_name=company_name,
+                deal_name=target_name,
+                company_id=company_id,
+                is_demo=(company_id in ("comp_technova", "technova")),
+            )
+
+            briefing_answer = agent_res.get("answer", "").strip()
+
+            # Deterministic fallback synthesis if Groq is unavailable, rate-limited, or errored
+            if not briefing_answer or "experiencing high demand" in briefing_answer or "not configured" in briefing_answer:
+                recalled_mems = agent_res.get("memory_context", {}).get("memories", [])
+                conn = get_db_connection()
+                cursor = conn.cursor()
+                cursor.execute(
+                    "SELECT contact_name, contact_role, content, outcome FROM interactions WHERE company_id = ? AND (deal_id = ? OR LOWER(company) LIKE ?) ORDER BY created_at DESC LIMIT 5",
+                    (company_id, target_id, f"%{target_name.lower()}%")
+                )
+                db_inters = cursor.fetchall()
+                cursor.execute(
+                    "SELECT strategy, result, details FROM outcomes WHERE company_id = ? AND (deal_id = ? OR LOWER(company) LIKE ?) ORDER BY created_at DESC LIMIT 3",
+                    (company_id, target_id, f"%{target_name.lower()}%")
+                )
+                db_outs = cursor.fetchall()
+                conn.close()
+
+                facts_list = []
+                for i in db_inters:
+                    facts_list.append(f"• Stakeholder: {i['contact_name']} ({i['contact_role'] or 'Key Stakeholder'}) — {i['content']}")
+                if not facts_list and recalled_mems:
+                    for m in recalled_mems[:3]:
+                        facts_list.append(f"• {m.get('text', '')}")
+
+                outcomes_list = []
+                for o in db_outs:
+                    outcomes_list.append(f"• Strategy '{o['strategy']}' marked as {o['result'].upper()}: {o['details']}")
+                if not outcomes_list and agent_res.get("learned_context", {}).get("reflection_summary"):
+                    outcomes_list.append(f"• {agent_res['learned_context']['reflection_summary']}")
+
+                briefing_answer = "### 1. Remembered Facts\n" + ("\n".join(facts_list) if facts_list else f"• Verified relationship memory active in bank {bank_id}.")
+                if outcomes_list:
+                    briefing_answer += "\n\n### 2. Learned Insights\n" + "\n".join(outcomes_list)
+                else:
+                    briefing_answer += f"\n\n### 2. Learned Insights\n• Continuing relationship discovery. Log strategy outcomes to build learned reflections."
+                briefing_answer += f"\n\n### 3. Recommended Action\n• Prepare executive briefing aligned with stakeholder priorities and verified technical requirements for {target_name}."
+                briefing_answer += f"\n\n### 4. What To Avoid\n• Do not make premature pricing concessions or commercial proposals without validating technical architecture and executive sign-off."
+
+            actual_mems = agent_res.get("memory_context", {}).get("count") or memories_count
+            actual_outs = 1 if (learned_count > 0 or agent_res.get("learned_context", {}).get("reflection_summary")) else 0
+
+            retrieved_sources = [f"Verified tenant memory bank ({bank_id})", f"Hindsight relationship memories ({target_name})"]
+            if agent_res.get("memory_context", {}).get("memories"):
+                for m in agent_res["memory_context"]["memories"][:2]:
+                    txt = m.get("text", "")
+                    if txt:
+                        retrieved_sources.append(txt[:80] + "..." if len(txt) > 80 else txt)
+
+            initial_briefing = {
+                "role": "assistant",
+                "question": default_question,
+                "answer": briefing_answer,
+                "grounding": {
+                    "memoriesUsed": actual_mems,
+                    "learnedOutcomes": actual_outs,
+                    "unsupportedClaims": 0,
                 },
-                {
-                    "label": "2. What to Avoid",
-                    "q": f"What strategies or pitfalls should we avoid with {target_name}?",
-                    "desc": "Warns against repeating unverified sales tactics",
-                },
-                {
-                    "label": "3. Hallucination Test",
-                    "q": f"What did {target_name}'s legal department say about our contract?",
-                    "desc": "Demonstrates zero hallucination on unrecorded facts",
-                },
-                {
-                    "label": "4. Customer Requirements",
-                    "q": f"What are the recorded customer requirements for {target_name}?",
-                    "desc": f"Reviews logged interactions for {target_name}",
-                },
-            ]
+                "sources": retrieved_sources,
+                "timestamp": "Initial Briefing",
+            }
+
+        suggested_questions = [
+            {
+                "label": "1. Meeting Strategy",
+                "q": f"How should I approach the next meeting with {target_name}?",
+                "desc": f"Consults verified relationship memories and stakeholder requirements for {target_name}",
+            },
+            {
+                "label": "2. What to Avoid",
+                "q": f"What strategies or pitfalls should we avoid with {target_name}?",
+                "desc": "Warns against repeating unverified sales tactics or past failed strategies",
+            },
+            {
+                "label": "3. Hallucination Test",
+                "q": f"What did {target_name}'s legal department say about our contract?",
+                "desc": "Demonstrates zero hallucination on unrecorded facts",
+            },
+            {
+                "label": "4. Customer Requirements",
+                "q": f"What are the recorded customer requirements and concerns for {target_name}?",
+                "desc": f"Reviews logged interactions and stated objections for {target_name}",
+            },
+        ]
         default_deal_id = target_id
         default_customer = target_name
     else:
@@ -2061,7 +1964,7 @@ DealMemory is actively tracking {deals_count} deals and {memories_count} interac
 ### 3. Priority Focus
 Select a specific deal to review grounded stakeholder maps, risk radar, and executive meeting counter-tactics.""",
                 "grounding": {
-                    "memoriesUsed": min(memories_count, 3),
+                    "memoriesUsed": memories_count,
                     "learnedOutcomes": min(learned_count, 1),
                     "unsupportedClaims": 0,
                 },
@@ -2094,14 +1997,18 @@ Select a specific deal to review grounded stakeholder maps, risk radar, and exec
         default_deal_id = first_id
         default_customer = first_deal or company_name
 
+    final_memories_count = max(memories_count, initial_briefing.get("grounding", {}).get("memoriesUsed", 0))
+    final_learned_count = max(learned_count, initial_briefing.get("grounding", {}).get("learnedOutcomes", 0))
+    recommendations_count = 3 if final_memories_count > 0 else 0
+
     return {
         "status": "success",
         "company_id": company_id,
         "company_name": company_name,
         "bank_id": bank_id,
         "metrics": {
-            "memories_count": memories_count,
-            "learned_insights_count": learned_count,
+            "memories_count": final_memories_count,
+            "learned_insights_count": final_learned_count,
             "active_recommendations_count": recommendations_count,
         },
         "initial_briefing": initial_briefing,
@@ -2128,20 +2035,20 @@ async def ask_deal_agent(
     if not request.question.strip():
         raise HTTPException(status_code=400, detail="Question cannot be empty.")
 
-    deal_id_clean = deal_id.strip().lower()
-    company_id = user.get("company_id")
+    deal_id_clean = deal_id.strip()
+    company_id = resolve_company_id(user)
     company_name = user.get("company_name") or user.get("company") or "Personal Workspace"
     bank_id = get_tenant_bank_id("", user)
 
     # Verify if deal_id is an actual deal owned strictly by this tenant
     deal_name = None
     owned_deal_id = None
-    if deal_id_clean not in ("agent", "general", "all"):
+    if deal_id_clean.lower() not in ("agent", "general", "all"):
         conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute(
-            "SELECT id, company_name FROM deals WHERE (id = ? OR LOWER(company_name) = ? OR LOWER(company_name) LIKE ?) AND company_id = ?",
-            (deal_id_clean, deal_id_clean, f"%{deal_id_clean}%", company_id)
+            "SELECT id, company_name FROM deals WHERE (LOWER(id) = LOWER(?) OR id = ? OR LOWER(company_name) = LOWER(?) OR LOWER(company_name) LIKE ?) AND company_id = ?",
+            (deal_id_clean, deal_id_clean, deal_id_clean, f"%{deal_id_clean.lower()}%", company_id)
         )
         row = cursor.fetchone()
         conn.close()

@@ -204,8 +204,15 @@ export default function AiAgent() {
       setRetainedMemoryResult(result);
       setPlaygroundStatus('retained');
 
-      // Refresh agent metrics
-      fetchAgentState(selectedDealId).then(setAgentState).catch(console.error);
+      // Refresh agent metrics and initial briefing
+      fetchAgentState(selectedDealId)
+        .then((data) => {
+          setAgentState(data);
+          if (data?.initial_briefing) {
+            setChatHistory((prev) => (prev.length <= 1 ? [data.initial_briefing] : prev));
+          }
+        })
+        .catch(console.error);
     } catch (err) {
       console.error('Playground retain error:', err);
       setPlaygroundStatus('error');
@@ -486,7 +493,7 @@ export default function AiAgent() {
                           <span>Grounded in Hindsight</span>
                         </span>
                         <span className="text-slate-500 dark:text-slate-400 text-[11px]">
-                          {item.grounding?.memoriesUsed || 0} memories used • {item.grounding?.learnedOutcomes || 0} learned outcome
+                          {item.grounding?.memoriesUsed || 0} memories used • {item.grounding?.learnedOutcomes || 0} learned outcome{item.grounding?.learnedOutcomes === 1 ? '' : 's'}
                         </span>
                       </div>
                       <span className="text-[11px] text-slate-400">{item.timestamp}</span>
