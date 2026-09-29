@@ -20,6 +20,8 @@ import {
   Layers,
   Play,
   RotateCw,
+  RefreshCw,
+  Loader2,
 } from 'lucide-react';
 import { fetchAgentState, askDealAgent, createInteraction, fetchDeals } from '../api';
 import { useAuth } from '../context/AuthContext';
