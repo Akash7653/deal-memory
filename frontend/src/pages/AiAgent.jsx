@@ -52,16 +52,16 @@ export default function AiAgent() {
       .then((data) => {
         const list = data.deals || [];
         setDeals(list);
-        if (!selectedDealId) {
-          if (dealParam && list.some((d) => d.id === dealParam)) {
-            setSelectedDealId(dealParam);
-          } else if (list.length > 0) {
-            setSelectedDealId(list[0].id);
-          }
-        }
       })
       .catch(console.error);
   }, []);
+
+  // Synchronize selected deal with route query param
+  useEffect(() => {
+    if (dealParam !== selectedDealId) {
+      setSelectedDealId(dealParam);
+    }
+  }, [dealParam]);
 
   const loadAgentData = async (dealId) => {
     setLoadingState(true);
@@ -77,7 +77,7 @@ export default function AiAgent() {
         setQuestion(data.suggested_questions[0].q);
       }
       setPlaygroundInput(
-        `Customer confirmed critical requirement for ${data.company_name || 'workspace'}.`
+        `Customer confirmed critical requirement for ${data.default_customer || data.company_name || 'workspace'}.`
       );
     } catch (err) {
       console.error('Failed to load agent state:', err);
@@ -105,7 +105,11 @@ export default function AiAgent() {
 
   const handleSelectDeal = (id) => {
     setSelectedDealId(id);
-    setSearchParams(id ? { deal: id } : {});
+    if (id) {
+      setSearchParams({ deal: id });
+    } else {
+      setSearchParams({});
+    }
   };
 
   const handleAsk = async (qText) => {
@@ -220,6 +224,7 @@ export default function AiAgent() {
   };
 
   const currentDeal = deals.find((d) => d.id === selectedDealId);
+  const currentDealName = currentDeal?.company_name || (selectedDealId ? agentState?.default_customer : null);
 
   const suggestedQuestions = agentState?.suggested_questions || [
     {
@@ -287,7 +292,7 @@ export default function AiAgent() {
               <div className="mt-3 flex flex-wrap items-center gap-2">
                 <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Account / Deal Context:</span>
                 <select
-                  value={selectedDealId}
+                  value={selectedDealId || ''}
                   onChange={(e) => handleSelectDeal(e.target.value)}
                   className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-900 dark:text-white focus:outline-none focus:border-purple-600"
                 >
@@ -297,6 +302,11 @@ export default function AiAgent() {
                       {d.company_name} {d.deal_value ? `($${d.deal_value.toLocaleString()} ARR)` : ''}
                     </option>
                   ))}
+                  {selectedDealId && !deals.some((d) => d.id === selectedDealId) && (
+                    <option value={selectedDealId}>
+                      {currentDealName || 'Selected Deal'} ({selectedDealId})
+                    </option>
+                  )}
                 </select>
               </div>
             </div>
@@ -577,8 +587,8 @@ export default function AiAgent() {
               value={question}
               onChange={(e) => setQuestion(e.target.value)}
               placeholder={
-                currentDeal
-                  ? `Ask DealMemory anything about ${currentDeal.company_name}...`
+                currentDealName
+                  ? `Ask DealMemory anything about ${currentDealName}...`
                   : `Ask DealMemory anything about ${agentState?.company_name || 'your'} customer relationships...`
               }
               className="flex-1 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-purple-600 transition-colors shadow-xs"

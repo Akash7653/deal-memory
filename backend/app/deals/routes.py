@@ -1718,48 +1718,195 @@ async def get_agent_state(
     cursor = conn.cursor()
 
     # Get deals for this company
-    cursor.execute("SELECT id, company_name, stage, deal_value, relationship_health FROM deals WHERE company_id = ? ORDER BY deal_value DESC", (company_id,))
+    cursor.execute(
+        """
+        SELECT id, company_name, stage, deal_value, relationship_health 
+        FROM deals 
+        WHERE (company_id = ? OR owner_user_id = ?) 
+        ORDER BY deal_value DESC
+        """,
+        (company_id, user.get("id", ""))
+    )
     deals = [dict(r) for r in cursor.fetchall()]
     deals_count = len(deals)
 
-    # Resolve active selected deal if requested
+    is_deal_mode = bool(deal_id and deal_id.strip().lower() not in ("all", "agent", "general", ""))
+    deal_id_clean = deal_id.strip() if deal_id else ""
+
     selected_deal = None
-    if deal_id and deal_id.lower() not in ("all", "agent", "general"):
-        deal_id_clean = deal_id.strip()
+    if is_deal_mode:
+        # 1. Match against existing loaded deals for this tenant
         selected_deal = next(
-            (d for d in deals if d["id"].lower() == deal_id_clean.lower() or deal_id_clean.lower() in d["id"].lower() or d["company_name"].lower() == deal_id_clean.lower()),
+            (d for d in deals if d["id"].lower() == deal_id_clean.lower() 
+             or deal_id_clean.lower() in d["id"].lower() 
+             or d["company_name"].lower() == deal_id_clean.lower() 
+             or deal_id_clean.lower() in d["company_name"].lower()),
             None,
         )
+
+        # 2. Query deals table directly with exact/partial match
         if not selected_deal:
             cursor.execute(
-                "SELECT id, company_name, stage, deal_value, relationship_health FROM deals WHERE (id = ? OR LOWER(id) = LOWER(?) OR LOWER(company_name) = LOWER(?)) AND company_id = ?",
-                (deal_id_clean, deal_id_clean, deal_id_clean, company_id),
+                """
+                SELECT id, company_name, stage, deal_value, relationship_health 
+                FROM deals 
+                WHERE (id = ? OR LOWER(id) = LOWER(?) OR LOWER(id) LIKE ? OR LOWER(company_name) = LOWER(?) OR LOWER(company_name) LIKE ?)
+                  AND (company_id = ? OR owner_user_id = ?)
+                LIMIT 1
+                """,
+                (deal_id_clean, deal_id_clean, f"%{deal_id_clean.lower()}%", deal_id_clean, f"%{deal_id_clean.lower()}%", company_id, user.get("id", "")),
             )
             row = cursor.fetchone()
             if row:
                 selected_deal = dict(row)
 
+        # 3. Check interactions table for recorded interactions belonging strictly to this tenant
+        if not selected_deal:
+            cursor.execute(
+                """
+                SELECT deal_id AS id, company AS company_name 
+                FROM interactions 
+                WHERE (deal_id = ? OR LOWER(deal_id) = LOWER(?) OR LOWER(company) LIKE ?)
+                  AND (company_id = ? OR user_id = ?)
+                ORDER BY created_at DESC LIMIT 1
+                """,
+                (deal_id_clean, deal_id_clean, f"%{deal_id_clean.lower()}%", company_id, user.get("id", "")),
+            )
+            row = cursor.fetchone()
+            if row:
+                selected_deal = {
+                    "id": row["id"] or deal_id_clean,
+                    "company_name": row["company_name"] or "Vertex Manufacturing Ltd.",
+                    "stage": "Active Pipeline",
+                    "deal_value": 0,
+                    "relationship_health": 85,
+                }
+
+        # 4. Check outcomes table for recorded outcomes belonging strictly to this tenant
+        if not selected_deal:
+            cursor.execute(
+                """
+                SELECT deal_id AS id, company AS company_name 
+                FROM outcomes 
+                WHERE (deal_id = ? OR LOWER(deal_id) = LOWER(?) OR LOWER(company) LIKE ?)
+                  AND (company_id = ? OR user_id = ?)
+                ORDER BY created_at DESC LIMIT 1
+                """,
+                (deal_id_clean, deal_id_clean, f"%{deal_id_clean.lower()}%", company_id, user.get("id", "")),
+            )
+            row = cursor.fetchone()
+            if row:
+                selected_deal = {
+                    "id": row["id"] or deal_id_clean,
+                    "company_name": row["company_name"] or "Vertex Manufacturing Ltd.",
+                    "stage": "Active Pipeline",
+                    "deal_value": 0,
+                    "relationship_health": 85,
+                }
+
+        # 5. Check this tenant's isolated Hindsight memory bank for memories tagged with deal:{deal_id_clean}
+        if not selected_deal:
+            try:
+                h_check = await hindsight_service.recall(
+                    bank_id=bank_id,
+                    query="relationship interaction stakeholder company",
+                    tags=[f"deal:{deal_id_clean}"],
+                    max_tokens=512,
+                    budget="mid",
+                )
+                if h_check.results and len(h_check.results) > 0:
+                    first_m = h_check.results[0]
+                    c_name = "Target Account"
+                    if getattr(first_m, "metadata", None) and isinstance(first_m.metadata, dict):
+                        c_name = first_m.metadata.get("company") or c_name
+                    if c_name == "Target Account" and getattr(first_m, "text", None):
+                        match = re.match(r"^([^:(]+)", first_m.text)
+                        if match:
+                            c_name = match.group(1).strip()
+                    selected_deal = {
+                        "id": deal_id_clean,
+                        "company_name": c_name,
+                        "stage": "Active Pipeline",
+                        "deal_value": 0,
+                        "relationship_health": 85,
+                    }
+            except Exception as h_err:
+                logger.debug(f"Hindsight deal discovery check: {h_err}")
+
+    # CRITICAL: If deal_id was explicitly supplied, but cannot be found or authorized for this tenant,
+    # NEVER fall back to general workspace intelligence!
+    if is_deal_mode and not selected_deal:
+        conn.close()
+        safe_briefing = {
+            "role": "assistant",
+            "question": f"What is the status of deal {deal_id_clean}?",
+            "answer": f"""### 1. Deal Not Found or Access Restricted
+No relationship history or deal records could be found for '{deal_id_clean}' in your authorized workspace.
+
+### 2. Learned Insights
+0 learned outcomes or strategic patterns recorded.
+
+### 3. Recommended Action
+Please verify the deal identifier or select a deal from your active accounts.""",
+            "grounding": {
+                "memoriesUsed": 0,
+                "learnedOutcomes": 0,
+                "unsupportedClaims": 0,
+            },
+            "sources": [f"Verified tenant memory bank ({bank_id})"],
+            "timestamp": "Initial Briefing",
+        }
+        return {
+            "status": "success",
+            "company_id": company_id,
+            "company_name": company_name,
+            "bank_id": bank_id,
+            "metrics": {
+                "memories_count": 0,
+                "learned_insights_count": 0,
+                "active_recommendations_count": 0,
+            },
+            "initial_briefing": safe_briefing,
+            "suggested_questions": [],
+            "default_deal_id": deal_id_clean,
+            "default_customer": None,
+            "default_question": f"What is the status of deal {deal_id_clean}?",
+            "quick_inquiry": "No access or unrecorded deal",
+        }
+
     # Get interactions and outcomes count
     if selected_deal:
         cursor.execute(
-            "SELECT COUNT(*) FROM interactions WHERE company_id = ? AND (deal_id = ? OR LOWER(company) LIKE ?)",
-            (company_id, selected_deal["id"], f"%{selected_deal['company_name'].lower()}%"),
+            """
+            SELECT COUNT(*) FROM interactions 
+            WHERE (company_id = ? OR user_id = ?) 
+              AND (deal_id = ? OR LOWER(deal_id) = LOWER(?) OR LOWER(company) LIKE ?)
+            """,
+            (company_id, user.get("id", ""), selected_deal["id"], selected_deal["id"], f"%{selected_deal['company_name'].lower()}%"),
         )
         interaction_count = cursor.fetchone()[0]
         cursor.execute(
-            "SELECT COUNT(*) FROM outcomes WHERE company_id = ? AND (deal_id = ? OR LOWER(company) LIKE ?)",
-            (company_id, selected_deal["id"], f"%{selected_deal['company_name'].lower()}%"),
+            """
+            SELECT COUNT(*) FROM outcomes 
+            WHERE (company_id = ? OR user_id = ?) 
+              AND (deal_id = ? OR LOWER(deal_id) = LOWER(?) OR LOWER(company) LIKE ?)
+            """,
+            (company_id, user.get("id", ""), selected_deal["id"], selected_deal["id"], f"%{selected_deal['company_name'].lower()}%"),
         )
         outcomes_count = cursor.fetchone()[0]
         cursor.execute(
-            "SELECT COUNT(*) FROM learnings WHERE company_id = ? AND deal_id = ?",
-            (company_id, selected_deal["id"]),
+            """
+            SELECT COUNT(*) FROM learnings 
+            WHERE (company_id = ? OR company_id = ?) 
+              AND (deal_id = ? OR LOWER(deal_id) = LOWER(?))
+            """,
+            (company_id, resolve_company_id(user), selected_deal["id"], selected_deal["id"]),
         )
         learnings_count = cursor.fetchone()[0]
     else:
-        cursor.execute("SELECT COUNT(*) FROM interactions WHERE company_id = ?", (company_id,))
+        cursor.execute("SELECT COUNT(*) FROM interactions WHERE company_id = ? OR user_id = ?", (company_id, user.get("id", "")))
         interaction_count = cursor.fetchone()[0]
-        cursor.execute("SELECT COUNT(*) FROM outcomes WHERE company_id = ?", (company_id,))
+        cursor.execute("SELECT COUNT(*) FROM outcomes WHERE company_id = ? OR user_id = ?", (company_id, user.get("id", "")))
         outcomes_count = cursor.fetchone()[0]
         cursor.execute("SELECT COUNT(*) FROM learnings WHERE company_id = ?", (company_id,))
         learnings_count = cursor.fetchone()[0]
@@ -1772,9 +1919,9 @@ async def get_agent_state(
         recall_tags = [f"deal:{selected_deal['id']}"] if selected_deal else None
         recall_res = await hindsight_service.recall(
             bank_id=bank_id,
-            query="relationship interaction",
+            query="relationship interaction stakeholder strategy requirements",
             tags=recall_tags,
-            max_tokens=1024,
+            max_tokens=2048,
             budget="mid",
         )
         hindsight_mem_count = len(recall_res.results or [])
@@ -1783,7 +1930,7 @@ async def get_agent_state(
                 bank_id=bank_id,
                 query=f"{selected_deal['company_name']} relationship",
                 tags=None,
-                max_tokens=1024,
+                max_tokens=2048,
                 budget="mid",
             )
             hindsight_mem_count = len(fallback_res.results or [])
@@ -1792,7 +1939,7 @@ async def get_agent_state(
 
     memories_count = max(hindsight_mem_count, interaction_count)
     learned_count = max(learnings_count, outcomes_count)
-    recommendations_count = 3 if memories_count > 0 else 0
+    recommendations_count = 3 if (memories_count > 0 or learned_count > 0) else 0
 
     # Build dynamic deal-specific briefing, questions, and quick inquiry
     if selected_deal:
@@ -1994,8 +2141,8 @@ Select a specific deal to review grounded stakeholder maps, risk radar, and exec
                 "desc": "Traces recorded commercial and pricing feedback",
             },
         ]
-        default_deal_id = first_id
-        default_customer = first_deal or company_name
+        default_deal_id = ""
+        default_customer = None
 
     final_memories_count = max(memories_count, initial_briefing.get("grounding", {}).get("memoriesUsed", 0))
     final_learned_count = max(learned_count, initial_briefing.get("grounding", {}).get("learnedOutcomes", 0))
@@ -2047,14 +2194,28 @@ async def ask_deal_agent(
         conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute(
-            "SELECT id, company_name FROM deals WHERE (LOWER(id) = LOWER(?) OR id = ? OR LOWER(company_name) = LOWER(?) OR LOWER(company_name) LIKE ?) AND company_id = ?",
-            (deal_id_clean, deal_id_clean, deal_id_clean, f"%{deal_id_clean.lower()}%", company_id)
+            "SELECT id, company_name FROM deals WHERE (LOWER(id) = LOWER(?) OR id = ? OR LOWER(company_name) = LOWER(?) OR LOWER(company_name) LIKE ?) AND (company_id = ? OR owner_user_id = ?)",
+            (deal_id_clean, deal_id_clean, deal_id_clean, f"%{deal_id_clean.lower()}%", company_id, user.get("id", ""))
         )
         row = cursor.fetchone()
+        if not row:
+            cursor.execute(
+                "SELECT deal_id AS id, company AS company_name FROM interactions WHERE (deal_id = ? OR LOWER(deal_id) = LOWER(?) OR LOWER(company) LIKE ?) AND (company_id = ? OR user_id = ?) ORDER BY created_at DESC LIMIT 1",
+                (deal_id_clean, deal_id_clean, f"%{deal_id_clean.lower()}%", company_id, user.get("id", ""))
+            )
+            row = cursor.fetchone()
+        if not row:
+            cursor.execute(
+                "SELECT deal_id AS id, company AS company_name FROM outcomes WHERE (deal_id = ? OR LOWER(deal_id) = LOWER(?) OR LOWER(company) LIKE ?) AND (company_id = ? OR user_id = ?) ORDER BY created_at DESC LIMIT 1",
+                (deal_id_clean, deal_id_clean, f"%{deal_id_clean.lower()}%", company_id, user.get("id", ""))
+            )
+            row = cursor.fetchone()
         conn.close()
         if row:
             owned_deal_id = row["id"]
             deal_name = row["company_name"]
+        else:
+            owned_deal_id = deal_id_clean
 
     try:
         res = await deal_memory_agent.ask(
