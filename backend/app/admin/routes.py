@@ -92,7 +92,7 @@ async def get_admin_stats(admin_user: dict = Depends(get_current_admin)):
     cursor.execute("SELECT COUNT(*) AS count FROM companies WHERE status = 'approved'")
     active_companies = cursor.fetchone()["count"]
 
-    cursor.execute("SELECT COUNT(*) AS count FROM users WHERE role != 'admin'")
+    cursor.execute("SELECT COUNT(*) AS count FROM users")
     total_users = cursor.fetchone()["count"]
 
     cursor.execute("SELECT COUNT(*) AS count FROM deals")

@@ -67,6 +67,30 @@ export default function AdminLayout() {
             </NavLink>
           </div>
 
+          {/* Desktop Center Navigation Links */}
+          <nav className="hidden xl:flex items-center space-x-1">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  end={item.end}
+                  className={({ isActive }) =>
+                    `flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                      isActive
+                        ? 'bg-purple-600 text-white shadow-xs'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60'
+                    }`
+                  }
+                >
+                  <Icon size={14} />
+                  <span>{item.label}</span>
+                </NavLink>
+              );
+            })}
+          </nav>
+
           {/* Right Actions */}
           <div className="flex items-center space-x-2 sm:space-x-3">
             {/* View App Link */}
@@ -106,7 +130,7 @@ export default function AdminLayout() {
               </div>
               <button
                 onClick={handleLogout}
-                className="p-2 rounded-xl text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors"
+                className="p-2 rounded-xl text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer"
                 title="Sign Out"
               >
                 <LogOut size={16} />
@@ -116,12 +140,41 @@ export default function AdminLayout() {
             {/* Mobile Hamburger */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+              className="lg:hidden p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
             >
               {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
           </div>
         </header>
+
+        {/* Always-Visible Responsive Sub-Navigation Bar on All Devices */}
+        <div className="mt-2.5 flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end={item.end}
+                className={({ isActive }) =>
+                  `flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all border cursor-pointer ${
+                    isActive
+                      ? 'bg-purple-600 text-white border-purple-500 shadow-xs'
+                      : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:border-purple-300 dark:hover:border-purple-700 hover:bg-slate-50 dark:hover:bg-slate-850'
+                  }`
+                }
+              >
+                <Icon size={14} />
+                <span>{item.label}</span>
+                {item.badge && (
+                  <span className="text-[10px] px-1.5 py-0.2 rounded bg-purple-500/20 text-purple-200 font-bold ml-1">
+                    {item.badge}
+                  </span>
+                )}
+              </NavLink>
+            );
+          })}
+        </div>
 
         {/* Mobile Dropdown Menu */}
         {mobileMenuOpen && (

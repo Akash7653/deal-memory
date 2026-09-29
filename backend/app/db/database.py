@@ -211,7 +211,7 @@ def seed_demo_account(cursor, conn):
 
     # 1. Seed Main Admin Account (akash@admin.com / micky@2710)
     pw_admin = bcrypt.hashpw("micky@2710".encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
-    cursor.execute("DELETE FROM users WHERE role = 'admin' AND email != 'akash@admin.com'")
+    cursor.execute("DELETE FROM users WHERE id NOT IN ('demo-user-001', 'user_jordan', 'admin_akash_001')")
     cursor.execute(
         """
         INSERT OR REPLACE INTO users (id, company_id, name, email, password_hash, company, role, status, created_at)
