@@ -107,53 +107,75 @@ export default function AiAgent() {
   };
 
   const handleAsk = async (qText) => {
-    const query = qText || question;
+    const query = (typeof qText === 'string' && qText.trim() ? qText : question) || '';
     if (!query.trim() || loading) return;
 
+    const dealTarget = selectedDealId || agentState?.default_deal_id || 'agent';
     setLoading(true);
+    setQuestion('');
+
+    const tempId = 'temp-' + Date.now();
+    // Optimistic update: show user question and thinking assistant placeholder immediately!
+    setChatHistory((prev) => [
+      ...prev,
+      {
+        role: 'user',
+        question: query,
+      },
+      {
+        role: 'assistant',
+        tempId,
+        isThinking: true,
+        question: query,
+        answer: 'Consulting Hindsight relationship memory & synthesizing grounded response...',
+        timestamp: 'Thinking...',
+      },
+    ]);
+
     try {
-      const dealTarget = selectedDealId || agentState?.default_deal_id || 'agent';
       const response = await askDealAgent(dealTarget, query);
       const memCount = response.memory_context?.count || 0;
       const memories = response.memory_context?.memories || [];
       const reflectionSummary = response.learned_context?.reflection_summary || '';
 
-      setChatHistory((prev) => [
-        ...prev,
-        {
-          role: 'user',
-          question: query,
-        },
-        {
-          role: 'assistant',
-          question: query,
-          answer: response.answer,
-          memoryContext: response.memory_context,
-          learnedContext: response.learned_context,
-          grounding: {
-            memoriesUsed: memCount,
-            learnedOutcomes: reflectionSummary ? 1 : 0,
-            unsupportedClaims: 0,
-          },
-          sources:
-            memCount > 0
-              ? memories.slice(0, 3).map((m) => (m.text.length > 80 ? m.text.slice(0, 80) + '...' : m.text))
-              : [`Verified against tenant memory bank (${agentState?.bank_id || 'company bank'})`],
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        },
-      ]);
-      setQuestion('');
+      setChatHistory((prev) =>
+        prev.map((item) =>
+          item.tempId === tempId
+            ? {
+                role: 'assistant',
+                question: query,
+                answer: response.answer,
+                memoryContext: response.memory_context,
+                learnedContext: response.learned_context,
+                grounding: {
+                  memoriesUsed: memCount,
+                  learnedOutcomes: reflectionSummary ? 1 : 0,
+                  unsupportedClaims: 0,
+                },
+                sources:
+                  memCount > 0
+                    ? memories.slice(0, 3).map((m) => (m.text.length > 80 ? m.text.slice(0, 80) + '...' : m.text))
+                    : [`Verified against tenant memory bank (${agentState?.bank_id || 'company bank'})`],
+                timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              }
+            : item
+        )
+      );
     } catch (err) {
-      setChatHistory((prev) => [
-        ...prev,
-        {
-          role: 'assistant',
-          question: query,
-          answer: `Error consulting DealMemory Agent: ${err.message}`,
-          isError: true,
-          timestamp: 'Error',
-        },
-      ]);
+      console.error('Ask error:', err);
+      setChatHistory((prev) =>
+        prev.map((item) =>
+          item.tempId === tempId
+            ? {
+                role: 'assistant',
+                question: query,
+                answer: `Error consulting DealMemory Agent: ${err.message}`,
+                isError: true,
+                timestamp: 'Error',
+              }
+            : item
+        )
+      );
     } finally {
       setLoading(false);
     }
@@ -418,20 +440,27 @@ export default function AiAgent() {
               60-Second Demo Inquiries (Click to Ask Live):
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {suggestedQuestions.map((sq, i) => (
-                <button
-                  key={i}
-                  onClick={() => handleAsk(sq.q)}
-                  disabled={loading}
-                  className="text-left p-3.5 rounded-2xl bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-850 border border-slate-200 dark:border-slate-800 hover:border-purple-400 dark:hover:border-purple-500/40 transition-all text-xs group cursor-pointer shadow-xs"
-                >
-                  <div className="font-semibold text-slate-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-300 flex items-center justify-between">
-                    <span>{sq.label}</span>
-                    <ArrowRight size={13} className="text-slate-400 group-hover:text-purple-500" />
-                  </div>
-                  <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">{sq.desc}</div>
-                </button>
-              ))}
+              {suggestedQuestions.map((sq, i) => {
+                const targetQ = sq.q || sq.question || sq.query || sq.desc || sq.label;
+                return (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleAsk(targetQ);
+                    }}
+                    disabled={loading}
+                    className="text-left p-3.5 rounded-2xl bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-850 border border-slate-200 dark:border-slate-800 hover:border-purple-400 dark:hover:border-purple-500/40 transition-all text-xs group cursor-pointer shadow-xs disabled:opacity-50"
+                  >
+                    <div className="font-semibold text-slate-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-300 flex items-center justify-between">
+                      <span>{sq.label}</span>
+                      <ArrowRight size={13} className="text-slate-400 group-hover:text-purple-500 transition-transform group-hover:translate-x-0.5" />
+                    </div>
+                    <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">{sq.desc}</div>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -462,25 +491,33 @@ export default function AiAgent() {
                     </div>
 
                     {/* Formatted Agent Response */}
-                    <div className="text-xs sm:text-sm text-slate-800 dark:text-slate-200 leading-relaxed whitespace-pre-line space-y-2">
-                      {item.answer}
-                    </div>
+                    {item.isThinking ? (
+                      <div className="flex items-center gap-2.5 py-3 text-xs text-purple-600 dark:text-purple-400 font-semibold animate-pulse">
+                        <RefreshCw size={14} className="animate-spin" />
+                        <span>{item.answer}</span>
+                      </div>
+                    ) : (
+                      <div className="text-xs sm:text-sm text-slate-800 dark:text-slate-200 leading-relaxed whitespace-pre-line space-y-2">
+                        {item.answer}
+                      </div>
+                    )}
 
-                    {/* Why This Recommendation & Evidence Dropdown */}
-                    <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
-                      <button
-                        onClick={() =>
-                          setExpandedMemories((prev) => ({
-                            ...prev,
-                            [idx]: !prev[idx],
-                          }))
-                        }
-                        className="flex items-center space-x-1.5 text-xs text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 font-semibold cursor-pointer"
-                      >
-                        <ShieldCheck size={14} />
-                        <span>Why This Recommendation? (View Grounding Sources)</span>
-                        {expandedMemories[idx] ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                      </button>
+                    {/* Why This Recommendation & Evidence Dropdown (only when not thinking) */}
+                    {!item.isThinking && (
+                      <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+                        <button
+                          onClick={() =>
+                            setExpandedMemories((prev) => ({
+                              ...prev,
+                              [idx]: !prev[idx],
+                            }))
+                          }
+                          className="flex items-center space-x-1.5 text-xs text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 font-semibold cursor-pointer"
+                        >
+                          <ShieldCheck size={14} />
+                          <span>Why This Recommendation? (View Grounding Sources)</span>
+                          {expandedMemories[idx] ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                        </button>
 
                       {expandedMemories[idx] && (
                         <div className="mt-3 p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs space-y-2 animate-fade-in">
@@ -511,8 +548,9 @@ export default function AiAgent() {
                         </div>
                       )}
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
+              )}
               </div>
             ))}
           </div>

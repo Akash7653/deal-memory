@@ -1,9 +1,11 @@
 import uuid
+import logging
 from datetime import datetime, timezone
 from typing import Optional, List, Dict, Any
 from fastapi import APIRouter, HTTPException, Depends, status, Query
 from pydantic import BaseModel, EmailStr, Field
 
+logger = logging.getLogger(__name__)
 from app.db.database import get_db_connection
 from app.auth.security import (
     verify_password,
@@ -208,6 +210,60 @@ async def get_admin_company_detail(company_id: str, admin_user: dict = Depends(g
     }
 
 
+@router.delete("/companies/{company_id}")
+async def delete_admin_company(company_id: str, admin_user: dict = Depends(get_current_admin)):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT id, name FROM companies WHERE id = ?", (company_id,))
+    comp = cursor.fetchone()
+    if not comp:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Company not found.")
+
+    comp_name = comp["name"]
+
+    # Cascade delete all related records
+    cursor.execute("DELETE FROM users WHERE company_id = ?", (company_id,))
+    cursor.execute("DELETE FROM customers WHERE company_id = ?", (company_id,))
+    cursor.execute("DELETE FROM deals WHERE company_id = ?", (company_id,))
+    cursor.execute("DELETE FROM interactions WHERE company_id = ?", (company_id,))
+    cursor.execute("DELETE FROM outcomes WHERE company_id = ?", (company_id,))
+    cursor.execute("DELETE FROM support_messages WHERE company_id = ?", (company_id,))
+    cursor.execute("DELETE FROM activities WHERE company_id = ?", (company_id,))
+    cursor.execute("DELETE FROM companies WHERE id = ?", (company_id,))
+
+    now_iso = datetime.now(timezone.utc).isoformat()
+    cursor.execute(
+        """
+        INSERT INTO activities (id, user_id, company, activity_type, title, description, created_at)
+        VALUES (?, ?, 'Platform Admin', 'auth', 'Company Deleted', ?, ?)
+        """,
+        (
+            f"act_{uuid.uuid4().hex[:8]}",
+            admin_user["id"],
+            f"Company '{comp_name}' ({company_id}) and all associated workspace records were deleted by administrator.",
+            now_iso,
+        ),
+    )
+
+    conn.commit()
+    conn.close()
+
+    try:
+        from app.services.hindsight import hindsight_service
+        bank_id = f"dealmemory-{company_id}"
+        await hindsight_service.delete_bank(bank_id=bank_id)
+    except Exception as e:
+        logger.debug(f"Could not delete Hindsight bank dealmemory-{company_id}: {e}")
+
+    return {
+        "status": "success",
+        "message": f"Company '{comp_name}' and all associated workspace data have been deleted successfully.",
+        "company_id": company_id,
+    }
+
+
 @router.get("/requests")
 async def get_admin_access_requests(admin_user: dict = Depends(get_current_admin)):
     conn = get_db_connection()
@@ -307,6 +363,53 @@ async def get_admin_users(admin_user: dict = Depends(get_current_admin)):
     users = [dict(r) for r in cursor.fetchall()]
     conn.close()
     return {"status": "success", "count": len(users), "users": users}
+
+
+@router.delete("/users/{user_id}")
+async def delete_admin_user(user_id: str, admin_user: dict = Depends(get_current_admin)):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT id, name, email, company_id FROM users WHERE id = ?", (user_id,))
+    user_row = cursor.fetchone()
+    if not user_row:
+        conn.close()
+        raise HTTPException(status_code=404, detail="User not found.")
+
+    if user_row["id"] == admin_user["id"]:
+        conn.close()
+        raise HTTPException(status_code=400, detail="Cannot delete your own active administrator account.")
+
+    user_name = user_row["name"]
+    user_email = user_row["email"]
+    comp_id = user_row["company_id"]
+
+    cursor.execute("DELETE FROM support_messages WHERE user_id = ?", (user_id,))
+    cursor.execute("DELETE FROM users WHERE id = ?", (user_id,))
+
+    now_iso = datetime.now(timezone.utc).isoformat()
+    cursor.execute(
+        """
+        INSERT INTO activities (id, company_id, user_id, company, activity_type, title, description, created_at)
+        VALUES (?, ?, ?, 'Platform Admin', 'auth', 'User Deleted', ?, ?)
+        """,
+        (
+            f"act_{uuid.uuid4().hex[:8]}",
+            comp_id,
+            admin_user["id"],
+            f"User '{user_name}' ({user_email}) was deleted by platform administrator.",
+            now_iso,
+        ),
+    )
+
+    conn.commit()
+    conn.close()
+
+    return {
+        "status": "success",
+        "message": f"User '{user_name}' ({user_email}) was deleted successfully.",
+        "user_id": user_id,
+    }
 
 
 @router.get("/conversations")

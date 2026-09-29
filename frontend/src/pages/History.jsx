@@ -34,7 +34,12 @@ export default function History() {
         fetchDeals().catch(() => ({ deals: [] })),
       ]);
       setActivities(histData.activities || []);
-      setDeals(dealsData.deals || []);
+      const userCompId = user?.company_id;
+      const allDeals = dealsData.deals || [];
+      const tenantDeals = userCompId
+        ? allDeals.filter((d) => d.company_id === userCompId)
+        : allDeals;
+      setDeals(tenantDeals);
     } catch (err) {
       const msg = err.message || '';
       if (msg.includes('User account not found') || msg.includes('Authentication required') || msg.includes('Invalid or expired')) {
@@ -194,14 +199,11 @@ export default function History() {
           className="bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-purple-500 transition-colors"
         >
           <option value="all">All Deals</option>
-          <option value="acme">ACME Corp (Demo)</option>
-          {deals
-            .filter((d) => d.id !== 'acme')
-            .map((d) => (
-              <option key={d.id} value={d.id}>
-                {d.company_name}
-              </option>
-            ))}
+          {deals.map((d) => (
+            <option key={d.id} value={d.id}>
+              {d.company_name}
+            </option>
+          ))}
         </select>
 
         <div className="ml-auto text-xs text-slate-500 dark:text-slate-400 font-medium">

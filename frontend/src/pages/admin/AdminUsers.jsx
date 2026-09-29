@@ -7,9 +7,10 @@ import {
   Mail,
   Shield,
   UserCheck,
-  Clock
+  Clock,
+  Trash2
 } from 'lucide-react';
-import { fetchAdminUsers } from '../../api';
+import { fetchAdminUsers, deleteAdminUser } from '../../api';
 
 export default function AdminUsers() {
   const [users, setUsers] = useState([]);
@@ -32,6 +33,16 @@ export default function AdminUsers() {
   useEffect(() => {
     loadUsers();
   }, []);
+
+  const handleDeleteUser = async (userId, userName, userEmail) => {
+    if (!window.confirm(`Are you sure you want to permanently delete user "${userName}" (${userEmail})?`)) return;
+    try {
+      await deleteAdminUser(userId);
+      setUsers((prev) => prev.filter((u) => u.id !== userId));
+    } catch (e) {
+      alert(e.message || 'Failed to delete user');
+    }
+  };
 
   const safeUsers = Array.isArray(users) ? users : [];
   const filtered = safeUsers.filter((u) => {
@@ -98,6 +109,7 @@ export default function AdminUsers() {
                   <th className="py-3 px-4">Role</th>
                   <th className="py-3 px-4">Status</th>
                   <th className="py-3 px-4">Last Active</th>
+                  <th className="py-3 px-4 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 text-slate-700 dark:text-slate-300">
@@ -134,6 +146,15 @@ export default function AdminUsers() {
                     </td>
                     <td className="py-3.5 px-4 text-slate-400 text-[11px]">
                       {u.last_login ? new Date(u.last_login).toLocaleString() : 'Recent'}
+                    </td>
+                    <td className="py-3.5 px-4 text-right">
+                      <button
+                        onClick={() => handleDeleteUser(u.id, u.name, u.email)}
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer"
+                        title="Delete User"
+                      >
+                        <Trash2 size={14} />
+                      </button>
                     </td>
                   </tr>
                 ))}

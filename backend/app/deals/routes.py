@@ -2033,8 +2033,8 @@ async def ask_deal_agent(
         conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute(
-            "SELECT id, company_name FROM deals WHERE id = ? AND company_id = ?",
-            (deal_id_clean, company_id)
+            "SELECT id, company_name FROM deals WHERE (id = ? OR LOWER(company_name) = ? OR LOWER(company_name) LIKE ?) AND company_id = ?",
+            (deal_id_clean, deal_id_clean, f"%{deal_id_clean}%", company_id)
         )
         row = cursor.fetchone()
         conn.close()

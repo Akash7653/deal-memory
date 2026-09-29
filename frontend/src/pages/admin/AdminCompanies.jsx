@@ -8,9 +8,10 @@ import {
   ShieldCheck,
   Users,
   Briefcase,
-  ExternalLink
+  ExternalLink,
+  Trash2
 } from 'lucide-react';
-import { fetchAdminCompanies } from '../../api';
+import { fetchAdminCompanies, deleteAdminCompany } from '../../api';
 
 export default function AdminCompanies() {
   const [companies, setCompanies] = useState([]);
@@ -33,6 +34,16 @@ export default function AdminCompanies() {
   useEffect(() => {
     loadCompanies();
   }, []);
+
+  const handleDeleteCompany = async (companyId, companyName) => {
+    if (!window.confirm(`Are you sure you want to permanently delete company "${companyName}" and all associated workspace data (users, deals, memories)?`)) return;
+    try {
+      await deleteAdminCompany(companyId);
+      setCompanies((prev) => prev.filter((c) => c.id !== companyId));
+    } catch (e) {
+      alert(e.message || 'Failed to delete company');
+    }
+  };
 
   const safeCompanies = Array.isArray(companies) ? companies : [];
   const filtered = safeCompanies.filter((c) => {
@@ -132,13 +143,22 @@ export default function AdminCompanies() {
                 <span className="text-[11px] text-slate-400">
                   {new Date(c.created_at).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
                 </span>
-                <NavLink
-                  to={`/admin/companies/${c.id}`}
-                  className="inline-flex items-center gap-1 text-xs font-bold text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300"
-                >
-                  <span>Details</span>
-                  <ArrowRight size={14} />
-                </NavLink>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleDeleteCompany(c.id, c.name)}
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer"
+                    title="Delete Company"
+                  >
+                    <Trash2 size={13} />
+                  </button>
+                  <NavLink
+                    to={`/admin/companies/${c.id}`}
+                    className="inline-flex items-center gap-1 text-xs font-bold text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300"
+                  >
+                    <span>Details</span>
+                    <ArrowRight size={14} />
+                  </NavLink>
+                </div>
               </div>
             </div>
           ))

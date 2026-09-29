@@ -222,6 +222,30 @@ export async function fetchAdminUsers() {
   return res.json();
 }
 
+export async function deleteAdminCompany(companyId) {
+  const res = await fetch(`${API_BASE}/admin/companies/${companyId}`, {
+    method: 'DELETE',
+    headers: getAdminAuthHeaders(),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || 'Failed to delete company');
+  }
+  return res.json();
+}
+
+export async function deleteAdminUser(userId) {
+  const res = await fetch(`${API_BASE}/admin/users/${userId}`, {
+    method: 'DELETE',
+    headers: getAdminAuthHeaders(),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || 'Failed to delete user');
+  }
+  return res.json();
+}
+
 export async function fetchAdminConversations() {
   const res = await fetch(`${API_BASE}/admin/conversations`, {
     headers: getAdminAuthHeaders(),
@@ -501,7 +525,7 @@ export async function fetchAgentState(dealId = '') {
 
 export async function askDealAgent(dealId = 'agent', question) {
   const targetDeal = dealId || 'agent';
-  const res = await fetch(`${API_BASE}/deals/${targetDeal}/ask`, {
+  const res = await fetch(`${API_BASE}/deals/${encodeURIComponent(targetDeal)}/ask`, {
     method: 'POST',
     headers: getAuthHeaders(),
     body: JSON.stringify({ question }),

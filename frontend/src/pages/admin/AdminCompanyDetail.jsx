@@ -12,9 +12,10 @@ import {
   User,
   CheckCircle2,
   XCircle,
-  Clock
+  Clock,
+  Trash2
 } from 'lucide-react';
-import { fetchAdminCompanyDetail, approveAdminRequest, rejectAdminRequest } from '../../api';
+import { fetchAdminCompanyDetail, approveAdminRequest, rejectAdminRequest, deleteAdminCompany, deleteAdminUser } from '../../api';
 
 export default function AdminCompanyDetail() {
   const { companyId } = useParams();
@@ -61,6 +62,28 @@ export default function AdminCompanyDetail() {
       alert(e.message || 'Rejection failed');
     } finally {
       setActionLoading(false);
+    }
+  };
+
+  const handleDeleteCompany = async () => {
+    if (!window.confirm(`Are you sure you want to permanently delete company "${company.name}" and all its workspace data (users, deals, memories)?`)) return;
+    setActionLoading(true);
+    try {
+      await deleteAdminCompany(companyId);
+      navigate('/admin/companies');
+    } catch (e) {
+      alert(e.message || 'Deletion failed');
+      setActionLoading(false);
+    }
+  };
+
+  const handleDeleteUser = async (userId, userName, userEmail) => {
+    if (!window.confirm(`Are you sure you want to delete user "${userName}" (${userEmail})?`)) return;
+    try {
+      await deleteAdminUser(userId);
+      await loadData();
+    } catch (e) {
+      alert(e.message || 'Failed to delete user');
     }
   };
 
@@ -131,27 +154,38 @@ export default function AdminCompanyDetail() {
           </div>
         </div>
 
-        {/* Action buttons if pending */}
-        {company.status === 'pending' && (
-          <div className="flex items-center gap-2 shrink-0">
-            <button
-              onClick={handleApprove}
-              disabled={actionLoading}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition-colors"
-            >
-              <CheckCircle2 size={14} />
-              <span>Approve Company</span>
-            </button>
-            <button
-              onClick={handleReject}
-              disabled={actionLoading}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/30 font-bold text-xs transition-colors"
-            >
-              <XCircle size={14} />
-              <span>Reject</span>
-            </button>
-          </div>
-        )}
+        {/* Action buttons */}
+        <div className="flex items-center gap-2 shrink-0">
+          {company.status === 'pending' && (
+            <>
+              <button
+                onClick={handleApprove}
+                disabled={actionLoading}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition-colors"
+              >
+                <CheckCircle2 size={14} />
+                <span>Approve Company</span>
+              </button>
+              <button
+                onClick={handleReject}
+                disabled={actionLoading}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/30 font-bold text-xs transition-colors"
+              >
+                <XCircle size={14} />
+                <span>Reject</span>
+              </button>
+            </>
+          )}
+          <button
+            onClick={handleDeleteCompany}
+            disabled={actionLoading}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/30 font-bold text-xs transition-colors cursor-pointer"
+            title="Delete this company and its workspace"
+          >
+            <Trash2 size={14} />
+            <span>Delete Company</span>
+          </button>
+        </div>
       </div>
 
       {/* Tenant Security Banner */}
@@ -211,12 +245,21 @@ export default function AdminCompanyDetail() {
                       </div>
                     </div>
                     <div className="mt-2 pt-2 border-t border-slate-200/60 dark:border-slate-800/80 flex items-center justify-between text-[10px]">
-                      <span className="px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400 font-semibold">
-                        {u.role || 'Member'}
-                      </span>
-                      <span className="px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-wider">
-                        {u.status || 'Active'}
-                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400 font-semibold">
+                          {u.role || 'Member'}
+                        </span>
+                        <span className="px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-wider">
+                          {u.status || 'Active'}
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => handleDeleteUser(u.id, u.name, u.email)}
+                        className="p-1 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors"
+                        title="Delete User"
+                      >
+                        <Trash2 size={12} />
+                      </button>
                     </div>
                   </div>
                 ))
