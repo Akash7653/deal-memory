@@ -23,9 +23,10 @@ export default function AdminActivity() {
     setLoading(true);
     try {
       const data = await fetchAdminActivity();
-      setActivities(data);
+      setActivities(Array.isArray(data) ? data : (data?.activities || []));
     } catch (e) {
       console.error('Failed to load activity logs:', e);
+      setActivities([]);
     } finally {
       setLoading(false);
     }
@@ -52,10 +53,11 @@ export default function AdminActivity() {
     if (act.includes('outcome')) {
       return <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20">Outcome</span>;
     }
-    return <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700">Audit</span>;
+    return <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-750">Audit</span>;
   };
 
-  const filtered = activities.filter((a) => {
+  const safeActivities = Array.isArray(activities) ? activities : [];
+  const filtered = safeActivities.filter((a) => {
     if (!search.trim()) return true;
     const q = search.toLowerCase();
     return (

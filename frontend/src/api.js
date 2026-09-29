@@ -1,6 +1,10 @@
 const API_BASE = (
   import.meta.env.VITE_API_BASE_URL ||
-  (typeof window !== 'undefined' && window.location.hostname === 'localhost' ? 'http://127.0.0.1:8000' : 'https://dealmemory-api.onrender.com')
+  (typeof window !== 'undefined' &&
+   (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') &&
+   window.location.port === '5173'
+    ? 'http://127.0.0.1:8000'
+    : '')
 ).replace(/\/+$/, '');
 
 function getAuthHeaders() {
@@ -433,8 +437,43 @@ export async function fetchLearnedInsights(dealId = 'acme') {
   return res.json();
 }
 
-export async function askDealAgent(dealId = 'acme', question) {
-  const res = await fetch(`${API_BASE}/deals/${dealId}/ask`, {
+export function formatDisplayDate(dateVal, includeTime = false) {
+  if (!dateVal) return 'Recent';
+  try {
+    let d = new Date(dateVal);
+    if (isNaN(d.getTime())) {
+      const str = String(dateVal).replace(' ', 'T');
+      d = new Date(str.endsWith('Z') || str.includes('+') ? str : str + 'Z');
+    }
+    if (isNaN(d.getTime())) return String(dateVal);
+    return d.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      ...(includeTime ? { hour: '2-digit', minute: '2-digit', hour12: true } : {}),
+    });
+  } catch {
+    return String(dateVal);
+  }
+}
+
+export async function fetchAgentState(dealId = '') {
+  const url = dealId
+    ? `${API_BASE}/deals/agent/state?deal_id=${encodeURIComponent(dealId)}`
+    : `${API_BASE}/deals/agent/state`;
+  const res = await fetch(url, {
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to fetch DealMemory agent state');
+  }
+  return res.json();
+}
+
+export async function askDealAgent(dealId = 'agent', question) {
+  const targetDeal = dealId || 'agent';
+  const res = await fetch(`${API_BASE}/deals/${targetDeal}/ask`, {
     method: 'POST',
     headers: getAuthHeaders(),
     body: JSON.stringify({ question }),

@@ -20,9 +20,10 @@ export default function AdminUsers() {
     setLoading(true);
     try {
       const data = await fetchAdminUsers();
-      setUsers(data);
+      setUsers(Array.isArray(data) ? data : (data?.users || []));
     } catch (e) {
       console.error('Failed to load users:', e);
+      setUsers([]);
     } finally {
       setLoading(false);
     }
@@ -32,7 +33,8 @@ export default function AdminUsers() {
     loadUsers();
   }, []);
 
-  const filtered = users.filter((u) => {
+  const safeUsers = Array.isArray(users) ? users : [];
+  const filtered = safeUsers.filter((u) => {
     if (!search.trim()) return true;
     const q = search.toLowerCase();
     return (

@@ -21,9 +21,10 @@ export default function AdminCompanies() {
     setLoading(true);
     try {
       const data = await fetchAdminCompanies();
-      setCompanies(data);
+      setCompanies(Array.isArray(data) ? data : (data?.companies || []));
     } catch (e) {
       console.error('Failed to load companies:', e);
+      setCompanies([]);
     } finally {
       setLoading(false);
     }
@@ -33,7 +34,8 @@ export default function AdminCompanies() {
     loadCompanies();
   }, []);
 
-  const filtered = companies.filter((c) => {
+  const safeCompanies = Array.isArray(companies) ? companies : [];
+  const filtered = safeCompanies.filter((c) => {
     if (!search.trim()) return true;
     const q = search.toLowerCase();
     return c.name?.toLowerCase().includes(q) || c.industry?.toLowerCase().includes(q) || c.id?.toLowerCase().includes(q);

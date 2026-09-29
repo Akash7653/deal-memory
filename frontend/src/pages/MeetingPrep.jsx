@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import {
   Sparkles,
   CalendarCheck2,
@@ -15,28 +15,80 @@ import {
   Layers,
   Shield,
   MessageSquare,
+  Building2,
+  ChevronDown,
 } from 'lucide-react';
-import { fetchMeetingPrep } from '../api';
+import { fetchMeetingPrep, fetchDeals } from '../api';
+import { useAuth } from '../context/AuthContext';
 
 export default function MeetingPrep() {
+  const { user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const dealParam = searchParams.get('deal');
+
+  const [deals, setDeals] = useState([]);
+  const [selectedDealId, setSelectedDealId] = useState('');
   const [prepData, setPrepData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const loadPrep = () => {
+  const isDemo =
+    user?.company_id === 'comp_technova' ||
+    user?.company_id === 'technova' ||
+    user?.email === 'demo@dealmemory.ai';
+
+  const loadPrep = async (dealId) => {
+    if (!dealId) return;
     setLoading(true);
-    fetchMeetingPrep('acme')
-      .then((data) => {
-        setPrepData(data);
-        setError(null);
-      })
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
+    setError(null);
+    try {
+      const data = await fetchMeetingPrep(dealId);
+      setPrepData(data);
+    } catch (err) {
+      setError(err.message || 'Failed to synthesize meeting briefing');
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
-    loadPrep();
-  }, []);
+    async function init() {
+      setLoading(true);
+      try {
+        const dealsRes = await fetchDeals(true).catch(() => ({ deals: [] }));
+        const userDeals = dealsRes?.deals || [];
+        setDeals(userDeals);
+
+        let activeId = '';
+        if (dealParam && userDeals.some((d) => d.id === dealParam)) {
+          activeId = dealParam;
+        } else if (isDemo || userDeals.some((d) => d.id === 'acme')) {
+          activeId = 'acme';
+        } else if (userDeals.length > 0) {
+          activeId = userDeals[0].id;
+        }
+
+        setSelectedDealId(activeId);
+        if (activeId) {
+          await loadPrep(activeId);
+        } else {
+          setLoading(false);
+        }
+      } catch (err) {
+        setError(err.message);
+        setLoading(false);
+      }
+    }
+    init();
+  }, [dealParam, isDemo]);
+
+  const handleDealChange = (dealId) => {
+    setSelectedDealId(dealId);
+    setSearchParams({ deal: dealId });
+    loadPrep(dealId);
+  };
+
+  const activeDealObj = deals.find((d) => d.id === selectedDealId);
 
   return (
     <div className="max-w-5xl mx-auto space-y-7 animate-fade-in">
@@ -48,26 +100,47 @@ export default function MeetingPrep() {
               <CalendarCheck2 size={16} />
               <span>Executive Meeting Briefing</span>
             </div>
-            <div className="flex items-baseline space-x-3">
+            <div className="flex flex-wrap items-baseline gap-3">
               <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-                NEXT MEETING: ACME Corp
+                NEXT MEETING: {prepData?.company || activeDealObj?.company_name || (selectedDealId === 'acme' ? 'ACME Corp' : 'Deal Briefing')}
               </h1>
-              <span className="text-lg font-bold text-purple-600 dark:text-purple-400">$120,000 ARR</span>
+              {(activeDealObj?.deal_value || selectedDealId === 'acme') && (
+                <span className="text-lg font-bold text-purple-600 dark:text-purple-400">
+                  ${(activeDealObj?.deal_value || 120000).toLocaleString()} ARR
+                </span>
+              )}
             </div>
             <p className="text-slate-600 dark:text-slate-400 text-xs sm:text-sm mt-1">
-              Generated from Hindsight relationship memory + previous strategy outcomes.
+              Generated dynamically from Hindsight relationship memory & past strategy outcomes.
             </p>
           </div>
 
-          <div className="flex items-center space-x-2.5">
-            <button
-              onClick={loadPrep}
-              disabled={loading}
-              className="flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-850 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-300 text-xs border border-slate-200 dark:border-slate-750 transition-colors cursor-pointer"
-            >
-              <RefreshCw size={13} className={loading ? 'animate-spin text-purple-600 dark:text-purple-400' : 'text-slate-500'} />
-              <span>Regenerate Brief</span>
-            </button>
+          <div className="flex flex-wrap items-center gap-2.5">
+            {deals.length > 1 && (
+              <select
+                value={selectedDealId}
+                onChange={(e) => handleDealChange(e.target.value)}
+                className="bg-slate-50 dark:bg-slate-850 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs font-semibold text-slate-800 dark:text-slate-200 focus:outline-none"
+              >
+                {deals.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.company_name}
+                  </option>
+                ))}
+              </select>
+            )}
+
+            {selectedDealId && (
+              <button
+                onClick={() => loadPrep(selectedDealId)}
+                disabled={loading}
+                className="flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-850 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-300 text-xs border border-slate-200 dark:border-slate-750 transition-colors cursor-pointer"
+              >
+                <RefreshCw size={13} className={loading ? 'animate-spin text-purple-600 dark:text-purple-400' : 'text-slate-500'} />
+                <span>Regenerate Brief</span>
+              </button>
+            )}
+
             <Link
               to="/agent"
               className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold flex items-center space-x-1.5 shadow-md shadow-purple-600/20 transition-all cursor-pointer active:scale-95"
@@ -93,12 +166,34 @@ export default function MeetingPrep() {
         <div className="bg-rose-50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-500/30 p-6 rounded-2xl text-xs text-rose-800 dark:text-rose-300 space-y-2 shadow-xs">
           <div className="font-bold">Error loading meeting prep:</div>
           <div>{error}</div>
-          <button
-            onClick={loadPrep}
-            className="px-3 py-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs font-semibold mt-2 cursor-pointer shadow-xs"
+          {selectedDealId && (
+            <button
+              onClick={() => loadPrep(selectedDealId)}
+              className="px-3 py-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs font-semibold mt-2 cursor-pointer shadow-xs"
+            >
+              Retry
+            </button>
+          )}
+        </div>
+      ) : !selectedDealId ? (
+        <div className="bg-white dark:bg-slate-900 border border-dashed border-slate-300 dark:border-slate-800 rounded-2xl p-10 text-center space-y-4">
+          <div className="w-12 h-12 rounded-2xl bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 flex items-center justify-center mx-auto">
+            <Building2 size={24} />
+          </div>
+          <div className="max-w-md mx-auto space-y-1.5">
+            <h3 className="text-base font-bold text-slate-900 dark:text-white">
+              No Active Deals Found
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+              Create your first enterprise deal on the dashboard to generate AI executive meeting briefings and strategic counter-tactics.
+            </p>
+          </div>
+          <Link
+            to="/dashboard"
+            className="inline-flex items-center space-x-2 px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold shadow-md shadow-purple-600/20"
           >
-            Retry
-          </button>
+            <span>Return to Dashboard</span>
+          </Link>
         </div>
       ) : (
         <div className="space-y-6">
@@ -113,29 +208,21 @@ export default function MeetingPrep() {
             </div>
 
             <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-200 leading-relaxed font-medium">
-              {prepData?.relationship_summary ||
-                'The engagement progressed from discovery into technical evaluation. Functional alignment on API-first data sync exists with Sarah (VP Sales), but CTO David introduced major architectural security concerns, and CFO Michael rejected our 15% discount offer.'}
+              {prepData?.relationship_summary || 'No recent relationship dynamics recorded yet.'}
             </p>
 
-            <div className="grid sm:grid-cols-3 gap-3 pt-1">
-              <div className="p-3.5 bg-purple-50/50 dark:bg-slate-950 rounded-xl border border-purple-200 dark:border-slate-800 space-y-1">
-                <div className="text-[11px] font-bold text-slate-900 dark:text-white">Sarah — VP Sales</div>
-                <div className="text-[10px] text-purple-700 dark:text-purple-400 font-semibold">Business Champion</div>
-                <p className="text-[11px] text-slate-600 dark:text-slate-400">Needs API-first sync to unify internal pipeline data.</p>
+            {prepData?.stakeholders && prepData.stakeholders.length > 0 && (
+              <div className="grid sm:grid-cols-3 gap-3 pt-1">
+                {prepData.stakeholders.map((s, idx) => (
+                  <div key={idx} className="p-3.5 bg-purple-50/50 dark:bg-slate-950 rounded-xl border border-purple-200 dark:border-slate-800 space-y-1">
+                    <div className="text-[11px] font-bold text-slate-900 dark:text-white">
+                      {s.name} {s.role ? `— ${s.role}` : ''}
+                    </div>
+                    {s.notes && <p className="text-[11px] text-slate-600 dark:text-slate-400">{s.notes}</p>}
+                  </div>
+                ))}
               </div>
-
-              <div className="p-3.5 bg-amber-50/50 dark:bg-slate-950 rounded-xl border border-amber-200 dark:border-amber-500/30 space-y-1">
-                <div className="text-[11px] font-bold text-slate-900 dark:text-white">David — CTO</div>
-                <div className="text-[10px] text-amber-800 dark:text-amber-400 font-semibold">Technical Blocker</div>
-                <p className="text-[11px] text-slate-600 dark:text-slate-400">Concerned about webhook latency and enterprise security.</p>
-              </div>
-
-              <div className="p-3.5 bg-rose-50/50 dark:bg-slate-950 rounded-xl border border-rose-200 dark:border-rose-500/30 space-y-1">
-                <div className="text-[11px] font-bold text-slate-900 dark:text-white">Michael — CFO</div>
-                <div className="text-[10px] text-rose-800 dark:text-rose-400 font-semibold">Budget Gatekeeper</div>
-                <p className="text-[11px] text-slate-600 dark:text-slate-400">Rejected 15% discount due to unproven integration ROI.</p>
-              </div>
-            </div>
+            )}
           </div>
 
           {/* 2. WHAT WE LEARNED & WHAT TO AVOID */}
@@ -147,18 +234,18 @@ export default function MeetingPrep() {
                 <span>2. What Hindsight Learned</span>
               </div>
               <ul className="space-y-2.5 text-xs text-slate-700 dark:text-slate-200">
-                <li className="flex items-start space-x-2">
-                  <CheckCircle2 size={15} className="text-emerald-600 dark:text-emerald-400 flex-shrink-0 mt-0.5" />
-                  <span><strong>Price was a proxy for ROI:</strong> Lowering the price did not address the CFO's underlying doubt.</span>
-                </li>
-                <li className="flex items-start space-x-2">
-                  <CheckCircle2 size={15} className="text-emerald-600 dark:text-emerald-400 flex-shrink-0 mt-0.5" />
-                  <span><strong>Technical sign-off is required:</strong> Michael will not approve budget until David approves the architecture.</span>
-                </li>
-                <li className="flex items-start space-x-2">
-                  <CheckCircle2 size={15} className="text-emerald-600 dark:text-emerald-400 flex-shrink-0 mt-0.5" />
-                  <span><strong>Sarah's champion status:</strong> Anchor on her business goal of eliminating data silos across teams.</span>
-                </li>
+                {prepData?.learned_insights && prepData.learned_insights.length > 0 ? (
+                  prepData.learned_insights.map((insight, idx) => (
+                    <li key={idx} className="flex items-start space-x-2">
+                      <CheckCircle2 size={15} className="text-emerald-600 dark:text-emerald-400 flex-shrink-0 mt-0.5" />
+                      <span>{insight}</span>
+                    </li>
+                  ))
+                ) : (
+                  <li className="text-slate-500 dark:text-slate-400">
+                    No strategic insights extracted yet. Record deal interactions and outcome reflections.
+                  </li>
+                )}
               </ul>
             </div>
 
@@ -169,18 +256,18 @@ export default function MeetingPrep() {
                 <span>3. What To Avoid</span>
               </div>
               <ul className="space-y-2.5 text-xs text-rose-900 dark:text-rose-200">
-                <li className="flex items-start space-x-2">
-                  <span className="text-rose-600 dark:text-rose-400 font-bold">•</span>
-                  <span><strong>DO NOT offer further discounts:</strong> Signals desperation and reinforces perception of weak product value.</span>
-                </li>
-                <li className="flex items-start space-x-2">
-                  <span className="text-rose-600 dark:text-rose-400 font-bold">•</span>
-                  <span><strong>DO NOT rush commercial closing:</strong> Bypassing CTO David's security evaluation will permanently kill the deal.</span>
-                </li>
-                <li className="flex items-start space-x-2">
-                  <span className="text-rose-600 dark:text-rose-400 font-bold">•</span>
-                  <span><strong>DO NOT give generic sales talk:</strong> Avoid high-level pitches; provide concrete latency and architecture specs.</span>
-                </li>
+                {prepData?.avoid_repeating && prepData.avoid_repeating.length > 0 ? (
+                  prepData.avoid_repeating.map((avoid, idx) => (
+                    <li key={idx} className="flex items-start space-x-2">
+                      <span className="text-rose-600 dark:text-rose-400 font-bold">•</span>
+                      <span>{avoid}</span>
+                    </li>
+                  ))
+                ) : (
+                  <li className="text-slate-500 dark:text-slate-400">
+                    No negative patterns detected. Avoid unverified pricing concessions without executive alignment.
+                  </li>
+                )}
               </ul>
             </div>
           </div>
@@ -190,41 +277,27 @@ export default function MeetingPrep() {
             <div className="flex items-center justify-between pb-2 border-b border-emerald-200 dark:border-emerald-500/20">
               <span className="text-xs font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-400 flex items-center space-x-1.5">
                 <Target size={16} />
-                <span>4. Recommended Strategy & Talking Points</span>
+                <span>4. Recommended Strategy & Action Items</span>
               </span>
-              <span className="text-xs text-emerald-700 dark:text-emerald-300 font-bold">Value-Based Technical Demo</span>
+              <span className="text-xs text-emerald-700 dark:text-emerald-300 font-bold">Execution Plan</span>
             </div>
 
             <div className="space-y-3 text-xs sm:text-sm text-slate-800 dark:text-slate-200">
-              <div className="p-3.5 rounded-xl bg-white dark:bg-slate-950 border border-emerald-200 dark:border-slate-800 space-y-1 shadow-2xs">
-                <div className="font-bold text-slate-900 dark:text-white flex items-center space-x-2">
-                  <MessageSquare size={13} className="text-purple-600 dark:text-purple-400" />
-                  <span>For Sarah (VP Sales):</span>
+              {prepData?.recommended_focus && prepData.recommended_focus.length > 0 ? (
+                prepData.recommended_focus.map((rec, idx) => (
+                  <div key={idx} className="p-3.5 rounded-xl bg-white dark:bg-slate-950 border border-emerald-200 dark:border-slate-800 space-y-1 shadow-2xs">
+                    <div className="font-bold text-slate-900 dark:text-white flex items-center space-x-2">
+                      <MessageSquare size={13} className="text-purple-600 dark:text-purple-400" />
+                      <span>Focus Item {idx + 1}:</span>
+                    </div>
+                    <p className="text-slate-600 dark:text-slate-300 text-xs">{rec}</p>
+                  </div>
+                ))
+              ) : (
+                <div className="p-3.5 rounded-xl bg-white dark:bg-slate-950 border border-emerald-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 text-xs">
+                  Continue discovery with customer champions to uncover underlying buying criteria.
                 </div>
-                <p className="text-slate-600 dark:text-slate-300 text-xs">
-                  "Let's review how our API-first pipeline connects your CRM with ERP systems live, eliminating manual pipeline handoffs for your team."
-                </p>
-              </div>
-
-              <div className="p-3.5 rounded-xl bg-white dark:bg-slate-950 border border-amber-200 dark:border-slate-800 space-y-1 shadow-2xs">
-                <div className="font-bold text-slate-900 dark:text-white flex items-center space-x-2">
-                  <MessageSquare size={13} className="text-amber-600 dark:text-amber-400" />
-                  <span>For David (CTO):</span>
-                </div>
-                <p className="text-slate-600 dark:text-slate-300 text-xs">
-                  "We have prepared our webhook SLA and SOC2 architecture diagram specifically addressing your integration complexity questions."
-                </p>
-              </div>
-
-              <div className="p-3.5 rounded-xl bg-white dark:bg-slate-950 border border-emerald-200 dark:border-slate-800 space-y-1 shadow-2xs">
-                <div className="font-bold text-slate-900 dark:text-white flex items-center space-x-2">
-                  <MessageSquare size={13} className="text-emerald-600 dark:text-emerald-400" />
-                  <span>For Michael (CFO):</span>
-                </div>
-                <p className="text-slate-600 dark:text-slate-300 text-xs">
-                  "Based on our integration modeling, automating this data flow saves an estimated $180,000 annually in engineering overhead — far exceeding the $120,000 ARR investment."
-                </p>
-              </div>
+              )}
             </div>
           </div>
         </div>

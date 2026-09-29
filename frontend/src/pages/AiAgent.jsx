@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   Bot,
   Sparkles,
@@ -20,76 +21,94 @@ import {
   Play,
   RotateCw,
 } from 'lucide-react';
-import { askDealAgent, createInteraction } from '../api';
+import { fetchAgentState, askDealAgent, createInteraction, fetchDeals } from '../api';
+import { useAuth } from '../context/AuthContext';
 
 export default function AiAgent() {
+  const { user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const dealParam = searchParams.get('deal') || '';
+
   const [activeTab, setActiveTab] = useState('chat'); // 'chat' | 'playground'
-  const [question, setQuestion] = useState('How should I approach the next meeting with ACME?');
-  const [chatHistory, setChatHistory] = useState([
-    {
-      role: 'assistant',
-      question: 'How should I approach the next meeting with ACME?',
-      answer: `### 1. Remembered Facts
-• Core Requirement: Sarah (VP Sales) explicitly stated during discovery that ACME requires an API-first solution to streamline sales pipeline data across internal systems.
-• Technical Objection: David (CTO) expressed major concerns on Sept 22 regarding integration complexity and enterprise security architecture.
-• Commercial Objection: Michael (CFO) and Sarah reviewed the commercial proposal on Sept 24 and stated annual pricing exceeds their budget.
-• Failed Strategy: On Sept 26, you offered a 15% upfront annual discount. This was rejected. Michael explicitly stated the issue was not just raw numbers but a lack of clear integration ROI.
-
-### 2. Learned Insights
-• Discounting is Ineffective: The previous attempt to use pricing concessions failed. The client does not perceive the value of integration, so lowering the price does not solve their hesitation.
-• Root Cause is Value, Not Cost: The CFO's rejection indicates the budget constraint is a symptom of unproven ROI. Until technical value is proven, price will always seem high.
-• Technical Prerequisite: CTO David's concerns are the primary blocker. If the technical team does not sign off on architecture, the commercial team cannot justify spend.
-
-### 3. Current Recommendations
-Do NOT repeat the discount strategy. Leading with further price reductions reinforces the perception that the product lacks inherent value.
-
-Instead, structure the next meeting around Value-Based Technical Demonstration:
-1. Address the CTO First (David): Prepare a detailed technical briefing specifically on integration complexity and security. Show how your API-first approach simplifies architecture.
-2. Reframe for the CFO (Michael) & VP Sales (Sarah): Shift from price negotiation to ROI definition. Present a business case linking API-first pipeline streamlining to operational savings.
-3. Unified Stakeholder Alignment: Ensure David, Michael, and Sarah are aligned so technical buy-in directly justifies the commercial investment.`,
-      grounding: {
-        memoriesUsed: 3,
-        learnedOutcomes: 1,
-        unsupportedClaims: 0,
-      },
-      sources: [
-        'Relationship history (Sarah, David, Michael)',
-        'Previous outcome (15% discount rejected by CFO Michael)',
-        'Learned insights (Value-skepticism / ROI justification)',
-      ],
-      timestamp: 'Initial Briefing',
-    },
-  ]);
+  const [deals, setDeals] = useState([]);
+  const [selectedDealId, setSelectedDealId] = useState(dealParam);
+  const [agentState, setAgentState] = useState(null);
+  const [loadingState, setLoadingState] = useState(true);
+  const [question, setQuestion] = useState('');
+  const [chatHistory, setChatHistory] = useState([]);
   const [loading, setLoading] = useState(false);
   const [expandedMemories, setExpandedMemories] = useState({});
 
   // Playground state
-  const [playgroundInput, setPlaygroundInput] = useState('Sarah confirmed that the API integration has been approved.');
+  const [playgroundInput, setPlaygroundInput] = useState('');
   const [playgroundStatus, setPlaygroundStatus] = useState('idle'); // 'idle' | 'retaining' | 'retained' | 'error'
   const [retainedMemoryResult, setRetainedMemoryResult] = useState(null);
 
-  const suggestedQuestions = [
-    {
-      label: '1. Meeting Strategy',
-      q: 'How should I approach the next meeting with ACME?',
-      desc: 'Main demo inquiry grounded in full history',
-    },
-    {
-      label: '2. What to Avoid',
-      q: 'What should I avoid doing in the next ACME meeting?',
-      desc: 'Exposes failed discount strategy warning',
-    },
-    {
-      label: '3. Hallucination Test',
-      q: "What did ACME's legal department say about our contract?",
-      desc: 'Demonstrates zero hallucination on unrecorded facts',
-    },
-    {
-      label: '4. Pricing Failure Reason',
-      q: 'Why did the 15% pricing discount fail with ACME?',
-      desc: 'Traces CFO Michael’s specific reaction',
-    },
-  ];
+  // Load available deals
+  useEffect(() => {
+    fetchDeals(true)
+      .then((data) => {
+        const list = data.deals || [];
+        setDeals(list);
+        if (!selectedDealId) {
+          if (dealParam) {
+            setSelectedDealId(dealParam);
+          } else if (list.length > 0) {
+            // If Globex exists, default or let user pick
+            const globexDeal = list.find((d) => d.company_name?.toLowerCase().includes('globex'));
+            if (globexDeal) {
+              setSelectedDealId(globexDeal.id);
+            }
+          }
+        }
+      })
+      .catch(console.error);
+  }, []);
+
+  const loadAgentData = async (dealId) => {
+    setLoadingState(true);
+    try {
+      const data = await fetchAgentState(dealId);
+      setAgentState(data);
+      if (data.initial_briefing) {
+        setChatHistory([data.initial_briefing]);
+      }
+      if (data.suggested_questions && data.suggested_questions.length > 0) {
+        setQuestion(data.suggested_questions[0].q);
+      }
+      if (data.is_demo_company) {
+        setPlaygroundInput('Sarah confirmed that the API integration has been approved.');
+      } else {
+        setPlaygroundInput(`Customer confirmed interest in relationship intelligence platform for ${data.company_name || 'workspace'}.`);
+      }
+    } catch (err) {
+      console.error('Failed to load agent state:', err);
+      const fallbackBriefing = {
+        role: 'assistant',
+        question: 'What is our current relationship memory and sales strategy status?',
+        answer: `### 1. Relationship Memory Status\nNo sufficient relationship history is recorded for this company workspace yet.\n\n### 2. Learned Insights\n0 learned outcomes or strategic patterns recorded.\n\n### 3. Recommended Action\nStart by recording customer interactions, outcomes, and sales strategies.\nDealMemory will build relationship memory and automatically synthesize adapted recommendations as evidence accumulates.`,
+        grounding: {
+          memoriesUsed: 0,
+          learnedOutcomes: 0,
+          unsupportedClaims: 0,
+        },
+        sources: ['Verified tenant memory bank'],
+        timestamp: 'Initial Briefing',
+      };
+      setChatHistory([fallbackBriefing]);
+    } finally {
+      setLoadingState(false);
+    }
+  };
+
+  useEffect(() => {
+    loadAgentData(selectedDealId);
+  }, [selectedDealId]);
+
+  const handleSelectDeal = (id) => {
+    setSelectedDealId(id);
+    setSearchParams(id ? { deal: id } : {});
+  };
 
   const handleAsk = async (qText) => {
     const query = qText || question;
@@ -97,7 +116,12 @@ Instead, structure the next meeting around Value-Based Technical Demonstration:
 
     setLoading(true);
     try {
-      const response = await askDealAgent('acme', query);
+      const dealTarget = selectedDealId || agentState?.default_deal_id || 'agent';
+      const response = await askDealAgent(dealTarget, query);
+      const memCount = response.memory_context?.count || 0;
+      const memories = response.memory_context?.memories || [];
+      const reflectionSummary = response.learned_context?.reflection_summary || '';
+
       setChatHistory((prev) => [
         ...prev,
         {
@@ -111,15 +135,14 @@ Instead, structure the next meeting around Value-Based Technical Demonstration:
           memoryContext: response.memory_context,
           learnedContext: response.learned_context,
           grounding: {
-            memoriesUsed: 3,
-            learnedOutcomes: 1,
+            memoriesUsed: memCount,
+            learnedOutcomes: reflectionSummary ? 1 : 0,
             unsupportedClaims: 0,
           },
-          sources: [
-            'Relationship history (Sarah, David, Michael)',
-            'Previous outcome (15% discount rejected by CFO Michael)',
-            'Learned insights (Value-skepticism / ROI justification)',
-          ],
+          sources:
+            memCount > 0
+              ? memories.slice(0, 3).map((m) => (m.text.length > 80 ? m.text.slice(0, 80) + '...' : m.text))
+              : [`Verified against tenant memory bank (${agentState?.bank_id || 'company bank'})`],
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         },
       ]);
@@ -146,22 +169,83 @@ Instead, structure the next meeting around Value-Based Technical Demonstration:
 
     setPlaygroundStatus('retaining');
     try {
-      const result = await createInteraction('acme', {
-        company: 'ACME Corp',
-        contact_name: 'Sarah',
-        contact_role: 'VP Sales',
+      const isDemo = agentState?.is_demo_company;
+      const dealTarget = agentState?.default_deal_id || 'agent';
+      const customerName = isDemo ? 'ACME Corp' : (agentState?.company_name || 'Customer Account');
+
+      const result = await createInteraction(dealTarget, {
+        company: customerName,
+        contact_name: isDemo ? 'Sarah' : 'Lead Decision Maker',
+        contact_role: isDemo ? 'VP Sales' : 'Executive Sponsor',
         interaction_type: 'technical',
         content: playgroundInput.trim(),
-        outcome: 'API architecture approved by champion',
-        tags: ['api-approved', 'architecture-cleared', 'live-demo'],
+        outcome: 'Verified interaction retained in company Hindsight memory bank',
+        tags: ['live-demo', 'playground', 'relationship-memory'],
       });
       setRetainedMemoryResult(result);
       setPlaygroundStatus('retained');
+
+      // Refresh agent metrics
+      fetchAgentState().then(setAgentState).catch(console.error);
     } catch (err) {
       console.error('Playground retain error:', err);
       setPlaygroundStatus('error');
     }
   };
+
+  const currentDeal = deals.find((d) => d.id === selectedDealId);
+  const isGlobex = currentDeal?.company_name?.toLowerCase().includes('globex') || selectedDealId?.toLowerCase().includes('globex');
+
+  const suggestedQuestions = isGlobex
+    ? [
+        {
+          label: '1. Next Meeting Approach (Step 6.5)',
+          q: 'How should I approach my next meeting with Rohan from Globex?',
+          desc: 'Grounds in Globex API requirement, security, & migration concerns',
+        },
+        {
+          label: '2. Meeting Preparation (Step 6.8)',
+          q: 'Prepare me for the next meeting with Globex.',
+          desc: 'Adapts based on recorded outcome & Hindsight reflection',
+        },
+        {
+          label: '3. Technical & Security Blockers',
+          q: 'What are Rohan’s primary technical concerns and objections?',
+          desc: 'Identifies API-first architecture, complexity, and security',
+        },
+        {
+          label: '4. Hallucination Check',
+          q: 'What did Globex’s legal team or Sarah say about our contract?',
+          desc: 'Proves zero hallucination & strict customer isolation',
+        },
+      ]
+    : agentState?.suggested_questions || [
+        {
+          label: '1. Meeting Strategy',
+          q: 'What is our recommended meeting strategy based on recorded history?',
+          desc: 'Consults verified relationship memories for your company',
+        },
+        {
+          label: '2. What to Avoid',
+          q: 'What strategies or pitfalls should we avoid based on our past outcomes?',
+          desc: 'Warns against repeating failed tactics',
+        },
+        {
+          label: '3. Hallucination Test',
+          q: 'What did the legal department say about our contract terms?',
+          desc: 'Demonstrates zero hallucination on unrecorded facts',
+        },
+        {
+          label: '4. Pricing Failure Reason',
+          q: 'Are there any recorded pricing failures or discount rejections?',
+          desc: 'Traces recorded financial and commercial feedback',
+        },
+      ];
+
+  const memoriesCount = agentState?.metrics?.memories_count ?? 0;
+  const learnedInsightsCount = agentState?.metrics?.learned_insights_count ?? 0;
+  const activeRecommendationsCount = agentState?.metrics?.active_recommendations_count ?? 0;
+  const currentBankId = agentState?.bank_id || 'company memory bank';
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 animate-fade-in">
@@ -181,15 +265,38 @@ Instead, structure the next meeting around Value-Based Technical Demonstration:
                   <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                   <span>Online</span>
                 </span>
+                <span className="hidden sm:inline-block text-[11px] font-mono px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-500/20">
+                  {currentBankId}
+                </span>
               </div>
               <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">
-                <span>15 Memories</span>
+                <span>{memoriesCount} Memories</span>
                 <span>•</span>
-                <span>5 Learned Insights</span>
+                <span>{learnedInsightsCount} Learned Insights</span>
                 <span>•</span>
-                <span className="text-emerald-600 dark:text-emerald-400 font-semibold">3 Active Recommendations</span>
+                <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
+                  {activeRecommendationsCount} Active Recommendations
+                </span>
                 <span>•</span>
                 <span>Grounded with Zero Hallucination</span>
+              </div>
+
+              {/* Account / Deal Selector */}
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Account / Deal Context:</span>
+                <select
+                  value={selectedDealId}
+                  onChange={(e) => handleSelectDeal(e.target.value)}
+                  className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-900 dark:text-white focus:outline-none focus:border-purple-600"
+                >
+                  <option value="">All Accounts (General Workspace)</option>
+                  {deals.map((d) => (
+                    <option key={d.id} value={d.id}>
+                      {d.company_name} {d.deal_value ? `($${d.deal_value.toLocaleString()} ARR)` : ''}
+                    </option>
+                  ))}
+                  {!deals.some((d) => d.id === 'acme') && <option value="acme">ACME Corp ($120,000 ARR)</option>}
+                </select>
               </div>
             </div>
           </div>
@@ -233,14 +340,14 @@ Instead, structure the next meeting around Value-Based Technical Demonstration:
             </div>
             <h2 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">Memory Playground</h2>
             <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1">
-              Demonstrate in real-time how entering a new interaction updates Hindsight persistent memory, which immediately influences future agent recommendations.
+              Demonstrate in real-time how entering a new interaction updates your company's Hindsight persistent memory bank (<code className="font-mono text-purple-600 dark:text-purple-400">{currentBankId}</code>), which immediately influences future agent recommendations.
             </p>
           </div>
 
           <form onSubmit={handlePlaygroundSubmit} className="space-y-4">
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                New Relationship Interaction (ACME Corp)
+                New Relationship Interaction ({agentState?.is_demo_company ? 'ACME Corp' : (agentState?.company_name || 'Customer Account')})
               </label>
               <div className="flex flex-col sm:flex-row gap-2">
                 <input
@@ -248,7 +355,7 @@ Instead, structure the next meeting around Value-Based Technical Demonstration:
                   required
                   value={playgroundInput}
                   onChange={(e) => setPlaygroundInput(e.target.value)}
-                  placeholder="e.g. Sarah confirmed that the API integration has been approved."
+                  placeholder={agentState?.is_demo_company ? "e.g. Sarah confirmed that the API integration has been approved." : "e.g. Key contact approved architecture integration phase."}
                   className="flex-1 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-purple-600 transition-colors"
                 />
                 <button
@@ -279,14 +386,14 @@ Instead, structure the next meeting around Value-Based Technical Demonstration:
                 <span>Interaction recorded & Hindsight memory updated successfully!</span>
               </div>
               <p className="leading-relaxed">
-                The fact <code className="bg-emerald-100 dark:bg-emerald-950/60 px-1.5 py-0.5 rounded text-emerald-900 dark:text-emerald-100 font-mono">"{playgroundInput}"</code> has been retained in bank <code className="bg-emerald-100 dark:bg-emerald-950/60 px-1.5 py-0.5 rounded text-emerald-900 dark:text-emerald-100 font-mono">dealmemory-acme</code>.
+                The fact <code className="bg-emerald-100 dark:bg-emerald-950/60 px-1.5 py-0.5 rounded text-emerald-900 dark:text-emerald-100 font-mono">"{playgroundInput}"</code> has been retained in bank <code className="bg-emerald-100 dark:bg-emerald-950/60 px-1.5 py-0.5 rounded text-emerald-900 dark:text-emerald-100 font-mono">{currentBankId}</code>.
               </p>
               <div className="pt-2 border-t border-emerald-200 dark:border-emerald-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <span className="text-[11px] text-emerald-700 dark:text-emerald-300/80 font-medium">Now test how the agent's briefing adapts:</span>
                 <button
                   onClick={() => {
                     setActiveTab('chat');
-                    handleAsk('Prepare me for the next ACME meeting considering Sarah just approved the API integration.');
+                    handleAsk(`Prepare me for the next meeting considering the customer just confirmed: "${playgroundInput}"`);
                   }}
                   className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center space-x-1.5 cursor-pointer shadow-sm"
                 >
@@ -377,7 +484,9 @@ Instead, structure the next meeting around Value-Based Technical Demonstration:
                           <CheckCircle2 size={13} />
                           <span>Grounded in Hindsight</span>
                         </span>
-                        <span className="text-slate-500 dark:text-slate-400 text-[11px]">3 memories used • 1 learned outcome</span>
+                        <span className="text-slate-500 dark:text-slate-400 text-[11px]">
+                          {item.grounding?.memoriesUsed || 0} memories used • {item.grounding?.learnedOutcomes || 0} learned outcome
+                        </span>
                       </div>
                       <span className="text-[11px] text-slate-400">{item.timestamp}</span>
                     </div>
@@ -406,14 +515,28 @@ Instead, structure the next meeting around Value-Based Technical Demonstration:
                       {expandedMemories[idx] && (
                         <div className="mt-3 p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs space-y-2 animate-fade-in">
                           <div className="font-semibold text-slate-900 dark:text-white">Retrieved Memory Grounding:</div>
-                          <ul className="list-disc list-inside text-slate-700 dark:text-slate-300 space-y-1">
-                            <li>Sarah mandated API-first sync architecture (Discovery call).</li>
-                            <li>David expressed deep concern over integration complexity & security.</li>
-                            <li>Michael rejected 15% upfront discount (Failed pricing strategy).</li>
-                            <li>Hindsight cognitive reflection: Discounting signals low value; lead with integration ROI.</li>
-                          </ul>
+                          {item.memoryContext?.memories && item.memoryContext.memories.length > 0 ? (
+                            <ul className="list-disc list-inside text-slate-700 dark:text-slate-300 space-y-1">
+                              {item.memoryContext.memories.map((m, mIdx) => (
+                                <li key={mIdx}>{m.text}</li>
+                              ))}
+                              {item.learnedContext?.reflection_summary && (
+                                <li>Strategic Reflection: {item.learnedContext.reflection_summary}</li>
+                              )}
+                            </ul>
+                          ) : item.sources && item.sources.length > 0 ? (
+                            <ul className="list-disc list-inside text-slate-700 dark:text-slate-300 space-y-1">
+                              {item.sources.map((s, sIdx) => (
+                                <li key={sIdx}>{s}</li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <div className="text-slate-500 dark:text-slate-400 italic">
+                              No interaction memories recorded for this query in this company workspace.
+                            </div>
+                          )}
                           <div className="text-[11px] text-emerald-600 dark:text-emerald-400 pt-1 font-semibold">
-                            ✓ Zero unsupported claims • Verified against tenant memory bank
+                            ✓ Zero unsupported claims • Verified against tenant memory bank ({currentBankId})
                           </div>
                         </div>
                       )}
@@ -436,7 +559,11 @@ Instead, structure the next meeting around Value-Based Technical Demonstration:
               type="text"
               value={question}
               onChange={(e) => setQuestion(e.target.value)}
-              placeholder="Ask DealMemory anything about ACME Corp..."
+              placeholder={
+                agentState?.is_demo_company
+                  ? "Ask DealMemory anything about ACME Corp or deals..."
+                  : `Ask DealMemory anything about ${agentState?.company_name || 'your company'} customer relationships...`
+              }
               className="flex-1 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-purple-600 transition-colors shadow-xs"
             />
             <button

@@ -28,9 +28,10 @@ export default function AdminRequests() {
     setLoading(true);
     try {
       const data = await fetchAdminRequests();
-      setRequests(data);
+      setRequests(Array.isArray(data) ? data : (data?.requests || []));
     } catch (e) {
       console.error('Failed to load requests:', e);
+      setRequests([]);
     } finally {
       setLoading(false);
     }
@@ -73,7 +74,8 @@ export default function AdminRequests() {
     }
   };
 
-  const filteredRequests = requests.filter((r) => {
+  const safeRequests = Array.isArray(requests) ? requests : [];
+  const filteredRequests = safeRequests.filter((r) => {
     if (filter !== 'all' && r.status !== filter) return false;
     if (search.trim()) {
       const q = search.toLowerCase();
@@ -97,7 +99,7 @@ export default function AdminRequests() {
               Company Access Requests
             </h1>
             <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
-              {requests.filter((r) => r.status === 'pending').length} Pending
+              {safeRequests.filter((r) => r.status === 'pending').length} Pending
             </span>
           </div>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
