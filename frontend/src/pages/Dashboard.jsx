@@ -19,12 +19,13 @@ import {
   Layers,
   ChevronRight,
 } from 'lucide-react';
-import { fetchDealMemory, fetchDeals, createDeal, fetchAgentState } from '../api';
+import { fetchDealMemory, fetchDeals, createDeal, fetchAgentState, fetchDashboardStats } from '../api';
 import { useAuth } from '../context/AuthContext';
 
 export default function Dashboard() {
   const { user } = useAuth();
   const [agentState, setAgentState] = useState(null);
+  const [stats, setStats] = useState(null);
   const [deals, setDeals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreateDealModal, setShowCreateDealModal] = useState(false);
@@ -34,12 +35,14 @@ export default function Dashboard() {
 
   const loadDashboardData = async () => {
     try {
-      const [stateData, dealsData] = await Promise.all([
+      const [stateData, dealsData, statsData] = await Promise.all([
         fetchAgentState().catch(() => null),
         fetchDeals(true).catch(() => ({ deals: [] })),
+        fetchDashboardStats().catch(() => null),
       ]);
       if (stateData) setAgentState(stateData);
       if (dealsData && dealsData.deals) setDeals(dealsData.deals);
+      if (statsData) setStats(statsData);
     } catch (err) {
       console.error('Dashboard load error', err);
     } finally {
@@ -80,20 +83,25 @@ export default function Dashboard() {
     return 'Good evening';
   };
 
-  const isDemo =
-    user?.company_id === 'comp_technova' ||
-    user?.company_id === 'technova' ||
-    user?.email === 'demo@dealmemory.ai' ||
-    agentState?.is_demo_company === true;
-
-  const hasAcmeDeal = deals.some((d) => d.id === 'acme');
-  const shouldShowAcme = isDemo || hasAcmeDeal;
-
-  const totalPipeline = deals.reduce((acc, d) => acc + (d.deal_value || 0), 0);
-  const activeDealsCount = deals.length;
-  const memoryCount = agentState?.metrics?.memories_count ?? (shouldShowAcme ? 15 : 0);
-  const learnedInsightsCount = agentState?.metrics?.learned_insights_count ?? (shouldShowAcme ? 5 : 0);
-  const dealsNeedingAttention = shouldShowAcme ? 1 : 0;
+  const totalPipeline = stats?.pipeline_value != null ? stats.pipeline_value : deals.reduce((acc, d) => acc + (d.deal_value || 0), 0);
+  const activeDealsCount = stats?.active_deals_count != null ? stats.active_deals_count : deals.length;
+  const evaluationCount = stats?.evaluation_deals_count != null ? stats.evaluation_deals_count : deals.filter((d) => d.stage === 'Evaluation').length;
+  const memoryCount = stats?.memories_count ?? agentState?.metrics?.memories_count ?? 0;
+  const learnedInsightsCount = stats?.learned_insights_count ?? agentState?.metrics?.learned_insights_count ?? 0;
+  const needsAttention = stats?.needs_attention || {
+    count: 0,
+    deal_name: null,
+    reason: activeDealsCount > 0 ? 'All pipeline deals on track' : 'No urgent relationship risks detected.',
+    deal_id: null,
+  };
+  const priorityDeals = stats?.priority_deals || [];
+  const continuousLoop = stats?.continuous_loop || {
+    remember: 'Hindsight retains key stakeholder mandates, objections, and hidden priorities.',
+    outcome: 'Every proposal, pricing negotiation, or pause is logged as a ground-truth outcome.',
+    learn: 'Hindsight extracts why deals stall and detects underlying buyer patterns.',
+    adapt: 'AI agent prescribes actionable counter-strategies before every executive meeting.',
+    deal_context: user?.company_name || 'Continuous Loop',
+  };
 
   return (
     <div className="max-w-6xl mx-auto space-y-6 sm:space-y-7 animate-fade-in">
@@ -104,9 +112,7 @@ export default function Dashboard() {
             {getGreeting()}, {user?.name || 'Sales Leader'}
           </h1>
           <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1">
-            {isDemo
-              ? "Here's what needs your attention today in the TechNova Solutions workspace."
-              : `Welcome to the ${user?.company_name || 'enterprise'} DealMemory workspace.`}
+            Welcome to the {user?.company_name || 'enterprise'} DealMemory workspace.
           </p>
         </div>
 
@@ -162,7 +168,7 @@ export default function Dashboard() {
               {activeDealsCount}
             </div>
             <div className="text-[11px] text-slate-600 dark:text-slate-400 mt-1 truncate">
-              <span>{deals.filter((d) => d.stage === 'Evaluation').length} in Evaluation stage</span>
+              <span>{evaluationCount} in Evaluation stage</span>
             </div>
           </div>
         </div>
@@ -177,10 +183,10 @@ export default function Dashboard() {
           </div>
           <div className="mt-2.5">
             <div className="text-xl sm:text-2xl font-black text-amber-900 dark:text-amber-200 tracking-tight">
-              {dealsNeedingAttention} {dealsNeedingAttention === 1 ? 'Deal' : 'Deals'}
+              {needsAttention.count} {needsAttention.count === 1 ? 'Deal' : 'Deals'}
             </div>
             <div className="text-[11px] text-amber-800 dark:text-amber-300/90 mt-1 font-semibold truncate">
-              <span>{shouldShowAcme ? 'ACME Corp • Stalled on ROI' : (activeDealsCount > 0 ? 'All pipeline deals on track' : 'No active alerts')}</span>
+              <span>{needsAttention.deal_name ? `${needsAttention.deal_name} • ${needsAttention.reason}` : needsAttention.reason}</span>
             </div>
           </div>
         </div>
@@ -198,7 +204,7 @@ export default function Dashboard() {
               {learnedInsightsCount} {learnedInsightsCount === 1 ? 'Insight' : 'Insights'}
             </div>
             <div className="text-[11px] text-emerald-800 dark:text-emerald-300/90 mt-1 font-semibold truncate">
-              <span>{memoryCount} memories in Hindsight bank</span>
+              <span>{memoryCount > 0 ? `${memoryCount} memories in Hindsight bank` : 'No learned patterns yet.'}</span>
             </div>
           </div>
         </div>
@@ -214,27 +220,32 @@ export default function Dashboard() {
           <span className="text-xs text-slate-500 dark:text-slate-400">Grounded in Hindsight relationship memory</span>
         </div>
 
-        {/* ACME Corp Flagship Card (Strictly preserved for Demo / TechNova) */}
-        {shouldShowAcme && (
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 rounded-2xl p-5 sm:p-6 transition-all shadow-sm">
+        {/* Priority Deals Rendered Dynamically from Current Authenticated Company */}
+        {priorityDeals.map((pDeal) => (
+          <div
+            key={pDeal.id}
+            className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 rounded-2xl p-5 sm:p-6 transition-all shadow-sm"
+          >
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
-              <div className="space-y-3">
+              <div className="space-y-3 flex-1 min-w-0">
                 <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-700 to-purple-500 flex items-center justify-center font-black text-white text-base shadow-sm">
-                    AC
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-700 to-purple-500 flex items-center justify-center font-black text-white text-base shadow-sm flex-shrink-0">
+                    {pDeal.short_name || (pDeal.company_name || 'DL').slice(0, 2).toUpperCase()}
                   </div>
-                  <div>
-                    <div className="flex items-center space-x-2.5">
-                      <h3 className="text-lg font-bold text-slate-900 dark:text-white">ACME Corp</h3>
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="text-lg font-bold text-slate-900 dark:text-white truncate">
+                        {pDeal.company_name}
+                      </h3>
                       <span className="text-xs px-2 py-0.5 rounded-full bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-800/60 font-semibold">
-                        Evaluation
+                        {pDeal.stage}
                       </span>
                       <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60 font-semibold">
-                        78% Health
+                        {pDeal.relationship_health ? `${pDeal.relationship_health}% Health` : 'Active'}
                       </span>
                     </div>
-                    <div className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
-                      $120,000 ARR • Key Champion: Sarah (VP Sales) • Blocker: David (CTO)
+                    <div className="text-xs text-slate-600 dark:text-slate-400 mt-0.5 truncate">
+                      ${(pDeal.deal_value || 0).toLocaleString()} ARR • Key Champion: {pDeal.champion} • Blocker: {pDeal.blocker}
                     </div>
                   </div>
                 </div>
@@ -246,9 +257,11 @@ export default function Dashboard() {
                       <AlertTriangle size={12} />
                       <span>Current Risk</span>
                     </div>
-                    <div className="text-xs font-bold text-rose-950 dark:text-slate-200">Integration Complexity & Security</div>
+                    <div className="text-xs font-bold text-rose-950 dark:text-slate-200">
+                      {pDeal.current_risk_title}
+                    </div>
                     <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
-                      David (CTO) paused talks after failed 15% discount; requires proof of enterprise API architecture.
+                      {pDeal.current_risk_desc}
                     </p>
                   </div>
 
@@ -257,9 +270,11 @@ export default function Dashboard() {
                       <CheckCircle2 size={12} />
                       <span>Prescribed Next Action</span>
                     </div>
-                    <div className="text-xs font-bold text-slate-900 dark:text-white">Prove Integration ROI • Do NOT Discount</div>
+                    <div className="text-xs font-bold text-slate-900 dark:text-white">
+                      {pDeal.next_action_title}
+                    </div>
                     <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
-                      Lead next meeting with operational savings modeling for CFO Michael and architecture briefing for David.
+                      {pDeal.next_action_desc}
                     </p>
                   </div>
                 </div>
@@ -268,21 +283,21 @@ export default function Dashboard() {
               {/* Quick Action Buttons for the Deal */}
               <div className="flex lg:flex-col items-center gap-2 self-start lg:self-auto flex-shrink-0">
                 <Link
-                  to="/deal"
+                  to={`/deal?deal=${pDeal.id}`}
                   className="w-full text-center px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-md shadow-purple-600/20 transition-all flex items-center justify-center space-x-1.5 active:scale-95"
                 >
                   <span>Deal Overview</span>
                   <ChevronRight size={14} />
                 </Link>
                 <Link
-                  to="/meeting-prep"
+                  to={`/meeting-prep?deal=${pDeal.id}`}
                   className="w-full text-center px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-850 hover:bg-slate-200 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-750 text-slate-800 dark:text-slate-200 text-xs font-semibold transition-all flex items-center justify-center space-x-1.5 active:scale-95"
                 >
                   <Sparkles size={13} className="text-purple-600 dark:text-purple-400" />
                   <span>Prepare Brief</span>
                 </Link>
                 <Link
-                  to="/agent"
+                  to={`/agent?deal=${pDeal.id}`}
                   className="w-full text-center px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-850 hover:bg-slate-200 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-750 text-slate-700 dark:text-slate-300 text-xs font-medium transition-all flex items-center justify-center space-x-1.5 active:scale-95"
                 >
                   <Bot size={13} className="text-purple-600 dark:text-purple-400" />
@@ -291,52 +306,10 @@ export default function Dashboard() {
               </div>
             </div>
           </div>
-        )}
+        ))}
 
-        {/* Any custom deals created by user */}
-        {deals
-          .filter((d) => !shouldShowAcme || d.id !== 'acme')
-          .map((deal) => (
-            <div
-              key={deal.id}
-              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 flex items-center justify-between gap-4 shadow-2xs"
-            >
-              <div className="flex items-center space-x-3">
-                <div className="w-9 h-9 rounded-xl bg-purple-50 dark:bg-slate-800 text-purple-700 dark:text-slate-300 flex items-center justify-center font-bold text-xs">
-                  {(deal.company_name || 'DL').slice(0, 2).toUpperCase()}
-                </div>
-                <div>
-                  <div className="flex items-center space-x-2">
-                    <h4 className="text-sm font-bold text-slate-900 dark:text-white">{deal.company_name}</h4>
-                    <span className="text-[10px] px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 font-semibold">
-                      {deal.stage || 'Active'}
-                    </span>
-                  </div>
-                  <div className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
-                    ${(deal.deal_value || 0).toLocaleString()} ARR • Health: {deal.relationship_health || 80}%
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Link
-                  to={`/meeting-prep?deal=${deal.id}`}
-                  className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300"
-                >
-                  Prepare
-                </Link>
-                <Link
-                  to="/add-interaction"
-                  className="text-xs font-bold text-purple-600 dark:text-purple-400 hover:text-purple-700 flex items-center space-x-1"
-                >
-                  <span>Add Notes</span>
-                  <ArrowRight size={13} />
-                </Link>
-              </div>
-            </div>
-          ))}
-
-        {/* Clean zero-state for new tenants with 0 deals */}
-        {!shouldShowAcme && deals.length === 0 && (
+        {/* Clean zero-state for companies with 0 deals */}
+        {priorityDeals.length === 0 && (
           <div className="bg-white dark:bg-slate-900 border border-dashed border-slate-300 dark:border-slate-800 rounded-2xl p-8 sm:p-10 text-center space-y-4">
             <div className="w-12 h-12 rounded-2xl bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 flex items-center justify-center mx-auto">
               <Building2 size={24} />
@@ -377,33 +350,25 @@ export default function Dashboard() {
           <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-850">
             <div className="text-[10px] font-bold text-purple-700 dark:text-purple-400 uppercase">1. Remember</div>
             <p className="text-xs text-slate-700 dark:text-slate-300 mt-0.5">
-              {shouldShowAcme
-                ? "Hindsight stores Sarah's API mandate and David's security doubts."
-                : "Hindsight retains key stakeholder mandates, objections, and hidden priorities."}
+              {continuousLoop.remember}
             </p>
           </div>
           <div className="p-3 rounded-xl bg-rose-50/70 dark:bg-slate-950 border border-rose-200 dark:border-rose-500/20">
             <div className="text-[10px] font-bold text-rose-700 dark:text-rose-400 uppercase">2. Outcome</div>
             <p className="text-xs text-rose-900 dark:text-rose-200 mt-0.5 font-medium">
-              {shouldShowAcme
-                ? "15% discount rejected by CFO Michael as unproven ROI."
-                : "Every proposal, pricing negotiation, or pause is logged as a ground-truth outcome."}
+              {continuousLoop.outcome}
             </p>
           </div>
           <div className="p-3 rounded-xl bg-purple-50/70 dark:bg-slate-950 border border-purple-200 dark:border-purple-500/20">
             <div className="text-[10px] font-bold text-purple-700 dark:text-purple-400 uppercase">3. Learn</div>
             <p className="text-xs text-purple-900 dark:text-purple-200 mt-0.5 font-medium">
-              {shouldShowAcme
-                ? "Price was a proxy for technical value skepticism."
-                : "Hindsight extracts why deals stall and detects underlying buyer patterns."}
+              {continuousLoop.learn}
             </p>
           </div>
           <div className="p-3 rounded-xl bg-emerald-50/70 dark:bg-slate-950 border border-emerald-200 dark:border-emerald-500/20">
             <div className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase">4. Adapt</div>
             <p className="text-xs text-emerald-900 dark:text-emerald-200 mt-0.5 font-medium">
-              {shouldShowAcme
-                ? "Agent prescribes ROI business case instead of discounting."
-                : "AI agent prescribes actionable counter-strategies before every executive meeting."}
+              {continuousLoop.adapt}
             </p>
           </div>
         </div>

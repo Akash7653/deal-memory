@@ -387,7 +387,31 @@ export async function deleteHistoryItem(activityId) {
 
 // ----------------- Hindsight Core Deal Intelligence -----------------
 
-export async function fetchDealOverview(dealId = 'acme') {
+export async function fetchDashboardStats() {
+  const res = await fetch(`${API_BASE}/deals/dashboard/stats`, {
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to fetch dashboard stats');
+  }
+  return res.json();
+}
+
+export async function fetchDealIntelligence(dealId) {
+  if (!dealId) return null;
+  const res = await fetch(`${API_BASE}/deals/${dealId}/intelligence`, {
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to fetch deal intelligence');
+  }
+  return res.json();
+}
+
+export async function fetchDealOverview(dealId = '') {
+  if (!dealId) return null;
   const res = await fetch(`${API_BASE}/deals/${dealId}/overview`, {
     headers: getAuthHeaders(),
   });
@@ -398,7 +422,8 @@ export async function fetchDealOverview(dealId = 'acme') {
   return res.json();
 }
 
-export async function fetchDealMemory(dealId = 'acme', query = '', tag = '') {
+export async function fetchDealMemory(dealId = '', query = '', tag = '') {
+  if (!dealId) return { memories: [] };
   let url = `${API_BASE}/deals/${dealId}/memory?max_tokens=3000`;
   if (query) url += `&query=${encodeURIComponent(query)}`;
   if (tag) url += `&tag=${encodeURIComponent(tag)}`;
@@ -413,7 +438,8 @@ export async function fetchDealMemory(dealId = 'acme', query = '', tag = '') {
   return res.json();
 }
 
-export async function triggerMeetingPrep(dealId = 'acme') {
+export async function triggerMeetingPrep(dealId = '') {
+  if (!dealId) return null;
   const res = await fetch(`${API_BASE}/deals/${dealId}/prepare`, {
     headers: getAuthHeaders(),
   });
@@ -426,7 +452,8 @@ export async function triggerMeetingPrep(dealId = 'acme') {
 
 export const fetchMeetingPrep = triggerMeetingPrep;
 
-export async function fetchLearnedInsights(dealId = 'acme') {
+export async function fetchLearnedInsights(dealId = '') {
+  if (!dealId) return { learned_insights: [] };
   const res = await fetch(`${API_BASE}/deals/${dealId}/reflect`, {
     headers: getAuthHeaders(),
   });
@@ -485,8 +512,9 @@ export async function askDealAgent(dealId = 'agent', question) {
   return res.json();
 }
 
-export async function createInteraction(dealId = 'acme', data) {
-  const res = await fetch(`${API_BASE}/deals/${dealId}/interactions`, {
+export async function createInteraction(dealId = '', data) {
+  const targetId = dealId || 'general';
+  const res = await fetch(`${API_BASE}/deals/${targetId}/interactions`, {
     method: 'POST',
     headers: getAuthHeaders(),
     body: JSON.stringify(data),
@@ -500,8 +528,9 @@ export async function createInteraction(dealId = 'acme', data) {
 
 export const postInteraction = createInteraction;
 
-export async function createOutcome(dealId = 'acme', data) {
-  const res = await fetch(`${API_BASE}/deals/${dealId}/outcomes`, {
+export async function createOutcome(dealId = '', data) {
+  const targetId = dealId || 'general';
+  const res = await fetch(`${API_BASE}/deals/${targetId}/outcomes`, {
     method: 'POST',
     headers: getAuthHeaders(),
     body: JSON.stringify(data),

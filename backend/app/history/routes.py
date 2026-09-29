@@ -21,8 +21,12 @@ async def get_user_history(
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    query = "SELECT id, user_id, deal_id, company, activity_type, title, description, created_at FROM activities WHERE (user_id = ? OR (deal_id = 'acme' AND user_id = 'demo-user-001'))"
-    params = [current_user["id"]]
+    company_id = current_user.get("company_id")
+    if not company_id:
+        return {"status": "success", "user_id": current_user["id"], "count": 0, "activities": []}
+
+    query = "SELECT id, user_id, deal_id, company, activity_type, title, description, created_at FROM activities WHERE company_id = ?"
+    params = [company_id]
 
     if activity_type and activity_type.lower() != "all":
         query += " AND activity_type = ?"
@@ -43,7 +47,7 @@ async def get_user_history(
         {
             "id": r["id"],
             "deal_id": r["deal_id"],
-            "company": r["company"] or "ACME Corp",
+            "company": r["company"] or "Deal Activity",
             "activity_type": r["activity_type"],
             "title": r["title"],
             "description": r["description"],

@@ -18,15 +18,18 @@ import {
   Bot,
   FileText,
 } from 'lucide-react';
-import { fetchDealMemory, fetchDeals, formatDisplayDate } from '../api';
+import { fetchDealMemory, fetchDeals, fetchDealIntelligence, formatDisplayDate } from '../api';
+import { useAuth } from '../context/AuthContext';
 
 export default function DealOverview() {
+  const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const dealParam = searchParams.get('deal') || '';
 
   const [deals, setDeals] = useState([]);
   const [selectedDealId, setSelectedDealId] = useState(dealParam);
   const [memories, setMemories] = useState([]);
+  const [intelligence, setIntelligence] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -36,38 +39,44 @@ export default function DealOverview() {
         const list = data.deals || [];
         setDeals(list);
         if (!selectedDealId) {
-          if (dealParam) {
+          if (dealParam && list.some((d) => d.id === dealParam)) {
             setSelectedDealId(dealParam);
           } else if (list.length > 0) {
             setSelectedDealId(list[0].id);
-          } else {
-            setSelectedDealId('acme');
           }
         }
       })
       .catch((err) => {
         console.error('Failed to load deals in Overview:', err);
-        if (!selectedDealId) setSelectedDealId('acme');
       });
   }, []);
 
-  const currentDeal = deals.find((d) => d.id === selectedDealId) || (selectedDealId === 'acme' ? { id: 'acme', company_name: 'ACME Corp', deal_value: 120000, stage: 'Evaluation' } : null);
+  const currentDeal = deals.find((d) => d.id === selectedDealId);
 
-  const loadMemories = (targetId) => {
-    const idToFetch = targetId || selectedDealId || 'acme';
+  const loadDealData = async (targetId) => {
+    if (!targetId) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
-    fetchDealMemory(idToFetch)
-      .then((data) => {
-        setMemories(data.memories || []);
-        setError(null);
-      })
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
+    setError(null);
+    try {
+      const [memData, intelData] = await Promise.all([
+        fetchDealMemory(targetId).catch(() => ({ memories: [] })),
+        fetchDealIntelligence(targetId).catch(() => null),
+      ]);
+      setMemories(memData?.memories || []);
+      setIntelligence(intelData);
+    } catch (err) {
+      setError(err.message || 'Failed to load deal intelligence');
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
     if (selectedDealId) {
-      loadMemories(selectedDealId);
+      loadDealData(selectedDealId);
     }
   }, [selectedDealId]);
 
@@ -76,11 +85,51 @@ export default function DealOverview() {
     setSearchParams(id ? { deal: id } : {});
   };
 
-  const isAcme = selectedDealId === 'acme';
-  const dealTitle = currentDeal?.company_name || 'Customer Deal';
-  const dealValue = currentDeal?.deal_value ? `$${currentDeal.deal_value.toLocaleString()} ARR` : '$180,000 ARR';
-  const dealStage = currentDeal?.stage || (isAcme ? 'Evaluation' : 'Discovery');
+  const dealTitle = currentDeal?.company_name || intelligence?.company_name || 'Customer Deal';
+  const dealValue = currentDeal?.deal_value
+    ? `$${currentDeal.deal_value.toLocaleString()} ARR`
+    : intelligence?.deal_value
+    ? `$${intelligence.deal_value.toLocaleString()} ARR`
+    : '$0 ARR';
+  const dealStage = currentDeal?.stage || intelligence?.stage || 'Discovery';
   const dealInitials = dealTitle.slice(0, 2).toUpperCase();
+
+  const healthScore = intelligence?.relationship_health ?? currentDeal?.relationship_health;
+  const healthDisplay = healthScore != null ? `${healthScore}%` : 'Not enough data';
+  const memoryBankName = user?.company_id ? `dealmemory-${user.company_id}` : 'dealmemory-bank';
+
+  const stakeholders = intelligence?.stakeholders || [];
+  const risks = intelligence?.risks || [];
+  const winningStrategy = intelligence?.winning_strategy || {
+    title: 'Formulate Value-Driven Engagement',
+    description: 'Record customer interactions and outcomes to synthesize deal-specific winning strategies.',
+  };
+  const strategyToAvoid = intelligence?.strategy_to_avoid || {
+    title: 'Avoid Premature Concessions',
+    description: 'Ensure all customer requirements and technical doubts are validated before commercial terms.',
+  };
+  const nextAction = intelligence?.next_action || {
+    title: 'Next Step',
+    subtitle: 'Log interaction or schedule technical review',
+  };
+
+  if (!loading && deals.length === 0 && !selectedDealId) {
+    return (
+      <div className="max-w-6xl mx-auto p-12 text-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl space-y-4">
+        <Building2 className="w-12 h-12 text-purple-600 dark:text-purple-400 mx-auto" />
+        <h2 className="text-xl font-bold text-slate-900 dark:text-white">No Deals in Workspace</h2>
+        <p className="text-sm text-slate-600 dark:text-slate-400">
+          Create an enterprise deal to begin tracking relationship intelligence and memory.
+        </p>
+        <Link
+          to="/"
+          className="inline-flex items-center px-4 py-2 rounded-xl bg-purple-600 text-white text-xs font-bold"
+        >
+          Go to Dashboard
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-6xl mx-auto space-y-7 animate-fade-in">
@@ -106,12 +155,12 @@ export default function DealOverview() {
               <div className="flex flex-wrap items-center gap-2.5 text-xs text-slate-600 dark:text-slate-400">
                 <span className="text-slate-900 dark:text-white font-extrabold text-sm sm:text-base">{dealValue}</span>
                 <span>•</span>
-                <span>{isAcme ? 'B2B Enterprise CRM' : 'Enterprise Digital Transformation'}</span>
+                <span>Enterprise Deal</span>
                 <span className="hidden sm:inline">•</span>
-                <span className="hidden sm:inline">Memory Bank: <code className="text-purple-700 dark:text-purple-300 font-bold bg-purple-50 dark:bg-purple-950/40 px-1.5 py-0.5 rounded border border-purple-200 dark:border-purple-900/40">{isAcme ? 'dealmemory-acme' : 'dealmemory-technova'}</code></span>
+                <span className="hidden sm:inline">Memory Bank: <code className="text-purple-700 dark:text-purple-300 font-bold bg-purple-50 dark:bg-purple-950/40 px-1.5 py-0.5 rounded border border-purple-200 dark:border-purple-900/40">{memoryBankName}</code></span>
               </div>
 
-              {/* Deal Selector Dropdown */}
+              {/* Deal Selector Dropdown - Strict Tenant Deals */}
               <div className="mt-2 flex flex-wrap items-center gap-2 pt-1">
                 <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Switch Deal:</span>
                 <select
@@ -124,7 +173,6 @@ export default function DealOverview() {
                       {d.company_name} {d.deal_value ? `($${d.deal_value.toLocaleString()} ARR)` : ''}
                     </option>
                   ))}
-                  {!deals.some((d) => d.id === 'acme') && <option value="acme">ACME Corp ($120,000 ARR)</option>}
                 </select>
               </div>
             </div>
@@ -139,7 +187,7 @@ export default function DealOverview() {
                   Relationship Health
                 </div>
                 <div className="text-lg sm:text-xl font-black text-emerald-700 dark:text-emerald-300 leading-tight">
-                  {isAcme ? '78%' : '85%'}
+                  {healthDisplay}
                 </div>
               </div>
               <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse flex-shrink-0" />
@@ -171,7 +219,7 @@ export default function DealOverview() {
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 space-y-1 shadow-2xs">
           <div className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase">Stage</div>
           <div className="text-sm font-bold text-slate-900 dark:text-white">{dealStage}</div>
-          <div className="text-[11px] text-slate-500 dark:text-slate-400">{isAcme ? 'Technical POC' : 'Stakeholder Discovery'}</div>
+          <div className="text-[11px] text-slate-500 dark:text-slate-400">Current Phase</div>
         </div>
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 space-y-1 shadow-2xs">
           <div className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase">Value</div>
@@ -180,22 +228,26 @@ export default function DealOverview() {
         </div>
         <div className="bg-emerald-50/40 dark:bg-slate-900 border border-emerald-200 dark:border-emerald-800/60 rounded-xl p-3.5 space-y-1 shadow-2xs">
           <div className="text-[10px] font-semibold text-emerald-800 dark:text-emerald-400 uppercase">Health Score</div>
-          <div className="text-sm font-bold text-emerald-700 dark:text-emerald-400">{isAcme ? '78% Health' : '85% Health'}</div>
-          <div className="text-[11px] text-emerald-800 dark:text-emerald-300 font-medium">Champion Active</div>
+          <div className="text-sm font-bold text-emerald-700 dark:text-emerald-400">{healthDisplay}</div>
+          <div className="text-[11px] text-emerald-800 dark:text-emerald-300 font-medium">Champion Tracked</div>
         </div>
         <div className="bg-purple-50/40 dark:bg-slate-900 border border-purple-200 dark:border-purple-900/40 rounded-xl p-3.5 space-y-1 shadow-2xs">
           <div className="text-[10px] font-semibold text-purple-800 dark:text-purple-400 uppercase">Last Interaction</div>
           <div className="text-sm font-bold text-slate-800 dark:text-slate-200">
-            {memories.length > 0 && memories[0].mentioned_at ? formatDisplayDate(memories[0].mentioned_at, false) : formatDisplayDate(new Date(), false)}
+            {memories.length > 0 && memories[0].mentioned_at
+              ? formatDisplayDate(memories[0].mentioned_at, false)
+              : intelligence?.last_interaction?.date
+              ? formatDisplayDate(intelligence.last_interaction.date, false)
+              : 'Recent Activity'}
           </div>
           <div className="text-[11px] text-purple-700 dark:text-purple-400 font-medium truncate">
-            {memories.length > 0 ? (memories[0].type || 'Interaction Recorded') : 'Recent Activity'}
+            {memories.length > 0 ? (memories[0].type || 'Interaction Recorded') : (intelligence?.last_interaction?.type || 'Recent Activity')}
           </div>
         </div>
         <div className="bg-purple-50/50 dark:bg-slate-900 border border-purple-200 dark:border-purple-900/40 rounded-xl p-3.5 space-y-1 col-span-2 sm:col-span-1 shadow-2xs">
           <div className="text-[10px] font-semibold text-purple-700 dark:text-purple-400 uppercase">Next Action</div>
-          <div className="text-sm font-bold text-slate-900 dark:text-white">{isAcme ? 'Prove ROI' : 'Security Validation'}</div>
-          <div className="text-[11px] text-purple-700 dark:text-purple-300 font-medium truncate">{isAcme ? 'Technical Briefing' : 'CTO Architecture Review'}</div>
+          <div className="text-sm font-bold text-slate-900 dark:text-white truncate">{nextAction.title}</div>
+          <div className="text-[11px] text-purple-700 dark:text-purple-300 font-medium truncate">{nextAction.subtitle}</div>
         </div>
       </div>
 
@@ -207,9 +259,9 @@ export default function DealOverview() {
             <CheckCircle2 size={16} />
             <span>Current Winning Strategy</span>
           </div>
-          <h3 className="text-base font-bold text-slate-900 dark:text-white">Prove Integration ROI and Technical Feasibility</h3>
+          <h3 className="text-base font-bold text-slate-900 dark:text-white">{winningStrategy.title}</h3>
           <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
-            Hindsight learned that CFO Michael's price pushback is a direct symptom of unverified integration value. Focus next meeting on operational hours saved by the API-first pipeline and clear security checklists with David.
+            {winningStrategy.description}
           </p>
         </div>
 
@@ -219,9 +271,9 @@ export default function DealOverview() {
             <XCircle size={16} />
             <span>Strategy To Avoid</span>
           </div>
-          <h3 className="text-base font-bold text-rose-950 dark:text-rose-200">Do NOT Repeat Discounting</h3>
+          <h3 className="text-base font-bold text-rose-950 dark:text-rose-200">{strategyToAvoid.title}</h3>
           <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
-            On Sept 26, offering a 15% upfront discount failed and alienated the CFO. Further price cuts signal low product value and will permanently stall enterprise procurement.
+            {strategyToAvoid.description}
           </p>
         </div>
       </div>
@@ -233,67 +285,38 @@ export default function DealOverview() {
             <Users size={16} className="text-purple-600 dark:text-purple-400" />
             <span>Stakeholders & Account Map</span>
           </h3>
-          <span className="text-xs text-slate-500 dark:text-slate-400">3 Stakeholders Retained in Hindsight</span>
+          <span className="text-xs text-slate-500 dark:text-slate-400">
+            {stakeholders.length} Stakeholder{stakeholders.length === 1 ? '' : 's'} Retained in Hindsight
+          </span>
         </div>
 
-        <div className="grid sm:grid-cols-3 gap-4">
-          {/* Sarah */}
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 sm:p-5 rounded-2xl space-y-2 shadow-xs">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-full bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 flex items-center justify-center font-bold text-sm border border-purple-200 dark:border-purple-800/60">
-                S
+        {stakeholders.length > 0 ? (
+          <div className="grid sm:grid-cols-3 gap-4">
+            {stakeholders.map((s, idx) => (
+              <div key={idx} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 sm:p-5 rounded-2xl space-y-2 shadow-xs">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 rounded-full bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 flex items-center justify-center font-bold text-sm border border-purple-200 dark:border-purple-800/60">
+                    {s.name.charAt(0)}
+                  </div>
+                  <div>
+                    <div className="font-bold text-slate-900 dark:text-white text-sm">{s.name}</div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400">{s.role}</div>
+                  </div>
+                </div>
+                <div className="text-xs text-purple-700 dark:text-purple-300 font-semibold pt-1">
+                  {s.category}
+                </div>
+                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                  {s.notes}
+                </p>
               </div>
-              <div>
-                <div className="font-bold text-slate-900 dark:text-white text-sm">Sarah</div>
-                <div className="text-xs text-slate-500 dark:text-slate-400">VP Sales</div>
-              </div>
-            </div>
-            <div className="text-xs text-purple-700 dark:text-purple-300 font-semibold pt-1">
-              Business Champion
-            </div>
-            <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-              Mandated an API-first solution to unify sales pipeline data across internal systems. Wants fast rollout.
-            </p>
+            ))}
           </div>
-
-          {/* David */}
-          <div className="bg-amber-50/50 dark:bg-slate-900 border border-amber-200 dark:border-amber-500/30 p-4 sm:p-5 rounded-2xl space-y-2 shadow-xs">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 flex items-center justify-center font-bold text-sm border border-amber-200 dark:border-amber-500/20">
-                D
-              </div>
-              <div>
-                <div className="font-bold text-slate-900 dark:text-white text-sm">David</div>
-                <div className="text-xs text-slate-500 dark:text-slate-400">CTO</div>
-              </div>
-            </div>
-            <div className="text-xs text-amber-800 dark:text-amber-300 font-semibold pt-1">
-              Technical Evaluator & Blocker
-            </div>
-            <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-              Primary blocker. Deeply concerned about integration complexity, webhook latency, and SOC2/security architecture.
-            </p>
+        ) : (
+          <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400">
+            Not recorded: No specific stakeholders identified for this deal yet. Record an interaction to capture key stakeholders.
           </div>
-
-          {/* Michael */}
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 sm:p-5 rounded-2xl space-y-2 shadow-xs">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 flex items-center justify-center font-bold text-sm border border-slate-200 dark:border-slate-700">
-                M
-              </div>
-              <div>
-                <div className="font-bold text-slate-900 dark:text-white text-sm">Michael</div>
-                <div className="text-xs text-slate-500 dark:text-slate-400">CFO</div>
-              </div>
-            </div>
-            <div className="text-xs text-slate-700 dark:text-slate-300 font-semibold pt-1">
-              Financial Gatekeeper
-            </div>
-            <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-              Demands strict ROI proof. Rejected 15% discount because proposal lacked concrete operational cost justification.
-            </p>
-          </div>
-        </div>
+        )}
       </div>
 
       {/* Deal Risk Radar Section */}
@@ -307,46 +330,37 @@ export default function DealOverview() {
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-          <div className="p-3 rounded-xl bg-rose-50/50 dark:bg-slate-950 border border-rose-200 dark:border-rose-500/30 space-y-1">
-            <div className="text-[10px] text-rose-800 dark:text-slate-400 uppercase font-semibold">Integration Risk</div>
-            <div className="text-sm font-bold text-rose-700 dark:text-rose-400">High</div>
-            <p className="text-[11px] text-slate-600 dark:text-slate-400">CTO raised API/webhook concerns</p>
-          </div>
+          {risks.map((r, i) => {
+            const isHigh = r.level === 'High';
+            const isMed = r.level === 'Medium';
+            const isStrong = r.level === 'Strong';
+            const cardBg = isHigh
+              ? 'bg-rose-50/50 dark:bg-slate-950 border-rose-200 dark:border-rose-500/30 text-rose-700 dark:text-rose-400'
+              : isMed
+              ? 'bg-amber-50/50 dark:bg-slate-950 border-amber-200 dark:border-amber-500/30 text-amber-700 dark:text-amber-400'
+              : isStrong
+              ? 'bg-emerald-50/50 dark:bg-slate-950 border-emerald-200 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-400'
+              : 'bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300';
 
-          <div className="p-3 rounded-xl bg-amber-50/50 dark:bg-slate-950 border border-amber-200 dark:border-amber-500/30 space-y-1">
-            <div className="text-[10px] text-amber-800 dark:text-slate-400 uppercase font-semibold">Security Risk</div>
-            <div className="text-sm font-bold text-amber-700 dark:text-amber-400">Medium</div>
-            <p className="text-[11px] text-slate-600 dark:text-slate-400">Needs enterprise architecture review</p>
-          </div>
-
-          <div className="p-3 rounded-xl bg-amber-50/50 dark:bg-slate-950 border border-amber-200 dark:border-amber-500/30 space-y-1">
-            <div className="text-[10px] text-amber-800 dark:text-slate-400 uppercase font-semibold">Budget Risk</div>
-            <div className="text-sm font-bold text-amber-700 dark:text-amber-400">Medium</div>
-            <p className="text-[11px] text-slate-600 dark:text-slate-400">CFO requires verified ROI</p>
-          </div>
-
-          <div className="p-3 rounded-xl bg-emerald-50/50 dark:bg-slate-950 border border-emerald-200 dark:border-emerald-500/30 space-y-1">
-            <div className="text-[10px] text-emerald-800 dark:text-slate-400 uppercase font-semibold">Champion Health</div>
-            <div className="text-sm font-bold text-emerald-700 dark:text-emerald-400">Strong</div>
-            <p className="text-[11px] text-slate-600 dark:text-slate-400">Sarah (VP Sales) committed</p>
-          </div>
-
-          <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 space-y-1 col-span-2 sm:col-span-1">
-            <div className="text-[10px] text-slate-600 dark:text-slate-400 uppercase font-semibold">Competition</div>
-            <div className="text-sm font-bold text-slate-800 dark:text-slate-300">Watch</div>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400">Internal build evaluated</p>
-          </div>
+            return (
+              <div key={i} className={`p-3 rounded-xl border space-y-1 ${cardBg}`}>
+                <div className="text-[10px] uppercase font-semibold text-slate-500 dark:text-slate-400">{r.category}</div>
+                <div className="text-sm font-bold">{r.level}</div>
+                <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-tight">{r.detail}</p>
+              </div>
+            );
+          })}
         </div>
 
         <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-850 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
           <div>
             <span className="font-bold text-slate-900 dark:text-white">Biggest Risk:</span>{' '}
-            <span className="text-slate-700 dark:text-slate-300">Integration complexity & unverified ROI with David (CTO).</span>
+            <span className="text-slate-700 dark:text-slate-300">{intelligence?.biggest_risk || 'None recorded'}</span>
           </div>
           <div className="text-purple-600 dark:text-purple-400 font-semibold flex items-center space-x-1.5 flex-shrink-0">
             <span>Recommended Action:</span>
-            <Link to="/meeting-prep" className="underline hover:text-purple-700 dark:hover:text-purple-300">
-              Schedule technical briefing
+            <Link to={`/meeting-prep?deal=${selectedDealId}`} className="underline hover:text-purple-700 dark:hover:text-purple-300">
+              {nextAction.subtitle || 'Schedule briefing'}
             </Link>
           </div>
         </div>

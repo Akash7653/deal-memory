@@ -90,6 +90,8 @@ async def get_current_user(credentials: Optional[HTTPAuthorizationCredentials] =
     if not row:
         email_val = payload.get("email", f"{user_id}@dealmemory.ai")
         name_val = payload.get("name") or email_val.split("@")[0].replace(".", " ").capitalize()
+        company_id_val = payload.get("company_id")
+        company_name_val = payload.get("company") or payload.get("company_name") or ("TechNova Solutions" if email_val == "demo@dealmemory.ai" else "Personal Workspace")
         now_str = datetime.now(timezone.utc).isoformat()
         try:
             cursor.execute(
@@ -97,7 +99,7 @@ async def get_current_user(credentials: Optional[HTTPAuthorizationCredentials] =
                 INSERT OR IGNORE INTO users (id, company_id, name, email, password_hash, company, role, status, created_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
-                (user_id, "comp_technova", name_val, email_val, "", "TechNova Solutions", "company_user", "active", now_str),
+                (user_id, company_id_val, name_val, email_val, "", company_name_val, "company_user", "active", now_str),
             )
             conn.commit()
             cursor.execute("SELECT id, company_id, name, email, company, role, status, created_at FROM users WHERE id = ?", (user_id,))
@@ -129,7 +131,7 @@ async def get_current_user(credentials: Optional[HTTPAuthorizationCredentials] =
 
     return {
         "id": row["id"],
-        "company_id": company_id or "comp_technova",
+        "company_id": company_id,
         "name": row["name"],
         "email": row["email"],
         "company": company_name,

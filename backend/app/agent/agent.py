@@ -56,11 +56,19 @@ class DealMemoryAgent:
         bank_id: Optional[str] = None,
         company_name: Optional[str] = None,
         deal_name: Optional[str] = None,
+        company_id: Optional[str] = None,
         is_demo: bool = False,
     ) -> Dict[str, Any]:
         """Answer a sales question grounded strictly in Hindsight memories and learned outcomes."""
         deal_id_clean = deal_id.strip().lower()
         active_bank_id = bank_id or settings.HINDSIGHT_BANK_ID or f"dealmemory-{deal_id_clean}"
+
+        # Resolve tenant company_id for strict database isolation
+        active_company_id = company_id
+        if not active_company_id and active_bank_id.startswith("dealmemory-"):
+            bank_suffix = active_bank_id.replace("dealmemory-", "")
+            if bank_suffix.startswith("comp_"):
+                active_company_id = bank_suffix
 
         # Determine tags: if general agent query, query full bank; otherwise query specific deal tag
         deal_tags = [f"deal:{deal_id_clean}"] if deal_id_clean not in ("agent", "general", "all", "") else None
@@ -112,7 +120,7 @@ class DealMemoryAgent:
         except Exception as e:
             logger.warning(f"Error recalling memory for {active_bank_id}: {e}")
 
-        # Incorporate local DB interactions and outcomes to guarantee zero-latency availability
+        # Incorporate local DB interactions and outcomes to guarantee zero-latency availability with strict company isolation
         db_memories: List[str] = []
         db_outcomes: List[str] = []
         try:
@@ -121,50 +129,38 @@ class DealMemoryAgent:
             cursor = conn.cursor()
             query_lower = question.lower()
 
-            # Check if Globex or another customer is mentioned in question or deal
-            customer_match = None
-            if "globex" in query_lower or "rohan" in query_lower or (deal_name and "globex" in deal_name.lower()):
-                customer_match = "globex"
+            if active_company_id:
+                if deal_id_clean not in ("agent", "general", "all", ""):
+                    cursor.execute(
+                        "SELECT contact_name, contact_role, company, interaction_type, content, outcome, date FROM interactions WHERE company_id = ? AND (deal_id = ? OR LOWER(company) LIKE ?) ORDER BY created_at DESC LIMIT 10",
+                        (active_company_id, deal_id_clean, f"%{deal_id_clean}%")
+                    )
+                else:
+                    cursor.execute(
+                        "SELECT contact_name, contact_role, company, interaction_type, content, outcome, date FROM interactions WHERE company_id = ? ORDER BY created_at DESC LIMIT 5",
+                        (active_company_id,)
+                    )
+                for row in cursor.fetchall():
+                    line = f"Interaction ({row['date'] or 'Recent'}) with {row['contact_name']} ({row['contact_role']}) at {row['company']}: {row['content']}"
+                    if row['outcome']:
+                        line += f" | Next Step / Outcome: {row['outcome']}"
+                    db_memories.append(line)
 
-            if deal_id_clean not in ("agent", "general", "all", ""):
-                cursor.execute(
-                    "SELECT contact_name, contact_role, company, interaction_type, content, outcome, date FROM interactions WHERE deal_id = ? OR LOWER(company) LIKE ? ORDER BY created_at DESC LIMIT 10",
-                    (deal_id_clean, f"%{deal_id_clean}%")
-                )
-            elif customer_match:
-                cursor.execute(
-                    "SELECT contact_name, contact_role, company, interaction_type, content, outcome, date FROM interactions WHERE LOWER(company) LIKE ? OR LOWER(contact_name) LIKE ? ORDER BY created_at DESC LIMIT 10",
-                    (f"%{customer_match}%", f"%{customer_match}%")
-                )
-            else:
-                cursor.execute(
-                    "SELECT contact_name, contact_role, company, interaction_type, content, outcome, date FROM interactions ORDER BY created_at DESC LIMIT 5"
-                )
-            for row in cursor.fetchall():
-                line = f"Interaction ({row['date'] or 'Recent'}) with {row['contact_name']} ({row['contact_role']}) at {row['company']}: {row['content']}"
-                if row['outcome']:
-                    line += f" | Next Step / Outcome: {row['outcome']}"
-                db_memories.append(line)
-
-            # Check outcomes
-            if deal_id_clean not in ("agent", "general", "all", ""):
-                cursor.execute(
-                    "SELECT company, strategy, result, details, date FROM outcomes WHERE deal_id = ? OR LOWER(company) LIKE ? ORDER BY created_at DESC LIMIT 5",
-                    (deal_id_clean, f"%{deal_id_clean}%")
-                )
-            elif customer_match:
-                cursor.execute(
-                    "SELECT company, strategy, result, details, date FROM outcomes WHERE LOWER(company) LIKE ? ORDER BY created_at DESC LIMIT 5",
-                    (f"%{customer_match}%",)
-                )
-            else:
-                cursor.execute(
-                    "SELECT company, strategy, result, details, date FROM outcomes ORDER BY created_at DESC LIMIT 5"
-                )
-            for row in cursor.fetchall():
-                db_outcomes.append(
-                    f"Recorded Strategy Outcome for {row['company']}: Strategy '{row['strategy']}' marked as {row['result'].upper()}. Details: {row['details']}"
-                )
+                # Check outcomes for this tenant company
+                if deal_id_clean not in ("agent", "general", "all", ""):
+                    cursor.execute(
+                        "SELECT company, strategy, result, details, date FROM outcomes WHERE company_id = ? AND (deal_id = ? OR LOWER(company) LIKE ?) ORDER BY created_at DESC LIMIT 5",
+                        (active_company_id, deal_id_clean, f"%{deal_id_clean}%")
+                    )
+                else:
+                    cursor.execute(
+                        "SELECT company, strategy, result, details, date FROM outcomes WHERE company_id = ? ORDER BY created_at DESC LIMIT 5",
+                        (active_company_id,)
+                    )
+                for row in cursor.fetchall():
+                    db_outcomes.append(
+                        f"Recorded Strategy Outcome for {row['company']}: Strategy '{row['strategy']}' marked as {row['result'].upper()}. Details: {row['details']}"
+                    )
             conn.close()
         except Exception as db_err:
             logger.debug(f"Error fetching DB fallback memories: {db_err}")

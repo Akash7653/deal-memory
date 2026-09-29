@@ -51,14 +51,10 @@ export default function AiAgent() {
         const list = data.deals || [];
         setDeals(list);
         if (!selectedDealId) {
-          if (dealParam) {
+          if (dealParam && list.some((d) => d.id === dealParam)) {
             setSelectedDealId(dealParam);
           } else if (list.length > 0) {
-            // If Globex exists, default or let user pick
-            const globexDeal = list.find((d) => d.company_name?.toLowerCase().includes('globex'));
-            if (globexDeal) {
-              setSelectedDealId(globexDeal.id);
-            }
+            setSelectedDealId(list[0].id);
           }
         }
       })
@@ -73,14 +69,14 @@ export default function AiAgent() {
       if (data.initial_briefing) {
         setChatHistory([data.initial_briefing]);
       }
-      if (data.suggested_questions && data.suggested_questions.length > 0) {
+      if (data.default_question) {
+        setQuestion(data.default_question);
+      } else if (data.suggested_questions && data.suggested_questions.length > 0) {
         setQuestion(data.suggested_questions[0].q);
       }
-      if (data.is_demo_company) {
-        setPlaygroundInput('Sarah confirmed that the API integration has been approved.');
-      } else {
-        setPlaygroundInput(`Customer confirmed interest in relationship intelligence platform for ${data.company_name || 'workspace'}.`);
-      }
+      setPlaygroundInput(
+        `Customer confirmed critical requirement for ${data.company_name || 'workspace'}.`
+      );
     } catch (err) {
       console.error('Failed to load agent state:', err);
       const fallbackBriefing = {
@@ -169,14 +165,13 @@ export default function AiAgent() {
 
     setPlaygroundStatus('retaining');
     try {
-      const isDemo = agentState?.is_demo_company;
-      const dealTarget = agentState?.default_deal_id || 'agent';
-      const customerName = isDemo ? 'ACME Corp' : (agentState?.company_name || 'Customer Account');
+      const dealTarget = selectedDealId || agentState?.default_deal_id || 'agent';
+      const customerName = currentDeal?.company_name || agentState?.company_name || 'Customer Account';
 
       const result = await createInteraction(dealTarget, {
         company: customerName,
-        contact_name: isDemo ? 'Sarah' : 'Lead Decision Maker',
-        contact_role: isDemo ? 'VP Sales' : 'Executive Sponsor',
+        contact_name: 'Lead Decision Maker',
+        contact_role: 'Executive Sponsor',
         interaction_type: 'technical',
         content: playgroundInput.trim(),
         outcome: 'Verified interaction retained in company Hindsight memory bank',
@@ -186,7 +181,7 @@ export default function AiAgent() {
       setPlaygroundStatus('retained');
 
       // Refresh agent metrics
-      fetchAgentState().then(setAgentState).catch(console.error);
+      fetchAgentState(selectedDealId).then(setAgentState).catch(console.error);
     } catch (err) {
       console.error('Playground retain error:', err);
       setPlaygroundStatus('error');
@@ -194,58 +189,34 @@ export default function AiAgent() {
   };
 
   const currentDeal = deals.find((d) => d.id === selectedDealId);
-  const isGlobex = currentDeal?.company_name?.toLowerCase().includes('globex') || selectedDealId?.toLowerCase().includes('globex');
 
-  const suggestedQuestions = isGlobex
-    ? [
-        {
-          label: '1. Next Meeting Approach (Step 6.5)',
-          q: 'How should I approach my next meeting with Rohan from Globex?',
-          desc: 'Grounds in Globex API requirement, security, & migration concerns',
-        },
-        {
-          label: '2. Meeting Preparation (Step 6.8)',
-          q: 'Prepare me for the next meeting with Globex.',
-          desc: 'Adapts based on recorded outcome & Hindsight reflection',
-        },
-        {
-          label: '3. Technical & Security Blockers',
-          q: 'What are Rohan’s primary technical concerns and objections?',
-          desc: 'Identifies API-first architecture, complexity, and security',
-        },
-        {
-          label: '4. Hallucination Check',
-          q: 'What did Globex’s legal team or Sarah say about our contract?',
-          desc: 'Proves zero hallucination & strict customer isolation',
-        },
-      ]
-    : agentState?.suggested_questions || [
-        {
-          label: '1. Meeting Strategy',
-          q: 'What is our recommended meeting strategy based on recorded history?',
-          desc: 'Consults verified relationship memories for your company',
-        },
-        {
-          label: '2. What to Avoid',
-          q: 'What strategies or pitfalls should we avoid based on our past outcomes?',
-          desc: 'Warns against repeating failed tactics',
-        },
-        {
-          label: '3. Hallucination Test',
-          q: 'What did the legal department say about our contract terms?',
-          desc: 'Demonstrates zero hallucination on unrecorded facts',
-        },
-        {
-          label: '4. Pricing Failure Reason',
-          q: 'Are there any recorded pricing failures or discount rejections?',
-          desc: 'Traces recorded financial and commercial feedback',
-        },
-      ];
+  const suggestedQuestions = agentState?.suggested_questions || [
+    {
+      label: '1. Meeting Strategy',
+      q: 'What is our recommended meeting strategy based on recorded history?',
+      desc: 'Consults verified relationship memories for your company',
+    },
+    {
+      label: '2. What to Avoid',
+      q: 'What strategies or pitfalls should we avoid based on our past outcomes?',
+      desc: 'Warns against repeating failed tactics',
+    },
+    {
+      label: '3. Hallucination Test',
+      q: 'What did the legal department say about our contract terms?',
+      desc: 'Demonstrates zero hallucination on unrecorded facts',
+    },
+    {
+      label: '4. Pricing Failure Reason',
+      q: 'Are there any recorded pricing failures or discount rejections?',
+      desc: 'Traces recorded financial and commercial feedback',
+    },
+  ];
 
   const memoriesCount = agentState?.metrics?.memories_count ?? 0;
   const learnedInsightsCount = agentState?.metrics?.learned_insights_count ?? 0;
   const activeRecommendationsCount = agentState?.metrics?.active_recommendations_count ?? 0;
-  const currentBankId = agentState?.bank_id || 'company memory bank';
+  const currentBankId = agentState?.bank_id || (user?.company_id ? `dealmemory-${user.company_id}` : 'company memory bank');
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 animate-fade-in">
@@ -295,7 +266,6 @@ export default function AiAgent() {
                       {d.company_name} {d.deal_value ? `($${d.deal_value.toLocaleString()} ARR)` : ''}
                     </option>
                   ))}
-                  {!deals.some((d) => d.id === 'acme') && <option value="acme">ACME Corp ($120,000 ARR)</option>}
                 </select>
               </div>
             </div>
@@ -560,9 +530,9 @@ export default function AiAgent() {
               value={question}
               onChange={(e) => setQuestion(e.target.value)}
               placeholder={
-                agentState?.is_demo_company
-                  ? "Ask DealMemory anything about ACME Corp or deals..."
-                  : `Ask DealMemory anything about ${agentState?.company_name || 'your company'} customer relationships...`
+                currentDeal
+                  ? `Ask DealMemory anything about ${currentDeal.company_name}...`
+                  : `Ask DealMemory anything about ${agentState?.company_name || 'your'} customer relationships...`
               }
               className="flex-1 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-purple-600 transition-colors shadow-xs"
             />

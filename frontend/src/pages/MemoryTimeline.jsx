@@ -41,29 +41,32 @@ export default function MemoryTimeline() {
         const list = data.deals || [];
         setDeals(list);
         if (!selectedDealId) {
-          if (dealParam) {
+          if (dealParam && list.some((d) => d.id === dealParam)) {
             setSelectedDealId(dealParam);
           } else if (list.length > 0) {
             setSelectedDealId(list[0].id);
-          } else {
-            setSelectedDealId('acme');
           }
         }
       })
       .catch((err) => {
         console.error('Failed to fetch deals:', err);
-        if (!selectedDealId) setSelectedDealId('acme');
       });
   }, []);
 
-  const currentDeal = deals.find((d) => d.id === selectedDealId) || (selectedDealId === 'acme' ? { id: 'acme', company_name: 'ACME Corp', deal_value: 120000, stage: 'Evaluation' } : null);
+  const currentDeal = deals.find((d) => d.id === selectedDealId);
 
   const loadData = async (dealIdToFetch) => {
-    const targetId = dealIdToFetch || selectedDealId || 'acme';
+    const targetId = dealIdToFetch || selectedDealId;
+    if (!targetId) {
+      setLoading(false);
+      setLiveMemories([]);
+      setLearnedInsights([]);
+      return;
+    }
     setLoading(true);
     try {
       const [memData, learnData] = await Promise.all([
-        fetchDealMemory(targetId),
+        fetchDealMemory(targetId).catch(() => ({ memories: [] })),
         fetchLearnedInsights(targetId).catch(() => ({ learned_insights: [] })),
       ]);
       setLiveMemories(memData.memories || []);
@@ -86,137 +89,66 @@ export default function MemoryTimeline() {
     setSearchParams(id ? { deal: id } : {});
   };
 
-  const acmeTimelineSteps = [
-    {
-      step: '1. DISCOVERY',
-      date: 'SEP 20, 2026',
-      type: 'memory',
-      category: 'Requirement Discovery',
-      stakeholder: 'Sarah — VP Sales (Business Champion)',
-      quote: 'ACME requires an API-first architecture to synchronize sales pipeline data across internal CRM systems.',
-      tags: ['discovery', 'api-first', 'sarah'],
-      badgeClass: 'bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800/60',
-      icon: CheckCircle2,
-    },
-    {
-      step: '2. TECHNICAL EVALUATION',
-      date: 'SEP 22, 2026',
-      type: 'memory',
-      category: 'Architecture Assessment',
-      stakeholder: 'David — CTO (Technical Evaluator)',
-      quote: 'David expressed serious concerns regarding webhook latency, integration complexity, and enterprise security compliance.',
-      tags: ['technical', 'security-blocker', 'david'],
-      badgeClass: 'bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800/60',
-      icon: Shield,
-    },
-    {
-      step: '3. COMMERCIAL PROPOSAL',
-      date: 'SEP 24, 2026',
-      type: 'memory',
-      category: 'Budget Review',
-      stakeholder: 'Michael — CFO (Financial Gatekeeper)',
-      quote: 'Commercial terms reviewed. Michael stated annual pricing of $120,000 ARR exceeded their current allocation.',
-      tags: ['commercial', 'budget-objection', 'michael'],
-      badgeClass: 'bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-800/60',
-      icon: AlertTriangle,
-    },
-    {
-      step: '4. STRATEGY OUTCOME',
-      date: 'SEP 26, 2026',
-      type: 'outcome',
-      category: 'Sales Strategy Result',
-      stakeholder: 'Michael — CFO',
-      status: 'FAILED',
-      quote: 'A 15% upfront annual discount was offered to bypass budget objections. CFO Michael rejected it immediately: "The proposal lacks clear integration ROI."',
-      tags: ['strategy:discount', 'outcome:unsuccessful'],
-      badgeClass: 'bg-rose-50 dark:bg-rose-950/40 text-rose-800 dark:text-rose-300 border-rose-200 dark:border-rose-900/40',
-      icon: XCircle,
-      callout: 'CRITICAL TURNING POINT: Discounting failed. Commercial discussions stalled.',
-    },
-    {
-      step: '5. HINDSIGHT REFLECTION',
-      date: `TODAY (${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).toUpperCase()})`,
+  const isAcme = selectedDealId === 'acme' && deals.some((d) => d.id === 'acme');
+  let dynamicSteps = [];
+
+  // Build steps dynamically from liveMemories and learnedInsights for all deals
+  liveMemories.forEach((m, idx) => {
+    const isOutcome = m.type === 'outcome' || m.text.toLowerCase().includes('outcome') || m.text.toLowerCase().includes('strategy outcome');
+    const isFailed = m.text.toLowerCase().includes('failed') || m.text.toLowerCase().includes('rejected') || m.text.toLowerCase().includes('pause');
+    const isSuccess = m.text.toLowerCase().includes('successful') || m.text.toLowerCase().includes('confirmed') || m.text.toLowerCase().includes('progress');
+
+    // Extract stakeholder
+    let stakeholder = currentDeal?.company_name || 'Prospect Stakeholder';
+    if (m.text.toLowerCase().includes('rohan')) stakeholder = 'Rohan Mehta — CTO';
+    else if (m.text.toLowerCase().includes('sarah')) stakeholder = 'Sarah — VP Sales';
+    else if (m.text.toLowerCase().includes('david')) stakeholder = 'David — CTO';
+    else if (m.text.toLowerCase().includes('michael')) stakeholder = 'Michael — CFO';
+    else if (m.text.toLowerCase().includes('marcus')) stakeholder = 'Marcus Vance — VP Operations';
+    else if (m.text.toLowerCase().includes('elena')) stakeholder = 'Elena Rostova — Procurement';
+    else if (m.context) stakeholder = m.context;
+
+    dynamicSteps.push({
+      step: `${idx + 1}. ${isOutcome ? 'STRATEGY OUTCOME' : 'INTERACTION MEMORY'}`,
+      date: formatDisplayDate(m.mentioned_at, false) || 'RECENT',
+      type: isOutcome ? 'outcome' : 'memory',
+      category: isOutcome ? 'Strategy Outcome' : 'Relationship Interaction',
+      stakeholder: stakeholder,
+      status: isFailed ? 'FAILED' : (isSuccess ? 'SUCCESSFUL' : 'RECORDED'),
+      quote: m.text,
+      tags: m.tags || ['hindsight-memory'],
+      badgeClass: isOutcome
+        ? (isSuccess ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/60' : 'bg-rose-50 dark:bg-rose-950/40 text-rose-800 dark:text-rose-300 border-rose-200 dark:border-rose-900/40')
+        : 'bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800/60',
+      icon: isOutcome ? (isSuccess ? CheckCircle2 : XCircle) : CheckCircle2,
+    });
+  });
+
+  if (learnedInsights.length > 0) {
+    dynamicSteps.push({
+      step: `${dynamicSteps.length + 1}. HINDSIGHT REFLECTION`,
+      date: 'AUTONOMOUS REASONING',
       type: 'reflection',
       category: 'Cognitive Reasoning',
-      stakeholder: 'Hindsight Autonomous Memory Engine',
-      quote: 'Price was merely a proxy for unverified ROI. The prospect is value-skeptical, not price-sensitive. Technical buy-in from CTO David is a prerequisite before CFO Michael will release budget.',
+      stakeholder: 'Hindsight Memory & Reflection Engine',
+      quote: learnedInsights[0] || 'Reflected on recorded outcomes and stakeholder concerns to extract forward-looking advice.',
       tags: ['hindsight:reflect', 'cognitive-learning'],
       badgeClass: 'bg-purple-100 dark:bg-purple-950/60 text-purple-800 dark:text-purple-300 border-purple-300 dark:border-purple-800',
       icon: Sparkles,
-    },
-    {
-      step: '6. ADAPTED STRATEGY',
-      date: 'NEXT ACTION',
-      type: 'recommendation',
-      category: 'Prescribed Next Move',
-      stakeholder: 'DealMemory Battle Plan',
-      quote: 'Do NOT offer another discount. Lead next meeting with an integration ROI business case for Michael and an enterprise security briefing for David.',
-      tags: ['action-plan', 'roi-proof', 'no-discounting'],
-      badgeClass: 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/60',
-      icon: Target,
-    },
-  ];
-
-  // Dynamic timeline synthesis for non-ACME deals (e.g. Globex)
-  const isAcme = selectedDealId === 'acme';
-  let dynamicSteps = [];
-
-  if (isAcme) {
-    dynamicSteps = [...acmeTimelineSteps];
-  } else {
-    // Build steps from liveMemories and learnedInsights
-    liveMemories.forEach((m, idx) => {
-      const isOutcome = m.type === 'outcome' || m.text.toLowerCase().includes('outcome') || m.text.toLowerCase().includes('strategy outcome');
-      const isFailed = m.text.toLowerCase().includes('failed') || m.text.toLowerCase().includes('rejected');
-      const isSuccess = m.text.toLowerCase().includes('successful') || m.text.toLowerCase().includes('confirmed');
-
-      // Extract stakeholder
-      let stakeholder = currentDeal?.company_name || 'Prospect Stakeholder';
-      if (m.text.toLowerCase().includes('rohan')) stakeholder = 'Rohan Mehta — CTO';
-      else if (m.context) stakeholder = m.context;
-
-      dynamicSteps.push({
-        step: `${idx + 1}. ${isOutcome ? 'STRATEGY OUTCOME' : 'INTERACTION MEMORY'}`,
-        date: formatDisplayDate(m.mentioned_at, false) || 'RECENT',
-        type: isOutcome ? 'outcome' : 'memory',
-        category: isOutcome ? 'Strategy Outcome' : 'Relationship Interaction',
-        stakeholder: stakeholder,
-        status: isFailed ? 'FAILED' : (isSuccess ? 'SUCCESSFUL' : 'RECORDED'),
-        quote: m.text,
-        tags: m.tags || ['hindsight-memory'],
-        badgeClass: isOutcome
-          ? (isSuccess ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/60' : 'bg-rose-50 dark:bg-rose-950/40 text-rose-800 dark:text-rose-300 border-rose-200 dark:border-rose-900/40')
-          : 'bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800/60',
-        icon: isOutcome ? (isSuccess ? CheckCircle2 : XCircle) : CheckCircle2,
-      });
     });
 
-    if (learnedInsights.length > 0) {
+    if (learnedInsights.length > 1) {
       dynamicSteps.push({
-        step: `${dynamicSteps.length + 1}. HINDSIGHT REFLECTION`,
-        date: 'AUTONOMOUS REASONING',
-        type: 'reflection',
-        category: 'Cognitive Reasoning',
-        stakeholder: 'Hindsight Memory & Reflection Engine',
-        quote: learnedInsights[0] || 'Reflected on recorded outcomes and stakeholder concerns to extract forward-looking advice.',
-        tags: ['hindsight:reflect', 'cognitive-learning'],
-        badgeClass: 'bg-purple-100 dark:bg-purple-950/60 text-purple-800 dark:text-purple-300 border-purple-300 dark:border-purple-800',
-        icon: Sparkles,
+        step: `${dynamicSteps.length + 1}. ADAPTED STRATEGY`,
+        date: 'NEXT ACTION',
+        type: 'recommendation',
+        category: 'Prescribed Next Move',
+        stakeholder: 'DealMemory Battle Plan',
+        quote: learnedInsights.slice(1).join(' '),
+        tags: ['action-plan', 'adapted-strategy'],
+        badgeClass: 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/60',
+        icon: Target,
       });
-
-      if (learnedInsights.length > 1) {
-        dynamicSteps.push({
-          step: `${dynamicSteps.length + 1}. ADAPTED STRATEGY`,
-          date: 'NEXT ACTION',
-          type: 'recommendation',
-          category: 'Prescribed Next Move',
-          stakeholder: 'DealMemory Battle Plan',
-          quote: learnedInsights.slice(1).join(' '),
-          tags: ['action-plan', 'adapted-strategy'],
-          badgeClass: 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/60',
-          icon: Target,
-        });
-      }
     }
   }
 
@@ -252,7 +184,6 @@ export default function MemoryTimeline() {
                     {d.company_name} {d.deal_value ? `($${d.deal_value.toLocaleString()} ARR)` : ''}
                   </option>
                 ))}
-                {!deals.some((d) => d.id === 'acme') && <option value="acme">ACME Corp ($120,000 ARR)</option>}
               </select>
             </div>
           </div>
@@ -279,7 +210,7 @@ export default function MemoryTimeline() {
 
       {/* Visual Flow: Before vs After & Core Learning */}
       <div className="grid md:grid-cols-2 gap-4">
-        {isAcme ? (
+        {isAcme && liveMemories.length > 0 ? (
           <>
             {/* Before: Failed Discount */}
             <div className="bg-white dark:bg-slate-900 border border-rose-200 dark:border-rose-900/40 rounded-2xl p-5 space-y-2 shadow-xs">
@@ -305,7 +236,7 @@ export default function MemoryTimeline() {
               </p>
             </div>
           </>
-        ) : (
+        ) : liveMemories.length > 0 ? (
           <>
             {/* Dynamic Custom Customer Before */}
             <div className="bg-white dark:bg-slate-900 border border-purple-200 dark:border-purple-900/40 rounded-2xl p-5 space-y-2 shadow-xs">
@@ -313,10 +244,10 @@ export default function MemoryTimeline() {
                 <BrainCircuit size={15} />
                 <span>Phase 1: Recorded Interaction & Objections</span>
               </div>
-              <h3 className="text-base font-bold text-slate-900 dark:text-white">API Integration Mandate & Compliance Concerns</h3>
+              <h3 className="text-base font-bold text-slate-900 dark:text-white">Customer Mandate & Objections</h3>
               <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
                 {liveMemories.find((m) => !m.type?.includes('outcome'))?.text ||
-                  `Recorded customer requirement for API-first architecture, migration risk mitigation, and security compliance verification.`}
+                  `Recorded customer requirement for architecture validation and risk mitigation.`}
               </p>
             </div>
 
@@ -334,8 +265,32 @@ export default function MemoryTimeline() {
               <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
                 {learnedInsights[0] ||
                   (liveMemories.some((m) => m.type === 'outcome')
-                    ? 'Technical validation reduced CTO concerns. Detailed security review is the next blocker before commercial discussions.'
+                    ? 'Strategy outcome recorded in Hindsight bank.'
                     : 'Record a strategy outcome to trigger Hindsight cognitive reflection and adapt the next meeting battle plan.')}
+              </p>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="bg-white dark:bg-slate-900 border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-2 shadow-xs">
+              <div className="flex items-center space-x-2 text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">
+                <BrainCircuit size={15} />
+                <span>Phase 1: Customer Discovery</span>
+              </div>
+              <h3 className="text-base font-bold text-slate-900 dark:text-white">Awaiting Initial Discovery</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                No customer interactions recorded yet. Log the first meeting or call to retain key stakeholder priorities.
+              </p>
+            </div>
+
+            <div className="bg-white dark:bg-slate-900 border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-2 shadow-xs">
+              <div className="flex items-center space-x-2 text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">
+                <CheckCircle2 size={15} />
+                <span>Phase 2: Strategy Outcomes</span>
+              </div>
+              <h3 className="text-base font-bold text-slate-900 dark:text-white">Awaiting Strategy Outcomes</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                Record proposals, negotiations, and pauses to trigger automated learning reflection.
               </p>
             </div>
           </>
@@ -433,66 +388,91 @@ export default function MemoryTimeline() {
 
       {/* Step by Step Timeline Cards */}
       <div className="space-y-4">
-        {filteredSteps.map((ev, idx) => {
-          const IconComponent = ev.icon;
-          return (
-            <div
-              key={idx}
-              className={`p-5 rounded-2xl bg-white dark:bg-slate-900 border transition-all shadow-xs ${
-                ev.status === 'FAILED'
-                  ? 'border-rose-200 dark:border-rose-900/40 bg-rose-50/20'
-                  : ev.type === 'reflection'
-                  ? 'border-purple-200 dark:border-purple-900/40 bg-purple-50/20'
-                  : ev.type === 'recommendation'
-                  ? 'border-emerald-200 dark:border-emerald-900/40 bg-emerald-50/20'
-                  : 'border-slate-200 dark:border-slate-800'
-              }`}
-            >
-              <div className="flex items-start justify-between gap-4">
-                <div className="space-y-2">
-                  <div className="flex items-center space-x-2">
-                    <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded border ${ev.badgeClass}`}>
-                      {ev.step}
-                    </span>
-                    <span className="text-xs text-slate-400">•</span>
-                    <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">{ev.date}</span>
-                    <span className="text-xs text-slate-400">•</span>
-                    <span className="text-xs text-slate-500 dark:text-slate-400">{ev.category}</span>
-                  </div>
-
-                  <div className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                    Stakeholder: <span className="text-slate-950 dark:text-white font-bold">{ev.stakeholder}</span>
-                  </div>
-
-                  <p className="text-xs sm:text-sm text-slate-800 dark:text-slate-200 leading-relaxed font-medium">
-                    {ev.quote}
-                  </p>
-
-                  {ev.callout && (
-                    <div className="p-3 rounded-xl bg-rose-50 dark:bg-slate-950 border border-rose-200 dark:border-rose-900/40 text-rose-800 dark:text-rose-300 text-xs font-medium">
-                      {ev.callout}
-                    </div>
-                  )}
-
-                  <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                    {ev.tags.map((t, i) => (
-                      <span
-                        key={i}
-                        className="text-[10px] px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-950 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-800"
-                      >
-                        #{t}
+        {filteredSteps.length > 0 ? (
+          filteredSteps.map((ev, idx) => {
+            const IconComponent = ev.icon;
+            return (
+              <div
+                key={idx}
+                className={`p-5 rounded-2xl bg-white dark:bg-slate-900 border transition-all shadow-xs ${
+                  ev.status === 'FAILED'
+                    ? 'border-rose-200 dark:border-rose-900/40 bg-rose-50/20'
+                    : ev.type === 'reflection'
+                    ? 'border-purple-200 dark:border-purple-900/40 bg-purple-50/20'
+                    : ev.type === 'recommendation'
+                    ? 'border-emerald-200 dark:border-emerald-900/40 bg-emerald-50/20'
+                    : 'border-slate-200 dark:border-slate-800'
+                }`}
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded border ${ev.badgeClass}`}>
+                        {ev.step}
                       </span>
-                    ))}
-                  </div>
-                </div>
+                      <span className="text-xs text-slate-400">•</span>
+                      <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">{ev.date}</span>
+                      <span className="text-xs text-slate-400">•</span>
+                      <span className="text-xs text-slate-500 dark:text-slate-400">{ev.category}</span>
+                    </div>
 
-                <div className="w-9 h-9 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 flex items-center justify-center flex-shrink-0 text-slate-700 dark:text-slate-300">
-                  <IconComponent size={18} className={ev.status === 'FAILED' ? 'text-rose-600 dark:text-rose-400' : 'text-purple-600 dark:text-purple-400'} />
+                    <div className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                      Stakeholder: <span className="text-slate-950 dark:text-white font-bold">{ev.stakeholder}</span>
+                    </div>
+
+                    <p className="text-xs sm:text-sm text-slate-800 dark:text-slate-200 leading-relaxed font-medium">
+                      {ev.quote}
+                    </p>
+
+                    {ev.callout && (
+                      <div className="p-3 rounded-xl bg-rose-50 dark:bg-slate-950 border border-rose-200 dark:border-rose-900/40 text-rose-800 dark:text-rose-300 text-xs font-medium">
+                        {ev.callout}
+                      </div>
+                    )}
+
+                    <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                      {ev.tags.map((t, i) => (
+                        <span
+                          key={i}
+                          className="text-[10px] px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-950 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-800"
+                        >
+                          #{t}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="w-9 h-9 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 flex items-center justify-center flex-shrink-0 text-slate-700 dark:text-slate-300">
+                    <IconComponent size={18} className={ev.status === 'FAILED' ? 'text-rose-600 dark:text-rose-400' : 'text-purple-600 dark:text-purple-400'} />
+                  </div>
                 </div>
               </div>
+            );
+          })
+        ) : (
+          <div className="bg-white dark:bg-slate-900 border border-dashed border-slate-300 dark:border-slate-800 rounded-2xl p-8 sm:p-10 text-center space-y-3 shadow-2xs">
+            <div className="w-12 h-12 rounded-2xl bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 flex items-center justify-center mx-auto">
+              <BrainCircuit size={24} />
             </div>
-          );
-        })}
+            <div className="space-y-1">
+              <h3 className="text-base font-bold text-slate-900 dark:text-white">0 Timeline Milestones</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto leading-relaxed">
+                No relationship history has been recorded for this deal yet. Record your first customer interaction to begin building persistent Hindsight memory.
+              </p>
+            </div>
+            {selectedDealId && (
+              <div className="pt-2">
+                <Link
+                  to={`/add-interaction?deal=${selectedDealId}&customer=${encodeURIComponent(currentDeal?.company_name || '')}`}
+                  className="inline-flex items-center space-x-1.5 px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold shadow-xs transition-all cursor-pointer active:scale-95"
+                >
+                  <FileText size={14} />
+                  <span>Record First Interaction</span>
+                </Link>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

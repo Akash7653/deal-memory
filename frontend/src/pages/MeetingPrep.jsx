@@ -62,8 +62,6 @@ export default function MeetingPrep() {
         let activeId = '';
         if (dealParam && userDeals.some((d) => d.id === dealParam)) {
           activeId = dealParam;
-        } else if (isDemo || userDeals.some((d) => d.id === 'acme')) {
-          activeId = 'acme';
         } else if (userDeals.length > 0) {
           activeId = userDeals[0].id;
         }
@@ -80,7 +78,7 @@ export default function MeetingPrep() {
       }
     }
     init();
-  }, [dealParam, isDemo]);
+  }, [dealParam]);
 
   const handleDealChange = (dealId) => {
     setSelectedDealId(dealId);
@@ -102,11 +100,11 @@ export default function MeetingPrep() {
             </div>
             <div className="flex flex-wrap items-baseline gap-3">
               <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-                NEXT MEETING: {prepData?.company || activeDealObj?.company_name || (selectedDealId === 'acme' ? 'ACME Corp' : 'Deal Briefing')}
+                NEXT MEETING: {prepData?.company || activeDealObj?.company_name || 'Deal Briefing'}
               </h1>
-              {(activeDealObj?.deal_value || selectedDealId === 'acme') && (
+              {activeDealObj?.deal_value != null && (
                 <span className="text-lg font-bold text-purple-600 dark:text-purple-400">
-                  ${(activeDealObj?.deal_value || 120000).toLocaleString()} ARR
+                  ${activeDealObj.deal_value.toLocaleString()} ARR
                 </span>
               )}
             </div>
@@ -116,7 +114,7 @@ export default function MeetingPrep() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5">
-            {deals.length > 1 && (
+            {deals.length > 0 && (
               <select
                 value={selectedDealId}
                 onChange={(e) => handleDealChange(e.target.value)}
