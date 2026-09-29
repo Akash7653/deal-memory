@@ -209,6 +209,16 @@ export default function DealOverview() {
     );
   };
 
+  // Guard while deals are loading
+  if (!dealsLoaded) {
+    return (
+      <div className="max-w-4xl mx-auto p-16 text-center">
+        <RefreshCw className="w-8 h-8 text-purple-600 animate-spin mx-auto mb-3" />
+        <p className="text-xs text-slate-500 font-medium">Loading deals overview...</p>
+      </div>
+    );
+  }
+
   // Case 1: Company has zero deals
   if (dealsLoaded && deals.length === 0) {
     return (
@@ -406,14 +416,14 @@ export default function DealOverview() {
             {/* Quick Actions */}
             <div className="flex items-center space-x-2">
               <Link
-                to={`/meeting-prep?deal=${currentDeal.id}`}
+                to={`/meeting-prep?deal=${currentDeal?.id || ''}`}
                 className="flex-1 sm:flex-initial px-4 py-2.5 text-xs font-semibold rounded-xl bg-purple-600 hover:bg-purple-700 text-white flex items-center justify-center space-x-1.5 shadow-md shadow-purple-600/20 transition-all cursor-pointer active:scale-95 whitespace-nowrap"
               >
                 <Sparkles size={14} />
                 <span>Prepare Meeting</span>
               </Link>
               <Link
-                to={`/agent?deal=${currentDeal.id}`}
+                to={`/agent?deal=${currentDeal?.id || ''}`}
                 className="flex-1 sm:flex-initial px-4 py-2.5 text-xs font-semibold rounded-xl bg-slate-100 dark:bg-slate-850 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-750 flex items-center justify-center space-x-1.5 transition-colors cursor-pointer active:scale-95 whitespace-nowrap"
               >
                 <Bot size={14} className="text-purple-600 dark:text-purple-400" />
