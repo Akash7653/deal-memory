@@ -230,7 +230,8 @@ export async function fetchAdminConversations() {
     const data = await res.json().catch(() => ({}));
     throw new Error(data.detail || 'Failed to fetch support conversations');
   }
-  return res.json();
+  const data = await res.json();
+  return Array.isArray(data) ? data : (data?.conversations || []);
 }
 
 export async function sendAdminSupportMessage(companyId, message) {

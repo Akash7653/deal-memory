@@ -198,7 +198,14 @@ async def get_admin_company_detail(company_id: str, admin_user: dict = Depends(g
 
     conn.close()
 
-    return {"status": "success", "company": company}
+    return {
+        "status": "success",
+        "company": company,
+        "users": company["users"],
+        "customers": company["customers"],
+        "deals": company["deals"],
+        "activities": company["activities"],
+    }
 
 
 @router.get("/requests")
@@ -307,21 +314,36 @@ async def get_admin_conversations(admin_user: dict = Depends(get_current_admin))
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    cursor.execute("SELECT id, name, industry, status FROM companies WHERE status = 'approved'")
+    cursor.execute("SELECT id, name, industry, size, status, contact_person, contact_email FROM companies WHERE status = 'approved'")
     companies = [dict(r) for r in cursor.fetchall()]
 
     for c in companies:
+        c["company_id"] = c["id"]
+        c["company_name"] = c["name"]
+
+        # Fetch registered users for this company
+        cursor.execute(
+            "SELECT id, name, email, role, status, created_at FROM users WHERE company_id = ? ORDER BY created_at ASC",
+            (c["id"],),
+        )
+        c["users"] = [dict(r) for r in cursor.fetchall()]
+
         cursor.execute("""
         SELECT id, company_id, user_id, sender_role, sender_name, message, created_at
         FROM support_messages
         WHERE company_id = ?
         ORDER BY created_at ASC
         """, (c["id"],))
-        c["messages"] = [dict(r) for r in cursor.fetchall()]
-        c["last_message"] = c["messages"][-1] if c["messages"] else None
+        msgs = [dict(r) for r in cursor.fetchall()]
+        for m in msgs:
+            m["is_admin"] = (m.get("sender_role") == "admin")
+            m["sender_type"] = m.get("sender_role")
+            m["user_name"] = m.get("sender_name")
+        c["messages"] = msgs
+        c["last_message"] = msgs[-1] if msgs else None
 
     conn.close()
-    return {"status": "success", "conversations": companies}
+    return {"status": "success", "conversations": companies, "count": len(companies)}
 
 
 @router.post("/conversations/{company_id}")
@@ -357,8 +379,12 @@ async def send_admin_support_message(
         "message": {
             "id": msg_id,
             "company_id": company_id,
+            "user_id": admin_user["id"],
             "sender_role": "admin",
+            "sender_type": "admin",
             "sender_name": "Platform Admin",
+            "user_name": "Platform Admin",
+            "is_admin": True,
             "message": req.message.strip(),
             "created_at": now_iso,
         },
